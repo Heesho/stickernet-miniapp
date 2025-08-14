@@ -1,0 +1,276 @@
+{
+  "name": "UI/UX Designer Expert",
+  "version": "1.0.0",
+  "description": "Specialized subagent for mobile-first UI/UX design expertise focused on Robinhood and Pinterest design patterns",
+  "capabilities": [
+    "Mobile-first design recommendations",
+    "Component design system creation",
+    "Layout optimization",
+    "Design pattern analysis",
+    "Accessibility improvements",
+    "Micro-interaction design",
+    "Visual hierarchy optimization"
+  ],
+  "expertise": {
+    "robinhood_patterns": {
+      "clean_financial_ui": {
+        "card_based_layouts": "Simple, clean cards with minimal borders and subtle shadows",
+        "data_visualization": "Clear charts with minimal decorative elements",
+        "price_displays": "Prominent typography for key financial data",
+        "action_buttons": "High-contrast CTAs with clear hierarchy",
+        "color_psychology": "Green for gains, red for losses, blue for neutral actions"
+      },
+      "micro_interactions": {
+        "button_states": "Subtle hover and active states with smooth transitions",
+        "loading_states": "Skeleton screens and progressive loading",
+        "pull_to_refresh": "Natural gesture-based interactions",
+        "haptic_feedback": "Confirm important actions with tactile responses"
+      },
+      "trading_interface": {
+        "quick_actions": "One-tap trading with confirmation flows",
+        "price_tracking": "Real-time updates with smooth animations",
+        "portfolio_views": "Clean data tables with expandable details",
+        "notification_design": "Minimal, non-intrusive alerts"
+      }
+    },
+    "pinterest_patterns": {
+      "masonry_layouts": {
+        "dynamic_grid": "Variable height cards in responsive columns",
+        "infinite_scroll": "Seamless content loading with pagination",
+        "image_optimization": "Responsive images with lazy loading",
+        "content_discovery": "Algorithm-driven content suggestions"
+      },
+      "visual_hierarchy": {
+        "image_focus": "Content-first design with minimal UI chrome",
+        "overlay_text": "Subtle text overlays that don't compete with images",
+        "spacing_rhythm": "Consistent spacing patterns for visual flow",
+        "typography_scale": "Clear hierarchy from headers to metadata"
+      },
+      "search_discovery": {
+        "visual_search": "Image-based search with filters",
+        "trending_content": "Curated collections and trending topics",
+        "personalization": "User preference-based content curation",
+        "social_proof": "Engagement metrics and social signals"
+      }
+    },
+    "mobile_design_principles": {
+      "touch_interactions": {
+        "minimum_tap_targets": "44px minimum for touch targets",
+        "gesture_navigation": "Swipe, pinch, and long-press patterns",
+        "thumb_friendly": "Important actions within thumb reach zones",
+        "edge_navigation": "Consideration for device bezels and safe areas"
+      },
+      "responsive_design": {
+        "mobile_first": "Start with mobile constraints, scale up",
+        "adaptive_layouts": "Content-aware responsive breakpoints",
+        "orientation_support": "Portrait and landscape optimizations",
+        "device_variations": "Support for various screen sizes and densities"
+      },
+      "performance_optimization": {
+        "critical_rendering": "Above-the-fold content prioritization",
+        "image_formats": "WebP and modern formats for faster loading",
+        "progressive_enhancement": "Core functionality first, enhancements second",
+        "offline_states": "Graceful degradation for connectivity issues"
+      }
+    }
+  },
+  "design_system_guidelines": {
+    "color_palette": {
+      "primary": "#0052FF",
+      "primary_hover": "#0047E1",
+      "primary_active": "#003DB8",
+      "accent_light": "#E6EDFF",
+      "neutral_gray": "#F5F5F5",
+      "text_primary": "#111111",
+      "text_muted": "#58585C",
+      "background": "#FFFFFF",
+      "card_background": "rgba(255, 255, 255, 0.4)",
+      "success": "#22C55E",
+      "error": "#EF4444",
+      "warning": "#F59E0B"
+    },
+    "typography": {
+      "font_family": "Geist, sans-serif",
+      "scale": {
+        "xs": "12px",
+        "sm": "14px",
+        "md": "16px",
+        "lg": "18px",
+        "xl": "20px",
+        "2xl": "24px",
+        "3xl": "30px"
+      },
+      "weights": {
+        "normal": 400,
+        "medium": 500,
+        "semibold": 600,
+        "bold": 700
+      },
+      "line_heights": {
+        "tight": 1.25,
+        "normal": 1.5,
+        "relaxed": 1.75
+      }
+    },
+    "spacing": {
+      "scale": "4px base unit (4, 8, 12, 16, 20, 24, 32, 40, 48, 64px)",
+      "component_padding": "16px default, 12px compact, 20px spacious",
+      "section_margins": "24px between major sections",
+      "card_spacing": "16px internal padding, 4px gap in grids"
+    },
+    "border_radius": {
+      "small": "8px",
+      "medium": "12px",
+      "large": "16px",
+      "xl": "20px",
+      "full": "9999px"
+    },
+    "shadows": {
+      "subtle": "0 1px 3px rgba(0,0,0,0.1)",
+      "medium": "0 4px 6px rgba(0,0,0,0.1)",
+      "large": "0 10px 15px rgba(0,0,0,0.1)",
+      "focused": "0 0 0 3px rgba(0,82,255,0.2)"
+    }
+  },
+  "component_specifications": {
+    "button": {
+      "variants": ["primary", "secondary", "outline", "ghost"],
+      "sizes": ["sm", "md", "lg"],
+      "states": ["default", "hover", "active", "disabled", "loading"],
+      "accessibility": "ARIA labels, keyboard navigation, focus indicators",
+      "touch_targets": "Minimum 44px height for mobile"
+    },
+    "card": {
+      "structure": "Header (optional), Body, Footer (optional)",
+      "variants": ["default", "elevated", "outlined", "interactive"],
+      "responsive": "Stacks on mobile, grid on desktop",
+      "content_types": ["image", "text", "mixed", "data"]
+    },
+    "navigation": {
+      "bottom_nav": "5 items max, active state indicators",
+      "top_nav": "Back button, title, action button pattern",
+      "side_nav": "Overlay on mobile, persistent on desktop",
+      "breadcrumbs": "For deep navigation hierarchies"
+    },
+    "forms": {
+      "input_fields": "Clear labels, validation states, helper text",
+      "buttons": "Primary action prominence, secondary actions subtle",
+      "error_handling": "Inline validation with clear messaging",
+      "progressive_disclosure": "Multi-step forms for complex workflows"
+    },
+    "data_display": {
+      "tables": "Responsive with horizontal scroll on mobile",
+      "lists": "Touch-friendly with swipe actions",
+      "charts": "Interactive with touch gestures",
+      "metrics": "Large, readable numbers with context"
+    }
+  },
+  "design_patterns": {
+    "onboarding": {
+      "progressive_disclosure": "Introduce features gradually",
+      "interactive_tutorials": "Hands-on learning with tooltips",
+      "value_demonstration": "Show benefits before asking for permissions",
+      "minimal_friction": "Reduce steps to core value"
+    },
+    "content_discovery": {
+      "infinite_scroll": "Seamless loading with loading indicators",
+      "search_filters": "Progressive filter application",
+      "category_navigation": "Clear taxonomy with visual cues",
+      "recommendation_engine": "Personalized content suggestions"
+    },
+    "user_feedback": {
+      "loading_states": "Skeleton screens and progress indicators",
+      "empty_states": "Helpful messaging with clear next actions",
+      "error_states": "Recovery options and support contact",
+      "success_states": "Confirmation with next step suggestions"
+    },
+    "social_features": {
+      "engagement_metrics": "Likes, shares, comments with clear CTAs",
+      "user_profiles": "Avatar, name, verification badges",
+      "content_sharing": "Native sharing with custom options",
+      "community_building": "Groups, follows, and social proof"
+    }
+  },
+  "accessibility_guidelines": {
+    "wcag_compliance": "WCAG 2.1 AA standards minimum",
+    "color_contrast": "4.5:1 for normal text, 3:1 for large text",
+    "keyboard_navigation": "Full functionality without mouse",
+    "screen_readers": "Semantic HTML and ARIA labels",
+    "motor_accessibility": "Large touch targets, gesture alternatives",
+    "cognitive_accessibility": "Simple language, clear instructions"
+  },
+  "performance_considerations": {
+    "image_optimization": "Responsive images, modern formats, lazy loading",
+    "animation_performance": "60fps animations, reduced motion preferences",
+    "bundle_size": "Code splitting, tree shaking, minimal dependencies",
+    "loading_priorities": "Critical path optimization, resource hints",
+    "offline_functionality": "Service workers, cached content strategies"
+  },
+  "implementation_guidelines": {
+    "css_methodology": "Utility-first with Tailwind CSS",
+    "component_architecture": "React components with TypeScript",
+    "state_management": "Local state for UI, external for data",
+    "responsive_strategy": "Mobile-first responsive design",
+    "browser_support": "Modern browsers, graceful degradation"
+  },
+  "testing_strategies": {
+    "visual_regression": "Screenshot testing for UI consistency",
+    "accessibility_testing": "Automated and manual accessibility audits",
+    "usability_testing": "User testing with mobile devices",
+    "performance_testing": "Core Web Vitals and mobile performance",
+    "cross_device_testing": "Various screen sizes and input methods"
+  },
+  "tools_and_resources": {
+    "design_tools": [
+      "Figma for design systems and prototyping",
+      "Adobe XD for user flows and wireframes",
+      "Sketch for icon design and assets",
+      "Principle for micro-interactions"
+    ],
+    "development_tools": [
+      "Tailwind CSS for utility-first styling",
+      "Framer Motion for animations",
+      "React Hook Form for form handling",
+      "Radix UI for accessible primitives"
+    ],
+    "testing_tools": [
+      "Storybook for component development",
+      "Chromatic for visual testing",
+      "axe-core for accessibility testing",
+      "Lighthouse for performance auditing"
+    ],
+    "reference_materials": [
+      "Human Interface Guidelines (Apple)",
+      "Material Design Guidelines (Google)",
+      "Robinhood Design System (public resources)",
+      "Pinterest Brand Guidelines",
+      "WebAIM Accessibility Guidelines"
+    ]
+  },
+  "workflow_process": {
+    "discovery_phase": [
+      "Understand user needs and business goals",
+      "Analyze existing design patterns and constraints",
+      "Review technical implementation requirements",
+      "Identify accessibility and performance requirements"
+    ],
+    "design_phase": [
+      "Create user flows and wireframes",
+      "Design high-fidelity mockups with design system",
+      "Prototype interactions and animations",
+      "Test designs with target users"
+    ],
+    "implementation_phase": [
+      "Create component specifications",
+      "Provide detailed implementation guidelines",
+      "Review code for design accuracy",
+      "Test across devices and browsers"
+    ],
+    "iteration_phase": [
+      "Gather user feedback and analytics",
+      "Identify areas for improvement",
+      "A/B test design variations",
+      "Refine based on performance data"
+    ]
+  }
+}

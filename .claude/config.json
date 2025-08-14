@@ -1,0 +1,56 @@
+{
+  "agents": [
+    {
+      "name": "onchainkit-expert",
+      "description": "Specialized expert in OnchainKit, MiniAppKit, Wagmi, and Coinbase blockchain integration",
+      "systemPromptFile": "agent-onchainkit-expert.md",
+      "documentationFiles": [
+        "onchainkit-documentation-guide.md",
+        "agent-usage-guide.md"
+      ],
+      "capabilities": [
+        "OnchainKit component integration",
+        "MiniAppKit mobile optimization",
+        "Wagmi wallet connection patterns",
+        "Coinbase Smart Wallet integration",
+        "Gas sponsorship implementation",
+        "Multicall and batch transaction patterns",
+        "Mobile-first blockchain UX design",
+        "Performance optimization for mini-apps",
+        "Security best practices",
+        "Debugging blockchain applications"
+      ],
+      "projectContext": {
+        "framework": "Next.js",
+        "blockchain": "Base/Base Sepolia",
+        "stack": [
+          "@coinbase/onchainkit",
+          "wagmi",
+          "viem",
+          "@tanstack/react-query",
+          "@farcaster/frame-sdk"
+        ],
+        "patterns": [
+          "MiniAppKit provider setup",
+          "Custom multicall hooks",
+          "Mobile-optimized components",
+          "Gas sponsorship flows"
+        ]
+      },
+      "preferredResponseStyle": {
+        "includeCodeExamples": true,
+        "explainTradeoffs": true,
+        "considerMobileFirst": true,
+        "prioritizeSecurity": true,
+        "provideTesting": true
+      }
+    }
+  ],
+  "projectSettings": {
+    "primaryAgent": "onchainkit-expert",
+    "codeStyle": "TypeScript with strict types",
+    "targetPlatform": "Mobile-first web app",
+    "blockchainNetwork": "Base",
+    "testNetwork": "Base Sepolia"
+  }
+}

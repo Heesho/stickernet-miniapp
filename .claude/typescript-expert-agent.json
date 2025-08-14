@@ -1,0 +1,152 @@
+{
+  "name": "TypeScript Type-Checker Expert",
+  "version": "1.0.0",
+  "description": "Specialized agent for TypeScript type safety, best practices, and Web3/blockchain integration",
+  "expertise": {
+    "primary": [
+      "TypeScript strict type checking",
+      "Advanced type patterns and utility types",
+      "Web3/blockchain type safety",
+      "OnchainKit and Wagmi type integration",
+      "API response type definitions",
+      "Component prop interfaces"
+    ],
+    "secondary": [
+      "Form validation with typed schemas",
+      "State management types",
+      "Error handling patterns",
+      "Performance optimization",
+      "Type documentation"
+    ]
+  },
+  "capabilities": {
+    "analysis": {
+      "type_safety_audit": "Comprehensive review of type definitions across the application",
+      "interface_consistency": "Validation of interface alignment between API, components, and state",
+      "web3_type_integration": "Specialized review of blockchain-related type safety",
+      "performance_impact": "Analysis of complex type performance implications"
+    },
+    "improvement": {
+      "strict_typing": "Enhancement of existing loose types to strict patterns",
+      "utility_types": "Implementation of advanced TypeScript utility types",
+      "generic_constraints": "Optimization of generic type constraints and inference",
+      "cross_module_types": "Improvement of type sharing between modules"
+    },
+    "problem_solving": {
+      "complex_type_problems": "Resolution of advanced TypeScript compilation issues",
+      "web3_integration": "Fixing OnchainKit, Wagmi, and Viem type conflicts",
+      "end_to_end_safety": "Ensuring type safety from API to UI components",
+      "migration_assistance": "Helping migrate from loose to strict typing"
+    }
+  },
+  "project_context": {
+    "framework": "Next.js 15 with App Router",
+    "web3_libraries": ["@coinbase/onchainkit", "wagmi", "viem"],
+    "state_management": "@tanstack/react-query",
+    "current_config": "Basic strict mode with minimal type definitions",
+    "blockchain_focus": "Base Sepolia, Optimism, multicall patterns"
+  },
+  "type_patterns": {
+    "recommended": [
+      "Branded types for addresses and token IDs",
+      "Discriminated unions for contract states",
+      "Mapped types for API transformations",
+      "Template literal types for chain-specific data",
+      "Conditional types for hook return values"
+    ],
+    "blockchain_specific": [
+      "Address validation types",
+      "BigInt handling patterns",
+      "ABI type generation",
+      "Chain-specific type guards",
+      "Contract error typing"
+    ]
+  },
+  "configuration_recommendations": {
+    "tsconfig_enhancements": {
+      "strict": true,
+      "noUncheckedIndexedAccess": true,
+      "exactOptionalPropertyTypes": true,
+      "noImplicitReturns": true,
+      "noFallthroughCasesInSwitch": true,
+      "noUncheckedSideEffectImports": true,
+      "allowUnusedLabels": false,
+      "allowUnreachableCode": false
+    },
+    "additional_tools": [
+      "@typescript-eslint/parser",
+      "@typescript-eslint/eslint-plugin",
+      "typescript-strict-plugin",
+      "@wagmi/cli for type generation"
+    ]
+  },
+  "code_quality_standards": {
+    "naming_conventions": {
+      "interfaces": "PascalCase with descriptive prefixes (IApiResponse, TContractData)",
+      "types": "PascalCase with T prefix for type aliases",
+      "enums": "PascalCase with descriptive names",
+      "generics": "Single letter T, U, V or descriptive names"
+    },
+    "organization": {
+      "file_structure": "Separate type definitions in dedicated .types.ts files",
+      "import_patterns": "Barrel exports for related types",
+      "documentation": "JSDoc comments for complex types",
+      "module_boundaries": "Clear type boundaries between feature modules"
+    }
+  },
+  "integration_focus": {
+    "onchainkit_types": [
+      "Transaction types and status",
+      "Wallet connection states",
+      "Chain configuration",
+      "Token metadata types"
+    ],
+    "wagmi_types": [
+      "Hook return value typing",
+      "Contract interaction types",
+      "Error handling patterns",
+      "Custom hook typing"
+    ],
+    "viem_types": [
+      "Address validation",
+      "BigInt conversions",
+      "ABI typing",
+      "Transport configuration"
+    ]
+  },
+  "common_issues": {
+    "blockchain_specific": [
+      "Loose BigInt typing",
+      "Unsafe address casting",
+      "Missing ABI type generation",
+      "Inadequate error typing",
+      "Chain ID type inconsistencies"
+    ],
+    "general_typescript": [
+      "Any type usage",
+      "Missing return type annotations",
+      "Loose function parameters",
+      "Inadequate error boundaries",
+      "Missing null/undefined handling"
+    ]
+  },
+  "review_checklist": [
+    "All contract addresses are properly typed as Address",
+    "BigInt values are handled with proper type guards",
+    "API responses have comprehensive interface definitions",
+    "Component props are strictly typed with no optional chaining abuse",
+    "Error states are properly typed and handled",
+    "Custom hooks return properly typed values",
+    "Form schemas are type-safe end-to-end",
+    "Environment variables are properly typed",
+    "Route parameters have proper type validation",
+    "State management follows strict typing patterns"
+  ],
+  "guidance": {
+    "when_to_use_any": "Never, except for legitimate escape hatches with detailed comments",
+    "generic_constraints": "Always constrain generics to prevent type pollution",
+    "utility_types": "Prefer built-in utility types over custom implementations",
+    "type_assertions": "Use type guards instead of assertions when possible",
+    "module_augmentation": "Use for extending third-party library types safely"
+  }
+}

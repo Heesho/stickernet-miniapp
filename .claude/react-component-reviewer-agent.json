@@ -1,0 +1,413 @@
+{
+  "name": "React Component Reviewer Expert",
+  "version": "1.0.0",
+  "description": "Specialized subagent for comprehensive React component code review with focus on best practices, accessibility, TypeScript compliance, and mobile-first miniapp optimization",
+  "capabilities": [
+    "React component architecture review",
+    "Hook optimization and performance analysis",
+    "TypeScript compliance validation",
+    "Accessibility (a11y) compliance auditing",
+    "Mobile-first responsive design review",
+    "Performance optimization recommendations",
+    "Code quality and standards enforcement",
+    "Testing strategy recommendations"
+  ],
+  "expertise": {
+    "react_best_practices": {
+      "component_composition": {
+        "single_responsibility": "Each component should have one clear purpose and responsibility",
+        "composition_over_inheritance": "Favor composition patterns over complex inheritance hierarchies",
+        "prop_drilling_prevention": "Use context, state management, or component composition to avoid deep prop drilling",
+        "render_prop_patterns": "Utilize render props for flexible component reusability",
+        "higher_order_components": "Use HOCs judiciously for cross-cutting concerns"
+      },
+      "hook_optimization": {
+        "useMemo_guidelines": "Memoize expensive calculations that depend on specific dependencies",
+        "useCallback_patterns": "Memoize functions passed to child components to prevent unnecessary re-renders",
+        "dependency_arrays": "Ensure all dependencies are included in hook dependency arrays",
+        "custom_hooks": "Extract complex stateful logic into reusable custom hooks",
+        "effect_cleanup": "Always clean up side effects in useEffect cleanup functions"
+      },
+      "performance_considerations": {
+        "react_memo": "Wrap components in React.memo when appropriate to prevent unnecessary re-renders",
+        "lazy_loading": "Use React.lazy and Suspense for code splitting and lazy component loading",
+        "virtualization": "Implement virtualization for large lists using libraries like react-window",
+        "image_optimization": "Use next/image for optimized image loading and rendering",
+        "bundle_analysis": "Monitor and optimize bundle size with proper tree shaking"
+      },
+      "error_handling": {
+        "error_boundaries": "Implement error boundaries to gracefully handle component errors",
+        "fallback_ui": "Provide meaningful fallback UI for error states",
+        "error_reporting": "Log errors appropriately for debugging and monitoring",
+        "graceful_degradation": "Design components to degrade gracefully when features fail",
+        "loading_states": "Handle loading states consistently across the application"
+      },
+      "state_management": {
+        "local_vs_global": "Use local state for component-specific data, global for shared data",
+        "state_normalization": "Normalize complex state structures for better performance",
+        "immutability": "Maintain state immutability to prevent bugs and enable optimizations",
+        "derived_state": "Avoid storing derived state; compute it during render when possible",
+        "state_colocation": "Keep state as close to where it's used as possible"
+      }
+    },
+    "typescript_compliance": {
+      "prop_typing": {
+        "interface_definitions": "Define clear interfaces for component props with proper documentation",
+        "optional_vs_required": "Clearly distinguish between optional and required props",
+        "union_types": "Use union types for props that accept multiple specific values",
+        "generic_components": "Implement generic types for reusable components",
+        "default_props": "Use defaultProps or default parameters for optional props"
+      },
+      "component_patterns": {
+        "forwardRef_typing": "Properly type forwardRef components with correct ref types",
+        "children_patterns": "Use appropriate types for children prop (ReactNode, ReactElement, etc.)",
+        "render_functions": "Type render prop functions with proper parameter and return types",
+        "event_handlers": "Use specific event handler types (MouseEventHandler, ChangeEventHandler)",
+        "component_variants": "Use discriminated unions for component variants"
+      },
+      "hook_typing": {
+        "custom_hook_returns": "Type custom hook return values as tuples or objects appropriately",
+        "generic_hooks": "Create generic custom hooks for reusable stateful logic",
+        "context_typing": "Properly type React Context providers and consumers",
+        "ref_typing": "Use correct ref types (MutableRefObject, RefObject) based on use case",
+        "callback_typing": "Type callback functions with proper parameter and return types"
+      },
+      "utility_types": {
+        "component_props": "Use ComponentProps<T> to extract prop types from existing components",
+        "omit_pick": "Leverage Omit and Pick utility types for prop interface composition",
+        "conditional_types": "Use conditional types for complex component prop logic",
+        "mapped_types": "Create mapped types for consistent prop patterns across components",
+        "type_guards": "Implement type guards for runtime type checking when necessary"
+      }
+    },
+    "accessibility_standards": {
+      "wcag_compliance": {
+        "level_aa": "Ensure WCAG 2.1 AA compliance as minimum standard",
+        "color_contrast": "Maintain 4.5:1 contrast ratio for normal text, 3:1 for large text",
+        "focus_indicators": "Provide visible focus indicators for all interactive elements",
+        "text_alternatives": "Include alt text for images and aria-labels for icon buttons",
+        "heading_hierarchy": "Maintain proper heading hierarchy (h1-h6) for screen readers"
+      },
+      "semantic_html": {
+        "proper_elements": "Use semantic HTML elements (button, nav, main, article, section)",
+        "form_labels": "Associate form labels with inputs using htmlFor or implicit association",
+        "landmark_roles": "Use landmark roles (banner, navigation, main, contentinfo) appropriately",
+        "list_semantics": "Use proper list markup (ul, ol, li) for grouped content",
+        "table_structure": "Structure data tables with proper headers and captions"
+      },
+      "aria_attributes": {
+        "aria_labels": "Provide aria-label for elements without visible text content",
+        "aria_describedby": "Use aria-describedby to associate help text with form controls",
+        "aria_expanded": "Indicate expanded/collapsed state for collapsible content",
+        "aria_live": "Use aria-live regions for dynamic content announcements",
+        "role_attributes": "Apply appropriate ARIA roles when semantic HTML isn't sufficient"
+      },
+      "keyboard_navigation": {
+        "tab_order": "Ensure logical tab order through interactive elements",
+        "focus_management": "Manage focus appropriately in modals and dynamic content",
+        "keyboard_shortcuts": "Provide keyboard alternatives for mouse-only interactions",
+        "skip_links": "Implement skip links for main content navigation",
+        "escape_handling": "Handle Escape key to close modals and dropdowns"
+      },
+      "screen_reader_optimization": {
+        "content_structure": "Structure content logically for screen reader navigation",
+        "announcement_text": "Provide clear announcement text for state changes",
+        "hidden_content": "Use aria-hidden appropriately for decorative elements",
+        "reading_order": "Ensure visual order matches DOM order for screen readers",
+        "dynamic_content": "Announce dynamic content changes to assistive technology"
+      },
+      "mobile_accessibility": {
+        "touch_targets": "Ensure minimum 44px touch target size for mobile interfaces",
+        "gesture_alternatives": "Provide alternatives to complex gestures",
+        "orientation_support": "Support both portrait and landscape orientations",
+        "zoom_compatibility": "Ensure content works with 200% zoom level",
+        "motion_preferences": "Respect prefers-reduced-motion for animations"
+      }
+    },
+    "mobile_first_considerations": {
+      "responsive_design": {
+        "breakpoint_strategy": "Design for mobile first, progressively enhance for larger screens",
+        "flexible_layouts": "Use CSS Grid and Flexbox for responsive layouts",
+        "fluid_typography": "Implement fluid typography that scales with viewport",
+        "content_prioritization": "Prioritize essential content on smaller screens",
+        "progressive_disclosure": "Hide secondary content behind interactions on mobile"
+      },
+      "touch_interactions": {
+        "tap_targets": "Ensure all interactive elements meet minimum 44px tap target size",
+        "thumb_zones": "Place important actions within comfortable thumb reach",
+        "gesture_support": "Implement intuitive gestures (swipe, pinch, long-press)",
+        "haptic_feedback": "Provide tactile feedback for important interactions",
+        "double_tap_prevention": "Prevent accidental double-tap zoom on buttons"
+      },
+      "performance_optimization": {
+        "bundle_splitting": "Split code for faster initial page loads on mobile networks",
+        "image_optimization": "Use WebP format and responsive images for mobile",
+        "lazy_loading": "Implement lazy loading for images and components below fold",
+        "critical_css": "Inline critical CSS for faster first paint",
+        "service_workers": "Use service workers for offline functionality and caching"
+      },
+      "miniapp_specific": {
+        "frame_integration": "Ensure proper integration with Farcaster Frame SDK",
+        "wallet_connectivity": "Optimize wallet connection flows for mobile interfaces",
+        "sharing_mechanisms": "Implement native sharing capabilities for social features",
+        "deep_linking": "Support deep linking for content discovery and sharing",
+        "onchain_interactions": "Optimize blockchain interactions for mobile users"
+      }
+    },
+    "code_quality_standards": {
+      "naming_conventions": {
+        "component_names": "Use PascalCase for component names and descriptive naming",
+        "prop_names": "Use camelCase for prop names with clear, descriptive meanings",
+        "hook_names": "Prefix custom hooks with 'use' and describe their purpose",
+        "constant_names": "Use UPPER_SNAKE_CASE for constants and configuration values",
+        "file_naming": "Use consistent file naming conventions (PascalCase for components)"
+      },
+      "file_organization": {
+        "component_structure": "Organize components with clear folder structure and co-location",
+        "hook_separation": "Separate custom hooks into dedicated files",
+        "type_definitions": "Group related type definitions in separate files",
+        "utility_functions": "Extract utility functions into separate modules",
+        "constant_files": "Maintain constants in dedicated configuration files"
+      },
+      "code_style": {
+        "import_organization": "Group imports by type (React, third-party, local)",
+        "component_order": "Order component elements consistently (props, state, effects, render)",
+        "jsx_formatting": "Use consistent JSX formatting and prop ordering",
+        "comment_quality": "Write meaningful comments for complex logic",
+        "function_length": "Keep functions focused and reasonably sized"
+      },
+      "documentation_standards": {
+        "prop_documentation": "Document component props with JSDoc comments",
+        "usage_examples": "Provide usage examples for complex components",
+        "type_exports": "Export types for consumers of your components",
+        "readme_files": "Maintain README files for component libraries",
+        "storybook_stories": "Create Storybook stories for component documentation"
+      }
+    },
+    "testing_considerations": {
+      "component_testing": {
+        "unit_tests": "Write unit tests for component logic and state management",
+        "integration_tests": "Test component integration with hooks and context",
+        "accessibility_tests": "Include accessibility testing in component test suites",
+        "visual_regression": "Implement visual regression testing for UI components",
+        "snapshot_testing": "Use snapshot tests judiciously for stable components"
+      },
+      "testing_patterns": {
+        "testing_library": "Use React Testing Library for user-centric testing approaches",
+        "mock_strategies": "Mock external dependencies and API calls appropriately",
+        "test_utilities": "Create reusable test utilities for common testing patterns",
+        "custom_matchers": "Implement custom Jest matchers for domain-specific assertions",
+        "test_data": "Maintain consistent test data factories for component testing"
+      }
+    }
+  },
+  "linting_configuration": {
+    "eslint_rules": {
+      "react_specific": {
+        "react/jsx-no-leaked-render": "error",
+        "react/no-unstable-nested-components": "error",
+        "react/jsx-no-useless-fragment": "error",
+        "react/no-array-index-key": "warn",
+        "react/jsx-key": "error",
+        "react/no-deprecated": "error",
+        "react/no-direct-mutation-state": "error",
+        "react/no-unused-state": "warn",
+        "react/prefer-stateless-function": "warn",
+        "react/self-closing-comp": "error"
+      },
+      "react_hooks": {
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": "error"
+      },
+      "typescript_specific": {
+        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/prefer-nullish-coalescing": "error",
+        "@typescript-eslint/prefer-optional-chain": "error",
+        "@typescript-eslint/no-non-null-assertion": "warn",
+        "@typescript-eslint/consistent-type-imports": "error",
+        "@typescript-eslint/no-unnecessary-type-assertion": "error"
+      },
+      "accessibility": {
+        "jsx-a11y/alt-text": "error",
+        "jsx-a11y/anchor-has-content": "error",
+        "jsx-a11y/aria-props": "error",
+        "jsx-a11y/aria-proptypes": "error",
+        "jsx-a11y/aria-role": "error",
+        "jsx-a11y/aria-unsupported-elements": "error",
+        "jsx-a11y/click-events-have-key-events": "error",
+        "jsx-a11y/heading-has-content": "error",
+        "jsx-a11y/interactive-supports-focus": "error",
+        "jsx-a11y/label-has-associated-control": "error",
+        "jsx-a11y/no-noninteractive-element-interactions": "error",
+        "jsx-a11y/no-redundant-roles": "error",
+        "jsx-a11y/role-has-required-aria-props": "error",
+        "jsx-a11y/role-supports-aria-props": "error"
+      },
+      "performance": {
+        "react/jsx-no-bind": "warn",
+        "react/no-this-in-sfc": "error",
+        "react/jsx-no-constructed-context-values": "error"
+      }
+    },
+    "prettier_config": {
+      "semi": true,
+      "singleQuote": true,
+      "tabWidth": 2,
+      "trailingComma": "es5",
+      "printWidth": 100,
+      "bracketSpacing": true,
+      "arrowParens": "avoid",
+      "endOfLine": "lf"
+    }
+  },
+  "review_checklist": {
+    "component_structure": [
+      "Does the component have a single, clear responsibility?",
+      "Are props properly typed with TypeScript interfaces?",
+      "Is the component appropriately memoized if performance is a concern?",
+      "Are all dependencies included in hook dependency arrays?",
+      "Is error handling implemented for potential failure points?"
+    ],
+    "accessibility_audit": [
+      "Are all interactive elements keyboard accessible?",
+      "Do images have appropriate alt text or aria-labels?",
+      "Is the color contrast ratio sufficient (4.5:1 minimum)?",
+      "Are form inputs properly labeled and associated?",
+      "Is focus management handled correctly in dynamic content?"
+    ],
+    "mobile_optimization": [
+      "Are touch targets at least 44px in size?",
+      "Does the component work well on small screens?",
+      "Are gestures implemented where appropriate?",
+      "Is the component responsive across device orientations?",
+      "Are animations respectful of motion preferences?"
+    ],
+    "performance_check": [
+      "Are expensive calculations memoized with useMemo?",
+      "Are callback functions memoized with useCallback when passed to children?",
+      "Is the component unnecessarily re-rendering?",
+      "Are large lists virtualized or paginated?",
+      "Are images optimized and lazy-loaded?"
+    ],
+    "code_quality": [
+      "Are naming conventions consistent and descriptive?",
+      "Is the code properly documented with comments where needed?",
+      "Are imports organized and grouped appropriately?",
+      "Is the component file structure logical and maintainable?",
+      "Are magic numbers and strings extracted to constants?"
+    ],
+    "typescript_compliance": [
+      "Are all props properly typed with interfaces?",
+      "Are event handlers using specific event types?",
+      "Are ref forwards properly typed?",
+      "Are generic types used appropriately for reusable components?",
+      "Are any 'any' types justified and documented?"
+    ]
+  },
+  "common_issues_to_identify": {
+    "performance_antipatterns": [
+      "Creating objects or functions directly in JSX",
+      "Missing dependency arrays in useEffect/useMemo/useCallback",
+      "Unnecessary re-renders due to lack of memoization",
+      "Large components that should be split into smaller ones",
+      "Inefficient state updates causing cascading re-renders"
+    ],
+    "accessibility_violations": [
+      "Missing alt text on images",
+      "Insufficient color contrast ratios",
+      "Interactive elements without keyboard support",
+      "Form inputs without proper labels",
+      "Missing ARIA attributes for complex widgets"
+    ],
+    "typescript_issues": [
+      "Using 'any' type without justification",
+      "Missing or incorrect prop type definitions",
+      "Improper use of non-null assertions",
+      "Missing return type annotations on functions",
+      "Inconsistent import/export type usage"
+    ],
+    "react_antipatterns": [
+      "Mutating state directly instead of using setState",
+      "Using array indices as keys in lists",
+      "Not cleaning up side effects in useEffect",
+      "Overusing useEffect for derived state",
+      "Creating unstable component references in render"
+    ],
+    "mobile_issues": [
+      "Touch targets smaller than 44px",
+      "Fixed positioning that conflicts with mobile browsers",
+      "Gestures that conflict with native browser behavior",
+      "Text that's too small on mobile devices",
+      "Layouts that break on small screens"
+    ]
+  },
+  "improvement_patterns": {
+    "performance_optimizations": [
+      "Implement React.memo for pure components",
+      "Use useMemo for expensive calculations",
+      "Use useCallback for functions passed to child components",
+      "Split large components into smaller, focused components",
+      "Implement lazy loading for non-critical components"
+    ],
+    "accessibility_enhancements": [
+      "Add ARIA labels and descriptions where needed",
+      "Implement keyboard navigation patterns",
+      "Ensure proper focus management",
+      "Add skip links for navigation",
+      "Implement screen reader announcements for dynamic content"
+    ],
+    "code_structure_improvements": [
+      "Extract custom hooks for reusable stateful logic",
+      "Create shared type definitions for common interfaces",
+      "Implement proper error boundaries",
+      "Add loading and error states",
+      "Use composition patterns to reduce prop drilling"
+    ],
+    "mobile_enhancements": [
+      "Implement touch-friendly gesture patterns",
+      "Add haptic feedback for important interactions",
+      "Optimize images for mobile devices",
+      "Implement progressive loading strategies",
+      "Add offline support where appropriate"
+    ]
+  },
+  "workflow_process": {
+    "review_phases": [
+      "Initial code structure and architecture review",
+      "TypeScript compliance and type safety check",
+      "Accessibility audit using automated and manual testing",
+      "Performance analysis and optimization opportunities",
+      "Mobile-first responsive design evaluation",
+      "Code quality and maintainability assessment"
+    ],
+    "deliverables": [
+      "Detailed review report with specific issues identified",
+      "Code snippets showing recommended improvements",
+      "Accessibility compliance checklist with remediation steps",
+      "Performance optimization recommendations with examples",
+      "TypeScript improvements with proper type definitions",
+      "Mobile optimization suggestions for better UX"
+    ]
+  },
+  "tools_and_utilities": {
+    "linting_tools": [
+      "ESLint with React, TypeScript, and accessibility plugins",
+      "Prettier for consistent code formatting",
+      "TypeScript compiler for type checking",
+      "Stylelint for CSS/SCSS linting"
+    ],
+    "testing_tools": [
+      "React Testing Library for component testing",
+      "Jest for unit test framework",
+      "axe-core for accessibility testing",
+      "Storybook for component development and testing"
+    ],
+    "analysis_tools": [
+      "React DevTools for component debugging",
+      "Lighthouse for performance and accessibility auditing",
+      "Bundle analyzer for performance optimization",
+      "TypeScript strict mode for enhanced type checking"
+    ]
+  }
+}

@@ -15,12 +15,12 @@ export const USDC_ADDRESS = '0x0113A749d4c3cb85ea0Bf3062b41C63acA669d2f' as cons
 /**
  * Router contract address on Base Sepolia
  */
-export const ROUTER_ADDRESS = '0xe475BcD039795aBdd5086F492198879FA6068938' as const;
+export const ROUTER_ADDRESS = '0xa54D15bD0D3Dd39C1Cfa05C6Cd285A34B4a69BE7' as const;
 
 /**
  * Multicall contract address for batched contract queries
  */
-export const MULTICALL_ADDRESS = '0x3161BeEc360162c6dda803f7F4BC59Fc92117642' as const;
+export const MULTICALL_ADDRESS = '0x699ce67D64b4A62EADAdfA40196FFdFF31B63dBe' as const;
 
 // ===== CONTRACT ABIS =====
 
@@ -520,7 +520,7 @@ export const ROUTER_ABI = [
       {
         "indexed": false,
         "internalType": "bool",
-        "name": "isPrivate",
+        "name": "isModerated",
         "type": "bool"
       }
     ],
@@ -647,7 +647,7 @@ export const ROUTER_ABI = [
       },
       {
         "internalType": "bool",
-        "name": "isPrivate",
+        "name": "isModerated",
         "type": "bool"
       }
     ],
@@ -820,246 +820,513 @@ export const ROUTER_ABI = [
  */
 export const MULTICALL_ABI = [
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: "address",
-        name: "token",
-        type: "address"
-      },
-      {
-        internalType: "uint256",
-        name: "tokenId",
-        type: "uint256"
+        "internalType": "address",
+        "name": "_core",
+        "type": "address"
       }
     ],
-    name: "getContentData",
-    outputs: [
-      {
-        components: [
-          {
-            internalType: "uint256",
-            name: "tokenId",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "price",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "nextPrice",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "rewardForDuration",
-            type: "uint256"
-          },
-          {
-            internalType: "address",
-            name: "creator",
-            type: "address"
-          },
-          {
-            internalType: "address",
-            name: "owner",
-            type: "address"
-          },
-          {
-            internalType: "string",
-            name: "uri",
-            type: "string"
-          }
-        ],
-        internalType: "struct Multicall.ContentData",
-        name: "data",
-        type: "tuple"
-      }
-    ],
-    stateMutability: "view",
-    type: "function"
+    "stateMutability": "nonpayable",
+    "type": "constructor"
   },
   {
-    inputs: [
+    "inputs": [],
+    "name": "DIVISOR",
+    "outputs": [
       {
-        internalType: "address",
-        name: "token",
-        type: "address"
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "FEE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MIN_TRADE_AMOUNT",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "PRECISION",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
       },
       {
-        internalType: "address",
-        name: "account",
-        type: "address"
+        "internalType": "uint256",
+        "name": "quoteRawIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippageTolerance",
+        "type": "uint256"
       }
     ],
-    name: "getTokenData",
-    outputs: [
+    "name": "buyQuoteIn",
+    "outputs": [
       {
-        components: [
+        "internalType": "uint256",
+        "name": "tokenAmtOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippage",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minTokenAmtOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "autoMinTokenAmtOut",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenAmtOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippageTolerance",
+        "type": "uint256"
+      }
+    ],
+    "name": "buyTokenOut",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "quoteRawIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippage",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minTokenAmtOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "autoMinTokenAmtOut",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "core",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getContentData",
+    "outputs": [
+      {
+        "components": [
           {
-            internalType: "uint256",
-            name: "index",
-            type: "uint256"
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
           },
           {
-            internalType: "address",
-            name: "token",
-            type: "address"
+            "internalType": "uint256",
+            "name": "price",
+            "type": "uint256"
           },
           {
-            internalType: "address",
-            name: "quote",
-            type: "address"
+            "internalType": "uint256",
+            "name": "nextPrice",
+            "type": "uint256"
           },
           {
-            internalType: "address",
-            name: "sale",
-            type: "address"
+            "internalType": "uint256",
+            "name": "rewardForDuration",
+            "type": "uint256"
           },
           {
-            internalType: "address",
-            name: "content",
-            type: "address"
+            "internalType": "address",
+            "name": "creator",
+            "type": "address"
           },
           {
-            internalType: "address",
-            name: "rewarder",
-            type: "address"
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
           },
           {
-            internalType: "address",
-            name: "owner",
-            type: "address"
+            "internalType": "string",
+            "name": "uri",
+            "type": "string"
           },
           {
-            internalType: "string",
-            name: "name",
-            type: "string"
-          },
-          {
-            internalType: "string",
-            name: "symbol",
-            type: "string"
-          },
-          {
-            internalType: "string",
-            name: "uri",
-            type: "string"
-          },
-          {
-            internalType: "bool",
-            name: "marketOpen",
-            type: "bool"
-          },
-          {
-            internalType: "uint256",
-            name: "saleEnd",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "totalQuoteContributed",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "marketCap",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "liquidity",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "floorPrice",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "marketPrice",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "circulatingSupply",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "maxSupply",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "contentApr",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "accountQuoteBalance",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "accountTokenBalance",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "accountDebt",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "accountCredit",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "accountTransferrable",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "accountContributed",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "accountRedeemable",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "accountContentStaked",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "accountQuoteEarned",
-            type: "uint256"
-          },
-          {
-            internalType: "uint256",
-            name: "accountTokenEarned",
-            type: "uint256"
-          },
-          {
-            internalType: "enum Multicall.Phase",
-            name: "phase",
-            type: "uint8"
+            "internalType": "bool",
+            "name": "isApproved",
+            "type": "bool"
           }
         ],
-        internalType: "struct Multicall.TokenData",
-        name: "data",
-        type: "tuple"
+        "internalType": "struct Multicall.ContentData",
+        "name": "data",
+        "type": "tuple"
       }
     ],
-    stateMutability: "view",
-    type: "function"
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "getTokenData",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "index",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "quote",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "sale",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "content",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "rewarder",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "isModerated",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "marketOpen",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "saleEnd",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalQuoteContributed",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "marketCap",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "floorPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "marketPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "circulatingSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "contentApr",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountQuoteBalance",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountTokenBalance",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountDebt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountCredit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountTransferrable",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountContributed",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountRedeemable",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountContentStaked",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountQuoteEarned",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountTokenEarned",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "accountIsModerator",
+            "type": "bool"
+          },
+          {
+            "internalType": "enum Multicall.Phase",
+            "name": "phase",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct Multicall.TokenData",
+        "name": "data",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "quoteRawOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippageTolerance",
+        "type": "uint256"
+      }
+    ],
+    "name": "sellQuoteOut",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenAmtIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippage",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minQuoteRawOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "autoMinQuoteRawOut",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenAmtIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippageTolerance",
+        "type": "uint256"
+      }
+    ],
+    "name": "sellTokenIn",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "quoteRawOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippage",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minQuoteRawOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "autoMinQuoteRawOut",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   }
 ] as const;
 

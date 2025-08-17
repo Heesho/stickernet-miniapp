@@ -1,25 +1,38 @@
+/**
+ * Error Boundary component for catching and handling React errors
+ * 
+ * @description Catches JavaScript errors anywhere in the child component tree,
+ * logs those errors, and displays a fallback UI instead of the component tree that crashed.
+ */
+
 "use client";
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
-import { Button } from "./ui";
+import { Button, ErrorMessage } from "./ui";
 
-interface Props {
+interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
 }
 
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean;
   error?: Error;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+/**
+ * Error boundary class component
+ * 
+ * @description React error boundary that catches errors in child components
+ * and provides graceful error handling with user-friendly messages.
+ */
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 

@@ -64,7 +64,7 @@ function ClientOnlyProviders({ children }: { children: ReactNode }) {
           }}
           // Additional OnchainKit provider props for Identity components
           projectId={process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_ID}
-          schemaId={process.env.NEXT_PUBLIC_ONCHAINKIT_SCHEMA_ID}
+          schemaId={process.env.NEXT_PUBLIC_ONCHAINKIT_SCHEMA_ID as `0x${string}` | undefined}
         >
           {!isMounted ? (
             <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] bg-black">

@@ -30,8 +30,13 @@ export const GET_CURATES_QUERY = `
       tokenId
       uri
       timestamp
+      blockNumber
       price
+      surplus
       creator {
+        id
+      }
+      prevOwner {
         id
       }
       user {
@@ -57,8 +62,13 @@ export const GET_CURATE_BY_ID_QUERY = `
       tokenId
       uri
       timestamp
+      blockNumber
       price
+      surplus
       creator {
+        id
+      }
+      prevOwner {
         id
       }
       user {
@@ -90,8 +100,13 @@ export const GET_CURATES_BY_CREATOR_QUERY = `
       tokenId
       uri
       timestamp
+      blockNumber
       price
+      surplus
       creator {
+        id
+      }
+      prevOwner {
         id
       }
       user {
@@ -117,9 +132,15 @@ export const GET_TOKEN_QUERY = `
       name
       symbol
       uri
-      creator {
+      owner {
         id
       }
+      marketOpen
+      isModerated
+      marketPrice
+      floorPrice
+      liquidity
+      marketCap
     }
   }
 `;
@@ -139,6 +160,7 @@ export const GET_TOKEN_BOARD_DATA_QUERY = `
       owner {
         id
       }
+      isModerated
       contentPositions(orderBy: price, orderDirection: desc) {
         id
         tokenId
@@ -151,6 +173,7 @@ export const GET_TOKEN_BOARD_DATA_QUERY = `
         uri
         price
         nextPrice
+        isApproved
       }
       contentDayData(orderBy: timestamp, orderDirection: desc, first: 1) {
         timestamp
@@ -219,6 +242,30 @@ export interface GraphQLResponse<T = unknown> {
 }
 
 /**
+ * Directory entity from subgraph
+ */
+export interface DirectoryEntity {
+  id: string;
+  index: string;
+  txCount: string;
+  swapVolume: string;
+  liquidity: string;
+  curateVolume: string;
+  contents: string;
+}
+
+/**
+ * User entity from subgraph
+ */
+export interface UserEntity {
+  id: string;
+  txCount: string;
+  referrer?: {
+    id: string;
+  };
+}
+
+/**
  * Curate entity from subgraph
  */
 export interface CurateEntity {
@@ -226,8 +273,13 @@ export interface CurateEntity {
   tokenId: string;
   uri: string;
   timestamp: string;
+  blockNumber: string;
   price: string;
+  surplus: string;
   creator: {
+    id: string;
+  };
+  prevOwner?: {
     id: string;
   };
   user?: {
@@ -249,9 +301,36 @@ export interface TokenEntity {
   name: string;
   symbol: string;
   uri: string;
-  creator: {
+  owner: {
     id: string;
   };
+  txCount?: string;
+  swapVolume?: string;
+  liquidity?: string;
+  totalSupply?: string;
+  marketCap?: string;
+  quoteVirtReserve?: string;
+  quoteRealReserve?: string;
+  tokenReserve?: string;
+  marketPrice?: string;
+  floorPrice?: string;
+  contribution?: string;
+  holders?: string;
+  contents?: string;
+  contentBalance?: string;
+  curateVolume?: string;
+  creatorRewardsQuote?: string;
+  curatorRewardsQuote?: string;
+  holderRewardsQuote?: string;
+  treasuryRevenueQuote?: string;
+  treasuryRevenueToken?: string;
+  contentRevenueQuote?: string;
+  contentRevenueToken?: string;
+  createdAtTimestamp?: string;
+  createdAtBlockNumber?: string;
+  marketOpen?: boolean;
+  marketOpensAt?: string;
+  isModerated?: boolean;
 }
 
 /**
@@ -288,6 +367,9 @@ export interface GetTokenResponse {
 export interface ContentPositionEntity {
   id: string;
   tokenId: string;
+  token: {
+    id: string;
+  };
   creator: {
     id: string;
   };
@@ -297,6 +379,95 @@ export interface ContentPositionEntity {
   uri: string;
   price: string;
   nextPrice: string;
+  isApproved?: boolean;
+}
+
+/**
+ * Token position entity from subgraph
+ */
+export interface TokenPositionEntity {
+  id: string;
+  token: {
+    id: string;
+  };
+  user: {
+    id: string;
+  };
+  contribution: string;
+  balance: string;
+  debt: string;
+  contentBalance: string;
+  creatorRevenueQuote: string;
+  ownerRevenueQuote: string;
+  affiliateRevenueQuote: string;
+  affiliateRevenueToken: string;
+  curatorRevenueQuote: string;
+  curatorRevenueToken: string;
+}
+
+/**
+ * Swap entity from subgraph
+ */
+export interface SwapEntity {
+  id: string;
+  token: {
+    id: string;
+  };
+  user: {
+    id: string;
+  };
+  blockNumber: string;
+  timestamp: string;
+  quoteIn: string;
+  quoteOut: string;
+  tokenIn: string;
+  tokenOut: string;
+  marketPrice: string;
+  floorPrice: string;
+}
+
+/**
+ * Moderator entity from subgraph
+ */
+export interface ModeratorEntity {
+  id: string;
+  user: {
+    id: string;
+  };
+  token: {
+    id: string;
+  };
+  isModerator: boolean;
+}
+
+/**
+ * Sale entity from subgraph
+ */
+export interface SaleEntity {
+  id: string;
+  token: {
+    id: string;
+  };
+}
+
+/**
+ * Content entity from subgraph
+ */
+export interface ContentEntity {
+  id: string;
+  token: {
+    id: string;
+  };
+}
+
+/**
+ * Rewarder entity from subgraph
+ */
+export interface RewarderEntity {
+  id: string;
+  token: {
+    id: string;
+  };
 }
 
 /**
@@ -319,6 +490,44 @@ export interface TokenDayDataEntity {
 }
 
 /**
+ * Token hour data entity
+ */
+export interface TokenHourDataEntity {
+  timestamp: string;
+  marketPrice: string;
+  floorPrice: string;
+  volume: string;
+}
+
+/**
+ * Token minute data entity
+ */
+export interface TokenMinuteDataEntity {
+  timestamp: string;
+  marketPrice: string;
+  floorPrice: string;
+  volume: string;
+}
+
+/**
+ * Content hour data entity
+ */
+export interface ContentHourDataEntity {
+  timestamp: string;
+  volume: string;
+  surplus: string;
+}
+
+/**
+ * Content minute data entity
+ */
+export interface ContentMinuteDataEntity {
+  timestamp: string;
+  volume: string;
+  surplus: string;
+}
+
+/**
  * Token board data entity from subgraph
  */
 export interface TokenBoardDataEntity {
@@ -330,6 +539,7 @@ export interface TokenBoardDataEntity {
   owner: {
     id: string;
   };
+  isModerated?: boolean;
   contentPositions: ContentPositionEntity[];
   contentDayData: ContentDayDataEntity[];
   tokenDayData: TokenDayDataEntity[];

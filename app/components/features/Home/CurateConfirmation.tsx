@@ -57,7 +57,7 @@ export function CurateConfirmation({ curate, nextPrice, onClose, onSuccess }: Cu
     const fetchPriceChange = async () => {
       try {
         const boardData = await fetchTokenBoardData(tokenAddress.toLowerCase());
-        if (boardData?.tokenDayData?.length >= 2) {
+        if (boardData?.tokenDayData && boardData.tokenDayData.length >= 2) {
           const currentPrice = parseFloat(boardData.marketPrice || "0");
           const yesterdayPrice = parseFloat(boardData.tokenDayData[1].marketPrice || "0");
           if (yesterdayPrice > 0) {

@@ -14,6 +14,9 @@ export * from '../api/subgraph';
 // Re-export everything from data
 export * from '../data/mockData';
 
+// Re-export everything from styles
+export * from './styles';
+
 // ===== COMMONLY USED COMBINATIONS =====
 
 /**

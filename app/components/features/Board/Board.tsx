@@ -6,6 +6,8 @@ import { useAccount } from "wagmi";
 import dynamic from "next/dynamic";
 import { Button, Icon } from "../../ui";
 import { CreateSticker } from "./CreateSticker";
+import { TradingView } from "./TradingView";
+import { formatUnits } from "viem";
 
 // Client-only OnchainKit Identity components to prevent hydration issues
 const Avatar = dynamic(
@@ -31,7 +33,6 @@ import {
   type ContentPositionEntity 
 } from "@/lib/constants";
 import { useTokenData } from "@/app/hooks/useMulticall";
-import { formatUnits } from "viem";
 import type { BoardProps } from "./Board.types";
 
 export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
@@ -57,15 +58,18 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
   const [showCreateSticker, setShowCreateSticker] = useState(false);
   const [tokenAvatarError, setTokenAvatarError] = useState(false);
   const [scrollY, setScrollY] = useState(0);
+  const [showTradingView, setShowTradingView] = useState(false);
+  const [hoveredPrice, setHoveredPrice] = useState<string | null>(null);
   const symbolRef = useRef<HTMLDivElement>(null);
   const { address: account, isConnected } = useAccount();
   
-  // Fetch token data from multicall
+  // Fetch token data from multicall - use 0x0 address if no account connected
   const { tokenData, isLoading: multicallLoading } = useTokenData({
     tokenAddress: tokenAddress as `0x${string}`,
-    account: account,
-    enabled: !!(tokenAddress && account && isConnected)
+    account: account || '0x0000000000000000000000000000000000000000' as `0x${string}`,
+    enabled: !!tokenAddress
   });
+
 
   // Function to refresh board data
   const refreshBoardData = useCallback(async () => {
@@ -148,7 +152,8 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
       multicallLoading, 
       hasTokenData: !!tokenData,
       tokenDataKeys: tokenData ? Object.keys(tokenData) : 'none',
-      loading 
+      loading,
+      phase: tokenData?.phase
     });
     
     let isMounted = true;
@@ -282,33 +287,6 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
   const themeBgClass = priceIsUp ? 'bg-[#0052FF]' : 'bg-[#FF6B35]';
   const themeBorderClass = priceIsUp ? 'border-[#0052FF]' : 'border-[#FF6B35]';
 
-  // Add wallet connection check
-  if (!isConnected) {
-    return (
-      <div className="animate-fade-in p-4">
-        <div className="flex items-center justify-between mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBackToHome}
-            className="flex items-center space-x-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <span>Back</span>
-          </Button>
-        </div>
-        <div className="text-center py-8">
-          <h3 className="text-lg font-semibold mb-2">Connect Your Wallet</h3>
-          <p className="text-[var(--app-text-secondary)] mb-4">
-            Please connect your wallet to view this token's board.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div className="animate-fade-in">
@@ -385,12 +363,26 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
               {boardData.token.symbol || "PEPE"}
             </div>
             
-            {/* View switcher button (board/token view) - trading chart icon */}
-            <button className={`w-9 h-9 ${themeBgClass} rounded-lg flex items-center justify-center text-white hover:opacity-90 transition-all z-10`}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 3v18h18"/>
-                <path d="m7 16 4-8 4 8 5-5"/>
-              </svg>
+            {/* View switcher button (board/token view) - shows grid when in trading, chart when in board */}
+            <button 
+              onClick={() => setShowTradingView(!showTradingView)}
+              className={`w-9 h-9 ${themeBgClass} rounded-lg flex items-center justify-center text-white hover:opacity-90 transition-all z-10`}
+            >
+              {showTradingView ? (
+                // Grid icon - to go back to board view
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/>
+                </svg>
+              ) : (
+                // Chart icon - to go to trading view
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 3v18h18"/>
+                  <path d="m7 16 4-8 4 8 5-5"/>
+                </svg>
+              )}
             </button>
           </div>
         </div>
@@ -411,7 +403,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
               {boardData.token.symbol || "PEPE"}
             </div>
             <div className="text-white text-3xl">
-              ${boardData.token.price}
+              ${hoveredPrice || boardData.token.price}
             </div>
           </div>
           
@@ -448,75 +440,103 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
           <span className="text-white opacity-70 text-base ml-2">Today</span>
         </div>
 
-        {/* Board description */}
-        <p className="text-white text-base mb-6">
-          This is a description about this board where the creator can say... 
-          <button className="text-white opacity-70 ml-2">more</button>
-        </p>
+        {/* Board description and owner - only show in board view */}
+        {!showTradingView && (
+          <>
+            {/* Board description */}
+            <p className="text-white text-base mb-6">
+              This is a description about this board where the creator can say... 
+              <button className="text-white opacity-70 ml-2">more</button>
+            </p>
 
-        {/* Owner info and options */}
-        <div className="flex items-center justify-between mb-8">
-          {/* Owner with OnchainKit Identity */}
-          <div className="flex items-center space-x-2">
-            <Avatar 
-              address={boardData.token.owner as `0x${string}`} 
-              className="w-8 h-8" 
-            />
-            <Name 
-              address={boardData.token.owner as `0x${string}`} 
-              className="text-white text-base" 
-            />
-          </div>
-          
-          {/* Options button */}
-          <button className="text-white">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="1"/>
-              <circle cx="19" cy="12" r="1"/>
-              <circle cx="5" cy="12" r="1"/>
-            </svg>
-          </button>
-        </div>
-
-      </div>
-
-      {/* Board content grid */}
-      <div>
-        <div className="columns-2 gap-4">
-          {boardData.curates.map((curate, index) => (
-            <CurateImage 
-              key={curate.id} 
-              curate={curate} 
-              index={index}
-              onImageClick={() => setSelectedCurate(curate)}
-              isNew={false}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Sticky Create button and volume - positioned above navbar */}
-      <div className="fixed bottom-16 left-0 right-0">
-        <div className="w-full max-w-md mx-auto bg-black px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Today's Steal Volume */}
-            <div>
-              <div className="text-white text-sm opacity-70">Today's Steal Volume</div>
-              <div className="text-white text-2xl font-bold">
-                ${boardData.stats.totalVolume}
+            {/* Owner info and options */}
+            <div className="flex items-center justify-between mb-8">
+              {/* Owner with OnchainKit Identity */}
+              <div className="flex items-center space-x-2">
+                <Avatar 
+                  address={boardData.token.owner as `0x${string}`} 
+                  className="w-8 h-8" 
+                />
+                <Name 
+                  address={boardData.token.owner as `0x${string}`} 
+                  className="text-white text-base" 
+                />
               </div>
+              
+              {/* Options button */}
+              <button className="text-white">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="1"/>
+                  <circle cx="19" cy="12" r="1"/>
+                  <circle cx="5" cy="12" r="1"/>
+                </svg>
+              </button>
             </div>
-            
-            {/* Create button */}
-            <Button 
-              onClick={() => setShowCreateSticker(true)}
-              className={`${themeBgClass} hover:opacity-90 text-white font-semibold py-2.5 px-8 rounded-xl`}
-            >
-              Stick
-            </Button>
+          </>
+        )}
+
+      </div>
+
+      {/* Board content grid or Trading View */}
+      {!showTradingView ? (
+        <div>
+          <div className="columns-2 gap-4">
+            {boardData.curates.map((curate, index) => (
+              <CurateImage 
+                key={curate.id} 
+                curate={curate} 
+                index={index}
+                onImageClick={() => setSelectedCurate(curate)}
+                isNew={false}
+              />
+            ))}
           </div>
         </div>
-      </div>
+      ) : (
+        <TradingView
+          tokenAddress={tokenAddress || ''}
+          tokenSymbol={boardData.token.symbol}
+          tokenName={boardData.token.name}
+          tokenPrice={boardData.token.price}
+          priceChange24h={boardData.stats.priceChange24h}
+          priceChangeAmount={boardData.stats.priceChangeAmount}
+          userPosition={{
+            shares: parseInt(tokenData?.accountTokenBalance?.toString() || '0') || 0,
+            marketValue: ((parseInt(tokenData?.accountTokenBalance?.toString() || '0') || 0) * parseFloat(boardData.token.price)).toFixed(2)
+          }}
+          todayVolume={boardData.stats.totalVolume}
+          onPriceHover={(price) => setHoveredPrice(price)}
+          phase={tokenData?.phase}
+          totalContributed={tokenData?.totalQuoteContributed}
+          userContributed={tokenData?.accountContributed}
+          userRedeemable={tokenData?.accountRedeemable}
+        />
+      )}
+
+      {/* Sticky Create/Trade button and volume - positioned above navbar */}
+      {!showTradingView && (
+        <div className="fixed bottom-16 left-0 right-0">
+          <div className="w-full max-w-md mx-auto bg-black px-4 py-3">
+            <div className="flex items-center justify-between">
+              {/* Today's steal volume */}
+              <div>
+                <div className="text-white text-sm opacity-70">Today's steal volume</div>
+                <div className="text-white text-2xl font-bold">
+                  ${boardData.stats.totalVolume}
+                </div>
+              </div>
+              
+              {/* Create button */}
+              <Button 
+                onClick={() => setShowCreateSticker(true)}
+                className={`${themeBgClass} hover:opacity-90 text-black font-semibold py-2.5 px-8 rounded-xl border-2 border-[#0052FF] min-w-[120px]`}
+              >
+                Stick
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Image Detail Modal */}
       {selectedCurate && (

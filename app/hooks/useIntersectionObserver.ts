@@ -76,7 +76,7 @@ export function useIntersectionObserver({
       }
       setTargetElement(null);
     };
-  }, [targetStyles]);
+  }, []);
 
   useEffect(() => {
     if (!targetElement) return;

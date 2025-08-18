@@ -51,11 +51,11 @@ export interface TokenData {
   readonly phase: Phase;
 }
 
-// Enums for better type safety
+// Enums for better type safety - must match Multicall.sol
 export enum Phase {
-  PRESALE = 0,
-  MARKET = 1,
-  ENDED = 2,
+  MARKET = 0,
+  CONTRI = 1,
+  REDEEM = 2,
 }
 
 // Transaction types

@@ -1,4 +1,4 @@
-import type { MiniAppNotificationDetails } from '@farcaster/frame-sdk';
+import type { MiniAppNotificationDetails } from '@farcaster/miniapp-sdk';
 
 // API Response wrapper types
 export interface ApiResponse<T = unknown> {

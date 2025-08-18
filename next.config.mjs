@@ -15,10 +15,6 @@ const nextConfig = {
     };
     return config;
   },
-  // Experimental features for better SSR support
-  experimental: {
-    esmExternals: 'loose',
-  },
   images: {
     remotePatterns: [
       {

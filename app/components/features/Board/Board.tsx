@@ -152,8 +152,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
       multicallLoading, 
       hasTokenData: !!tokenData,
       tokenDataKeys: tokenData ? Object.keys(tokenData) : 'none',
-      loading,
-      phase: tokenData?.phase
+      loading
     });
     
     let isMounted = true;
@@ -506,10 +505,6 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
           }}
           todayVolume={boardData.stats.totalVolume}
           onPriceHover={(price) => setHoveredPrice(price)}
-          phase={tokenData?.phase}
-          totalContributed={tokenData?.totalQuoteContributed}
-          userContributed={tokenData?.accountContributed}
-          userRedeemable={tokenData?.accountRedeemable}
         />
       )}
 

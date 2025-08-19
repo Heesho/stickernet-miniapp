@@ -20,7 +20,6 @@ export type {
 } from './blockchain.types';
 
 export {
-  Phase,
   isAddress,
   isValidTokenId,
   isValidChainId,

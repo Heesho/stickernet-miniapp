@@ -15,22 +15,20 @@ export interface ContentData {
   readonly creator: Address;
   readonly owner: Address;
   readonly uri: string;
+  readonly isApproved: boolean;
 }
 
 export interface TokenData {
   readonly index: bigint;
   readonly token: Address;
   readonly quote: Address;
-  readonly sale: Address;
   readonly content: Address;
   readonly rewarder: Address;
   readonly owner: Address;
   readonly name: string;
   readonly symbol: string;
   readonly uri: string;
-  readonly marketOpen: boolean;
-  readonly saleEnd: bigint;
-  readonly totalQuoteContributed: Wei;
+  readonly isModerated: boolean;
   readonly marketCap: Wei;
   readonly liquidity: Wei;
   readonly floorPrice: Wei;
@@ -43,20 +41,14 @@ export interface TokenData {
   readonly accountDebt: Wei;
   readonly accountCredit: Wei;
   readonly accountTransferrable: bigint;
-  readonly accountContributed: Wei;
-  readonly accountRedeemable: Wei;
+  readonly accountContentOwned: bigint;
   readonly accountContentStaked: bigint;
   readonly accountQuoteEarned: Wei;
   readonly accountTokenEarned: bigint;
-  readonly phase: Phase;
+  readonly accountIsModerator: boolean;
 }
 
-// Enums for better type safety - must match Multicall.sol
-export enum Phase {
-  MARKET = 0,
-  CONTRI = 1,
-  REDEEM = 2,
-}
+// Removed Phase enum as it's no longer in the new contract structure
 
 // Transaction types
 export interface TransactionRequest {

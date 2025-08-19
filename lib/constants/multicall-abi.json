@@ -1,0 +1,481 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_core",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "DIVISOR",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "FEE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MIN_TRADE_AMOUNT",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "PRECISION",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "quoteRawIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippageTolerance",
+        "type": "uint256"
+      }
+    ],
+    "name": "buyQuoteIn",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenAmtOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippage",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minTokenAmtOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "autoMinTokenAmtOut",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenAmtOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippageTolerance",
+        "type": "uint256"
+      }
+    ],
+    "name": "buyTokenOut",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "quoteRawIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippage",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minTokenAmtOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "autoMinTokenAmtOut",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "core",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getContentData",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "price",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "nextPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rewardForDuration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "creator",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "isApproved",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct Multicall.ContentData",
+        "name": "data",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "getTokenData",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "index",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "quote",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "content",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "rewarder",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "isModerated",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "marketCap",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "liquidity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "floorPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "marketPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "circulatingSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "contentApr",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountQuoteBalance",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountTokenBalance",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountDebt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountCredit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountTransferrable",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountContentOwned",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountContentStaked",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountQuoteEarned",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accountTokenEarned",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "accountIsModerator",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct Multicall.TokenData",
+        "name": "data",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "quoteRawOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippageTolerance",
+        "type": "uint256"
+      }
+    ],
+    "name": "sellQuoteOut",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenAmtIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippage",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minQuoteRawOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "autoMinQuoteRawOut",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenAmtIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippageTolerance",
+        "type": "uint256"
+      }
+    ],
+    "name": "sellTokenIn",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "quoteRawOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slippage",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minQuoteRawOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "autoMinQuoteRawOut",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

@@ -49,7 +49,8 @@ export function useContentData({
     rewardForDuration: data.rewardForDuration as any,
     creator: data.creator,
     owner: data.owner,
-    uri: data.uri
+    uri: data.uri,
+    isApproved: data.isApproved
   } : undefined;
 
   // Safe formatting with proper decimal handling
@@ -135,16 +136,13 @@ export function useTokenData({
     index: data.index,
     token: data.token,
     quote: data.quote,
-    sale: data.sale,
     content: data.content,
     rewarder: data.rewarder,
     owner: data.owner,
     name: data.name,
     symbol: data.symbol,
     uri: data.uri,
-    marketOpen: data.marketOpen,
-    saleEnd: data.saleEnd,
-    totalQuoteContributed: data.totalQuoteContributed as any,
+    isModerated: data.isModerated,
     marketCap: data.marketCap as any,
     liquidity: data.liquidity as any,
     floorPrice: data.floorPrice as any,
@@ -157,12 +155,11 @@ export function useTokenData({
     accountDebt: data.accountDebt as any,
     accountCredit: data.accountCredit as any,
     accountTransferrable: data.accountTransferrable as any,
-    accountContributed: data.accountContributed as any,
-    accountRedeemable: data.accountRedeemable as any,
+    accountContentOwned: data.accountContentOwned as any,
     accountContentStaked: data.accountContentStaked as any,
     accountQuoteEarned: data.accountQuoteEarned as any,
     accountTokenEarned: data.accountTokenEarned as any,
-    phase: data.phase
+    accountIsModerator: data.accountIsModerator
   } : undefined;
 
   return {

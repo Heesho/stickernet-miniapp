@@ -5,7 +5,6 @@ import { Button } from "../../ui";
 import { RobinhoodChart } from "../../ui/RobinhoodChart/RobinhoodChart";
 import { useChartData } from "@/app/hooks/useChartData";
 import { Timeframe, PriceDataPoint } from "../../ui/RobinhoodChart/RobinhoodChart.types";
-import { Phase } from "@/types";
 import { formatUnits } from "viem";
 import { BuyPage } from "./BuyPage";
 import { SellPage } from "./SellPage";
@@ -23,10 +22,6 @@ interface TradingViewProps {
   };
   todayVolume: string;
   onPriceHover?: (price: string | null) => void;
-  phase?: Phase;
-  totalContributed?: bigint;
-  userContributed?: bigint;
-  userRedeemable?: bigint;
 }
 
 export function TradingView({
@@ -38,11 +33,7 @@ export function TradingView({
   priceChangeAmount,
   userPosition,
   todayVolume,
-  onPriceHover,
-  phase,
-  totalContributed,
-  userContributed,
-  userRedeemable
+  onPriceHover
 }: TradingViewProps) {
   const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>('LIVE');
   const [hoveredPrice, setHoveredPrice] = useState<number | null>(null);
@@ -56,10 +47,7 @@ export function TradingView({
   const themeBgClass = priceIsUp ? 'bg-[#0052FF]' : 'bg-[#FF6B35]';
   const themeColorClass = priceIsUp ? 'text-[#0052FF]' : 'text-[#FF6B35]';
   
-  // Determine phase
-  const isContributionPhase = phase === Phase.CONTRI;
-  const isMarketPhase = phase === Phase.MARKET;
-  const isRedeemPhase = phase === Phase.REDEEM;
+  // Trading is always available now (no phases)
 
   // Fetch chart data from subgraph
   const { data: chartData, loading: chartLoading, error: chartError } = useChartData({
@@ -95,59 +83,18 @@ export function TradingView({
 
   return (
     <div className="animate-fade-in">
-      {/* Phase indicator badge */}
-      {isContributionPhase && (
-        <div className="inline-flex items-center px-3 py-1 rounded-full bg-gray-800 text-gray-300 text-sm font-medium mb-6">
-          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2 animate-pulse" />
-          Contribution Phase
-        </div>
-      )}
-      {isRedeemPhase && (
-        <div className="inline-flex items-center px-3 py-1 rounded-full bg-gray-800 text-gray-300 text-sm font-medium mb-6">
-          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2" />
-          Redeem Phase
-        </div>
-      )}
-      
-      {/* Robinhood-style Chart - only show in market or redeem phase */}
-      {(isMarketPhase || isRedeemPhase) && (
-        <div className="-mx-4 mb-8">
-          <RobinhoodChart
-            priceData={chartData}
-            timeframe={selectedTimeframe}
-            currentPrice={parseFloat(tokenPrice)}
-            onPriceHover={handlePriceHover}
-            onTimeframeChange={setSelectedTimeframe}
-            height={320}
-            priceChange24h={priceChange24h}
-          />
-        </div>
-      )}
-      
-      {/* Contribution phase info - show instead of chart */}
-      {isContributionPhase && (
-        <div className="mb-8 pb-6 border-b border-gray-900">
-          <h3 className="text-white text-lg font-semibold mb-6">Contribution Progress</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-baseline">
-              <span className="text-gray-500 text-sm">Total Contributed</span>
-              <span className="text-white text-lg font-medium">
-                ${totalContributed ? parseFloat(formatUnits(totalContributed, 6)).toLocaleString() : '0'}
-              </span>
-            </div>
-            <div className="flex justify-between items-baseline">
-              <span className="text-gray-500 text-sm">Token Price</span>
-              <span className="text-gray-300 text-lg font-medium">$0.001</span>
-            </div>
-            <div className="flex justify-between items-baseline">
-              <span className="text-gray-500 text-sm">Your Contribution</span>
-              <span className="text-white text-lg font-medium">
-                ${userContributed ? parseFloat(formatUnits(userContributed, 6)).toLocaleString() : '0'}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Robinhood-style Chart */}
+      <div className="-mx-4 mb-8">
+        <RobinhoodChart
+          priceData={chartData}
+          timeframe={selectedTimeframe}
+          currentPrice={parseFloat(tokenPrice)}
+          onPriceHover={handlePriceHover}
+          onTimeframeChange={setSelectedTimeframe}
+          height={320}
+          priceChange24h={priceChange24h}
+        />
+      </div>
 
       {/* Trading content */}
       <div className="pb-20 space-y-6">
@@ -333,26 +280,14 @@ export function TradingView({
             {/* Volume display */}
             <div>
               <div className="text-white text-sm opacity-70">
-                {isContributionPhase ? "Total Contributed" : "Today's swap volume"}
+                Today's swap volume
               </div>
               <div className="text-white text-2xl font-bold">
-                {isContributionPhase 
-                  ? `$${totalContributed ? parseFloat(formatUnits(totalContributed, 6)).toLocaleString() : '0'}`
-                  : `$${todayVolume}`
-                }
+                ${todayVolume}
               </div>
             </div>
             
-            {/* Action button based on phase */}
-            {isContributionPhase && (
-              <Button 
-                onClick={() => console.log('Contributing...')}
-                className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-2.5 px-8 rounded-xl"
-              >
-                Contribute
-              </Button>
-            )}
-            {isMarketPhase && (
+            {/* Trade button - always shown */}
               <div className="relative" ref={tradeMenuRef}>
                 {/* Main Trade/Close button */}
                 <button
@@ -394,15 +329,6 @@ export function TradingView({
                   </div>
                 )}
               </div>
-            )}
-            {isRedeemPhase && (
-              <Button 
-                onClick={() => console.log('Redeeming...')}
-                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2.5 px-8 rounded-xl"
-              >
-                Redeem Tokens
-              </Button>
-            )}
           </div>
         </div>
       </div>

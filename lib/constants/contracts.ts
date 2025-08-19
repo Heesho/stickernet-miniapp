@@ -20,7 +20,7 @@ export const ROUTER_ADDRESS = '0xa54D15bD0D3Dd39C1Cfa05C6Cd285A34B4a69BE7' as co
 /**
  * Multicall contract address for batched contract queries
  */
-export const MULTICALL_ADDRESS = '0x699ce67D64b4A62EADAdfA40196FFdFF31B63dBe' as const;
+export const MULTICALL_ADDRESS = '0x5A4E59AD2A964c1452C279C0c14b2bf9477342FC' as const;
 
 // ===== CONTRACT ABIS =====
 

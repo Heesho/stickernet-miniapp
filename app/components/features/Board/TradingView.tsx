@@ -7,6 +7,8 @@ import { useChartData } from "@/app/hooks/useChartData";
 import { Timeframe, PriceDataPoint } from "../../ui/RobinhoodChart/RobinhoodChart.types";
 import { Phase } from "@/types";
 import { formatUnits } from "viem";
+import { BuyPage } from "./BuyPage";
+import { SellPage } from "./SellPage";
 
 interface TradingViewProps {
   tokenAddress: string;
@@ -45,6 +47,8 @@ export function TradingView({
   const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>('LIVE');
   const [hoveredPrice, setHoveredPrice] = useState<number | null>(null);
   const [isTradeExpanded, setIsTradeExpanded] = useState(false);
+  const [showBuyPage, setShowBuyPage] = useState(false);
+  const [showSellPage, setShowSellPage] = useState(false);
   const tradeMenuRef = useRef<HTMLDivElement>(null);
   
   const priceIsUp = priceChange24h >= 0;
@@ -371,7 +375,7 @@ export function TradingView({
                   <div className="absolute bottom-full right-0 mb-2 flex flex-col gap-2">
                     <button 
                       onClick={() => {
-                        console.log('Buy');
+                        setShowBuyPage(true);
                         setIsTradeExpanded(false);
                       }}
                       className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-black font-semibold py-2.5 px-8 rounded-xl min-w-[120px] focus:outline-none active:bg-[#0052FF]/80 transition-colors"
@@ -380,7 +384,7 @@ export function TradingView({
                     </button>
                     <button 
                       onClick={() => {
-                        console.log('Sell');
+                        setShowSellPage(true);
                         setIsTradeExpanded(false);
                       }}
                       className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-black font-semibold py-2.5 px-8 rounded-xl min-w-[120px] focus:outline-none active:bg-[#0052FF]/80 transition-colors"
@@ -402,6 +406,28 @@ export function TradingView({
           </div>
         </div>
       </div>
+
+      {/* Buy Page Modal */}
+      {showBuyPage && (
+        <BuyPage
+          tokenAddress={tokenAddress}
+          tokenSymbol={tokenSymbol}
+          tokenName={tokenName}
+          tokenPrice={tokenPrice}
+          onClose={() => setShowBuyPage(false)}
+        />
+      )}
+
+      {/* Sell Page Modal */}
+      {showSellPage && (
+        <SellPage
+          tokenAddress={tokenAddress}
+          tokenSymbol={tokenSymbol}
+          tokenName={tokenName}
+          tokenPrice={tokenPrice}
+          onClose={() => setShowSellPage(false)}
+        />
+      )}
     </div>
   );
 }

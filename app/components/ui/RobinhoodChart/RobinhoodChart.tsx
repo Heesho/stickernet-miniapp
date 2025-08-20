@@ -60,13 +60,26 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
     const fallbackPrice = parseFloat(currentPrice || '0.0001');
     
     // Check if all data points have the same price (flat line from no trading activity)
-    const uniquePrices = new Set(priceData.map(d => d.marketPrice));
+    const uniquePrices = new Set(priceData.map(d => Math.round(d.marketPrice * 100000000) / 100000000));
     const hasNoVolume = priceData.every(d => d.volume === 0);
-    const isFlat = priceData.length > 0 && (uniquePrices.size === 1 || hasNoVolume);
+    // Mark as flat for visual purposes, but we'll still allow interactions
+    const isFlat = priceData.length > 0 && uniquePrices.size <= 1;
     
-    // For LIVE timeframe or no data, always show flat lines
-    // This ensures chart is always visible
-    if (!priceData.length || isFlat || (timeframe === 'LIVE' && priceData.length < 2)) {
+    // Debug logging for LIVE chart
+    if (timeframe === 'LIVE') {
+      console.log('LIVE chart analysis:', {
+        dataLength: priceData.length,
+        uniquePrices: uniquePrices.size,
+        hasNoVolume,
+        isFlat,
+        samplePrices: Array.from(uniquePrices).slice(0, 5),
+        firstPoint: priceData[0],
+        lastPoint: priceData[priceData.length - 1]
+      });
+    }
+    
+    // For no data, show empty chart
+    if (!priceData.length) {
       const price = currentPrice ? parseFloat(currentPrice) : fallbackPrice;
       const floorPrice = price * 0.95;
       
@@ -85,6 +98,8 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
         isFlat: true
       };
     }
+    
+    // Even if flat, we want to process the data to allow interactions
 
     // Don't separate data - treat all as one continuous line
     // Find min and max values for scaling
@@ -156,8 +171,8 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
 
   // Handle mouse/touch interactions
   const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement> | React.TouchEvent<SVGSVGElement>) => {
-    // Don't handle any mouse events when flat
-    if (!svgRef.current || !points.length || isFlat) {
+    // Only check for svg and points, allow interactions even when flat
+    if (!svgRef.current || !points.length) {
       return;
     }
 
@@ -177,7 +192,7 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
       setHoveredPoint({ x: closestPoint.x, y: closestPoint.marketY, data: closestPoint.data });
       onPriceHover?.(closestPoint.data);
     }
-  }, [points, onPriceHover, isFlat]);
+  }, [points, onPriceHover]);
 
   const handleMouseLeave = useCallback(() => {
     setMousePosition(null);
@@ -233,12 +248,12 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
           className="w-full"
           style={{ 
             display: 'block',
-            cursor: isFlat || points.length === 0 ? 'default' : 'crosshair'
+            cursor: points.length === 0 ? 'default' : 'crosshair'
           }}
-          onMouseMove={!isFlat && points.length > 0 ? handleMouseMove : undefined}
-          onTouchMove={!isFlat && points.length > 0 ? handleMouseMove : undefined}
-          onMouseLeave={!isFlat && points.length > 0 ? handleMouseLeave : undefined}
-          onTouchEnd={!isFlat && points.length > 0 ? handleMouseLeave : undefined}
+          onMouseMove={points.length > 0 ? handleMouseMove : undefined}
+          onTouchMove={points.length > 0 ? handleMouseMove : undefined}
+          onMouseLeave={points.length > 0 ? handleMouseLeave : undefined}
+          onTouchEnd={points.length > 0 ? handleMouseLeave : undefined}
         >
           {/* Gradient definition */}
           <defs>
@@ -302,8 +317,8 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
           )}
         </svg>
 
-        {/* Hover tooltip - Time only - hide when flat or no points */}
-        {hoveredPoint && !isFlat && points.length > 0 && (
+        {/* Hover tooltip - Time only - show even when flat */}
+        {hoveredPoint && points.length > 0 && (
           <div 
             className="absolute pointer-events-none z-10 bg-black/90 rounded-lg px-3 py-1.5 text-sm"
             style={{ 

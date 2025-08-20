@@ -379,30 +379,24 @@ body::-webkit-scrollbar {
 @keyframes priceIncrease {
   0% {
     transform: scale(1);
-    color: inherit;
   }
   50% {
     transform: scale(1.1);
-    color: #0052FF;
   }
   100% {
     transform: scale(1);
-    color: inherit;
   }
 }
 
 @keyframes priceDecrease {
   0% {
     transform: scale(1);
-    color: inherit;
   }
   50% {
     transform: scale(0.95);
-    color: #FF6B35;
   }
   100% {
     transform: scale(1);
-    color: inherit;
   }
 }
 

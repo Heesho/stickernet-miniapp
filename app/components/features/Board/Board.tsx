@@ -49,7 +49,8 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
     };
     curates: Curate[];
     stats: {
-      totalVolume: string;
+      totalVolume: string;  // Steal volume
+      swapVolume: string;   // Trading volume
       priceChange24h: number;
       priceChangeAmount: string;
       priceChange1h?: number;
@@ -76,6 +77,12 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
   const [showTradingView, setShowTradingView] = useState(false);
   const [hoveredPrice, setHoveredPrice] = useState<string | null>(null);
   const [hoveredFloorPrice, setHoveredFloorPrice] = useState<string | null>(null);
+  const [selectedTimeframe, setSelectedTimeframe] = useState<'LIVE' | '4H' | '1D' | '1W' | '1M' | 'MAX'>('LIVE');
+  const [timeframePriceData, setTimeframePriceData] = useState<{ priceChange: number; priceChangeAmount: string; label: string }>({
+    priceChange: 0,
+    priceChangeAmount: '0',
+    label: 'last hour'
+  });
   const symbolRef = useRef<HTMLDivElement>(null);
   const { address: account, isConnected } = useAccount();
   
@@ -135,8 +142,10 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
     }));
     
     // Calculate metrics
-    // Use contentDayData for steal volume (most recent day)
-    const todayVolume = boardDataFromSubgraph.contentDayData?.[0]?.volume || "0";
+    // Use tokenDayData for swap volume (trading volume)
+    const todaySwapVolume = boardDataFromSubgraph.tokenDayData?.[0]?.volume || "0";
+    // Use contentDayData for steal volume (content curation volume)
+    const todayStealVolume = boardDataFromSubgraph.contentDayData?.[0]?.volume || "0";
     
     let priceChange24h = 0;
     let priceChangeAmount = "0";
@@ -192,7 +201,8 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         },
         curates: curates,
         stats: {
-          totalVolume: todayVolume,  // Pass raw value, TradingView will format it
+          totalVolume: todayStealVolume,  // Steal volume for board view
+          swapVolume: todaySwapVolume,    // Swap volume for trading view
           priceChange24h: priceChange24h,
           priceChangeAmount: priceChangeAmount,
           priceChange1h: priceChange1h
@@ -254,8 +264,9 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
           }
         }));
         
-        // Calculate today's steal volume from contentDayData
-        const todayVolume = boardDataFromSubgraph.contentDayData?.[0]?.volume || "0";
+        // Calculate today's volumes
+        const todaySwapVolume = boardDataFromSubgraph.tokenDayData?.[0]?.volume || "0";
+        const todayStealVolume = boardDataFromSubgraph.contentDayData?.[0]?.volume || "0";
         
         // Calculate price change from tokenDayData
         let priceChange24h = 0;
@@ -313,7 +324,8 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
             },
             curates: curates,
             stats: {
-              totalVolume: todayVolume,  // Pass raw value, TradingView will format it
+              totalVolume: todayStealVolume,  // Steal volume for board view
+              swapVolume: todaySwapVolume,    // Swap volume for trading view
               priceChange24h: priceChange24h,
               priceChangeAmount: priceChangeAmount,
               priceChange1h: priceChange1h
@@ -372,16 +384,43 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Initialize timeframePriceData when boardData is available
+  useEffect(() => {
+    if (boardData && boardData.stats) {
+      // Only update if we haven't initialized yet (using a ref to track)
+      if (selectedTimeframe === 'LIVE' && timeframePriceData.label === 'last hour' && timeframePriceData.priceChangeAmount === '0') {
+        setTimeframePriceData({
+          priceChange: boardData.stats.priceChange1h || boardData.stats.priceChange24h || 0,
+          priceChangeAmount: boardData.stats.priceChangeAmount || '0',
+          label: 'last hour'
+        });
+      }
+    }
+  }, [boardData?.stats?.priceChange1h, boardData?.stats?.priceChange24h, boardData?.stats?.priceChangeAmount]);
+
   const handleBackToHome = () => {
     setActiveTab?.("home");
   };
 
+  // Create the callback outside of conditional rendering
+  const handleTimeframeChange = useCallback((timeframe: any, priceData: any) => {
+    setSelectedTimeframe(timeframe);
+    if (priceData) {
+      setTimeframePriceData(priceData);
+    }
+  }, []);
+
   // Dynamic color theme based on price performance
-  // Use the 24h price change which is displayed as "Today"
+  // Use the price change for the selected timeframe
   let isPricePositive = true; // Default to positive (blue)
   let isDataLoaded = false;
   
-  if (boardData?.stats?.priceChange24h !== undefined) {
+  // Use timeframePriceData for the currently selected timeframe
+  if (timeframePriceData.priceChange !== undefined && timeframePriceData.priceChangeAmount !== '0') {
+    isPricePositive = timeframePriceData.priceChange >= 0;
+    isDataLoaded = true;
+  } else if (boardData?.stats?.priceChange24h !== undefined) {
+    // Fallback to 24h if timeframe data not yet loaded
     isPricePositive = boardData.stats.priceChange24h >= 0;
     isDataLoaded = true;
   }
@@ -551,16 +590,16 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
 
         {/* Price change indicator */}
         <div className="flex items-center mb-6">
-          <div className={`flex items-center space-x-1 ${themeColorClass}`}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" 
-                 className={isPricePositive ? '' : 'rotate-180'}>
-              <path d="m7 14 5-5 5 5"/>
-            </svg>
+          <div className={`flex items-center space-x-1 ${timeframePriceData.priceChange >= 0 ? 'text-[#0052FF]' : 'text-[#FF6B35]'}`}>
+            {/* Triangle indicator */}
+            <span className="text-lg">
+              {timeframePriceData.priceChange >= 0 ? '▲' : '▼'}
+            </span>
             <span className="text-base font-medium">
-              ${Math.abs(parseFloat(boardData.stats.priceChangeAmount))} ({Math.abs(boardData.stats.priceChange24h).toFixed(2)}%)
+              ${Math.abs(parseFloat(timeframePriceData.priceChangeAmount)).toFixed(6)} ({Math.abs(timeframePriceData.priceChange).toFixed(2)}%)
             </span>
           </div>
-          <span className="text-white opacity-70 text-base ml-2">Today</span>
+          <span className="text-white opacity-70 text-base ml-2">{timeframePriceData.label}</span>
         </div>
 
         {/* Board description and owner - only show in board view */}
@@ -628,13 +667,14 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
             shares: parseInt(tokenData?.accountTokenBalance?.toString() || '0') || 0,
             marketValue: ((parseInt(tokenData?.accountTokenBalance?.toString() || '0') || 0) * parseFloat(boardData.token.price)).toFixed(2)
           }}
-          todayVolume={boardData.stats.totalVolume}
+          todayVolume={boardData.stats.swapVolume}
           onPriceHover={(price, floorPrice) => {
             setHoveredPrice(price);
             setHoveredFloorPrice(floorPrice);
           }}
           tokenData={tokenData}
           subgraphData={boardData.subgraphData}
+          onTimeframeChange={handleTimeframeChange}
         />
       )}
 

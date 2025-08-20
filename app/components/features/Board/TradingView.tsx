@@ -41,6 +41,7 @@ interface TradingViewProps {
     contentRevenueToken?: string;
     marketPrice?: string;
   };
+  onTimeframeChange?: (timeframe: Timeframe, priceData: { priceChange: number; priceChangeAmount: string; label: string }) => void;
 }
 
 export function TradingView({
@@ -55,7 +56,8 @@ export function TradingView({
   todayVolume,
   onPriceHover,
   tokenData,
-  subgraphData
+  subgraphData,
+  onTimeframeChange
 }: TradingViewProps) {
   const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>('LIVE');
   const [hoveredPrice, setHoveredPrice] = useState<number | null>(null);
@@ -73,7 +75,7 @@ export function TradingView({
     positionData: subgraphPositionData,
     chartData: liveChartData,
     forceRefresh,
-    refreshAfterTransaction
+    refreshAfterTransaction: baseRefreshAfterTransaction
   } = useRealTimeData({
     tokenAddress: tokenAddress as `0x${string}`,
     userAddress,
@@ -108,19 +110,76 @@ export function TradingView({
     }
   }, [tokenPosition]);
   
-  // Dynamic theme colors based on 1-hour price performance
-  const isPricePositive = priceChange1h !== undefined ? priceChange1h >= 0 : priceChange24h >= 0;
+  // Track the calculated price change for the selected timeframe
+  const [timeframePriceChange, setTimeframePriceChange] = useState<number | null>(null);
+  
+  // Dynamic theme colors based on selected timeframe price performance
+  // Use calculated timeframe change if available, otherwise fall back to props
+  let isPricePositive = true;
+  if (timeframePriceChange !== null) {
+    isPricePositive = timeframePriceChange >= 0;
+  } else if (selectedTimeframe === 'LIVE' && priceChange1h !== undefined) {
+    isPricePositive = priceChange1h >= 0;
+  } else if (priceChange24h !== undefined) {
+    isPricePositive = priceChange24h >= 0;
+  }
+  
   const themeColor = isPricePositive ? '#0052FF' : '#FF6B35';
   const themeBgClass = isPricePositive ? 'bg-[#0052FF]' : 'bg-[#FF6B35]';
   const themeColorClass = isPricePositive ? 'text-[#0052FF]' : 'text-[#FF6B35]';
   const themeBorderClass = isPricePositive ? 'border-[#0052FF]' : 'border-[#FF6B35]';
   
   // Fetch chart data from subgraph
-  const { data: chartData, loading: chartLoading, error: chartError } = useChartData({
+  const { data: chartData, loading: chartLoading, error: chartError, refetch: refetchChart } = useChartData({
     tokenAddress,
     timeframe: selectedTimeframe,
     enabled: true
   });
+  
+  // Calculate price change based on selected timeframe and chart data
+  useEffect(() => {
+    if (chartData && chartData.length > 0) {
+      const currentPrice = parseFloat(tokenPrice);
+      const firstDataPoint = chartData[0];
+      const priceChange = ((currentPrice - firstDataPoint.marketPrice) / firstDataPoint.marketPrice) * 100;
+      const priceChangeAmount = (currentPrice - firstDataPoint.marketPrice).toFixed(6);
+      
+      // Update local state for theme
+      setTimeframePriceChange(priceChange);
+      
+      // Determine the label based on timeframe
+      let label = 'last hour';
+      switch (selectedTimeframe) {
+        case 'LIVE': label = 'last hour'; break;
+        case '4H': label = 'last 4 hours'; break;
+        case '1D': label = 'today'; break;
+        case '1W': label = 'last week'; break;
+        case '1M': label = 'last month'; break;
+        case 'MAX': label = 'all time'; break;
+      }
+      
+      if (onTimeframeChange) {
+        onTimeframeChange(selectedTimeframe, { priceChange, priceChangeAmount, label });
+      }
+    }
+  }, [selectedTimeframe, chartData, tokenPrice, onTimeframeChange]);
+  
+  // Enhanced refresh function that also refreshes chart data
+  const refreshAfterTransaction = async (txHash?: string) => {
+    console.log('Transaction completed, refreshing all data including chart...');
+    // Call base refresh
+    await baseRefreshAfterTransaction(txHash);
+    // Also refresh chart data
+    setTimeout(() => {
+      console.log('Refreshing chart data...');
+      refetchChart();
+    }, 1000);
+    // Additional delayed refresh for chart
+    setTimeout(() => {
+      console.log('Second chart refresh...');
+      refetchChart();
+    }, 5000);
+  };
 
   const handlePriceHover = (dataPoint: PriceDataPoint | null) => {
     const price = dataPoint ? dataPoint.marketPrice : null;
@@ -158,9 +217,9 @@ export function TradingView({
     
     return {
       shares: formatTokenAmount(shares),
-      marketValue: formatForAnimatedNumber(marketValue),  // Format for AnimatedNumber with K/M/B
-      credit: formatForAnimatedNumber(credit),  // Format for AnimatedNumber with K/M/B
-      debt: formatForAnimatedNumber(debt)  // Format for AnimatedNumber with K/M/B
+      marketValue: marketValue.toString(),  // Pass raw number as string
+      credit: credit.toString(),  // Pass raw number as string
+      debt: debt.toString()  // Pass raw number as string
     };
   }, [multicallData, tokenPrice]);
   
@@ -184,7 +243,7 @@ export function TradingView({
     
     return {
       stickers: tokenPosition.contentCreated || '0',
-      marketValue: formatValue(tokenPosition.createdValue),
+      marketValue: tokenPosition.createdValue || '0',  // Pass raw value as string
       totalSteals: tokenPosition.createdCurations || '0',
       totalReturn: formatValue(tokenPosition.creatorRevenueQuote)
     };
@@ -234,9 +293,9 @@ export function TradingView({
     
     return {
       stickers: tokenPosition.contentOwned || '0',
-      marketValue: formatForAnimatedNumber(contentBalance),  // Format for AnimatedNumber with K/M/B
+      marketValue: contentBalance.toString(),  // Pass raw number as string
       ownership: formatNumber(ownership, 0, false),
-      claimable: formatForAnimatedNumber(claimable),  // Format for AnimatedNumber with K/M/B
+      claimable: claimable.toString(),  // Pass raw number as string
       totalSpent: formatCurrency(safeParseFloat(tokenPosition.curationSpend)),
       totalReturn: formatCurrency(totalReturn)
     };
@@ -268,9 +327,11 @@ export function TradingView({
           timeframe={selectedTimeframe}
           currentPrice={tokenPrice}
           onPriceHover={handlePriceHover}
-          onTimeframeChange={setSelectedTimeframe}
+          onTimeframeChange={(timeframe) => {
+            setSelectedTimeframe(timeframe);
+          }}
           height={320}
-          priceChange24h={priceChange1h !== undefined ? priceChange1h : priceChange24h}
+          priceChange24h={timeframePriceChange !== null ? timeframePriceChange : (priceChange1h !== undefined ? priceChange1h : priceChange24h)}
         />
       </div>
 

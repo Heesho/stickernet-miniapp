@@ -4,7 +4,8 @@
       "Bash(mv:*)",
       "Bash(grep:*)",
       "Bash(mkdir:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

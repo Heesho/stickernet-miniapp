@@ -74,8 +74,14 @@ export function AnimatedNumber({
       let formatted: string;
       if (Math.abs(currentValue) >= 1000000) {
         formatted = (currentValue / 1000000).toFixed(2) + 'M';
-      } else if (Math.abs(currentValue) >= 1000) {
+      } else if (Math.abs(currentValue) >= 10000) {
         formatted = (currentValue / 1000).toFixed(2) + 'K';
+      } else if (Math.abs(currentValue) >= 1000) {
+        // Add comma for thousands
+        const wholePart = Math.floor(currentValue);
+        const decimalPart = currentValue - wholePart;
+        const formattedWhole = wholePart.toLocaleString('en-US');
+        formatted = formattedWhole + decimalPart.toFixed(decimals).substring(1);
       } else if (Math.abs(currentValue) < 1 && currentValue !== 0) {
         formatted = currentValue.toFixed(Math.max(decimals, 6));
       } else {
@@ -103,20 +109,21 @@ export function AnimatedNumber({
     };
   }, [value, duration, decimals, animateOnMount]);
 
-  // Determine color animation based on value change
+  // Determine animation based on value change (no color change)
   const getAnimationClass = () => {
     if (!isAnimating || !isMountedRef.current) return '';
     
     const currentVal = typeof value === 'string' ? parseFloat(value) : value;
     const isIncrease = currentVal > previousValueRef.current;
     
+    // Only return animation classes, no color classes
     return isIncrease 
-      ? 'animate-price-increase text-[#0052FF]' 
-      : 'animate-price-decrease text-[#FF6B35]';
+      ? 'animate-price-increase' 
+      : 'animate-price-decrease';
   };
 
   return (
-    <span className={`transition-colors duration-300 ${className} ${getAnimationClass()}`}>
+    <span className={`${className} ${getAnimationClass()}`}>
       {prefix}{displayValue}{suffix}
     </span>
   );

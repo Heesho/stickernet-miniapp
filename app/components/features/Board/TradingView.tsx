@@ -13,6 +13,7 @@ import { useAccount } from "wagmi";
 import { useRealTimeData } from "@/app/hooks/useRealTimeData";
 import { usePriceAnimation, useNumberTicker } from "@/app/hooks/usePriceAnimation";
 import { useTokenPosition } from "@/app/hooks/useTokenPosition";
+import { formatNumber, formatCurrency, formatTokenAmount, formatPercentage, formatCompact, formatForAnimatedNumber } from "@/lib/utils/formatters";
 
 interface TradingViewProps {
   tokenAddress: string;
@@ -156,10 +157,10 @@ export function TradingView({
       : 0;
     
     return {
-      shares: shares.toLocaleString(undefined, { maximumFractionDigits: 2 }),
-      marketValue: marketValue.toFixed(2),
-      credit: credit.toFixed(2),
-      debt: debt.toFixed(2)
+      shares: formatTokenAmount(shares),
+      marketValue: formatForAnimatedNumber(marketValue),  // Format for AnimatedNumber with K/M/B
+      credit: formatForAnimatedNumber(credit),  // Format for AnimatedNumber with K/M/B
+      debt: formatForAnimatedNumber(debt)  // Format for AnimatedNumber with K/M/B
     };
   }, [multicallData, tokenPrice]);
   
@@ -233,11 +234,11 @@ export function TradingView({
     
     return {
       stickers: tokenPosition.contentOwned || '0',
-      marketValue: contentBalance.toFixed(2),
-      ownership: ownership.toFixed(0),
-      claimable: claimable.toFixed(2),
-      totalSpent: safeParseFloat(tokenPosition.curationSpend).toFixed(2),
-      totalReturn: totalReturn.toFixed(2)
+      marketValue: formatForAnimatedNumber(contentBalance),  // Format for AnimatedNumber with K/M/B
+      ownership: formatNumber(ownership, 0, false),
+      claimable: formatForAnimatedNumber(claimable),  // Format for AnimatedNumber with K/M/B
+      totalSpent: formatCurrency(safeParseFloat(tokenPosition.curationSpend)),
+      totalReturn: formatCurrency(totalReturn)
     };
   }, [tokenPosition, subgraphTokenData, tokenPrice, multicallData]);
 
@@ -357,7 +358,7 @@ export function TradingView({
             
             <div>
               <div className="text-gray-500 text-sm mb-1">Total return</div>
-              <div className="text-white text-lg">${creationsData.totalReturn}</div>
+              <div className="text-white text-lg">{creationsData.totalReturn}</div>
             </div>
           </div>
         </div>
@@ -405,12 +406,12 @@ export function TradingView({
             
             <div>
               <div className="text-gray-500 text-sm mb-1">Total spent</div>
-              <div className="text-white text-lg">${collectionData.totalSpent}</div>
+              <div className="text-white text-lg">{collectionData.totalSpent}</div>
             </div>
             
             <div>
               <div className="text-gray-500 text-sm mb-1">Total return</div>
-              <div className="text-white text-lg">${collectionData.totalReturn}</div>
+              <div className="text-white text-lg">{collectionData.totalReturn}</div>
             </div>
           </div>
         </div>
@@ -423,28 +424,14 @@ export function TradingView({
             <div>
               <div className="text-gray-500 text-sm mb-1">Market cap</div>
               <div className="text-white text-lg">
-                {(() => {
-                  if (!tokenData?.marketCap) return '$0.00';
-                  const value = parseFloat(formatUnits(tokenData.marketCap, 6));
-                  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
-                  if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
-                  if (value >= 1) return `$${value.toFixed(2)}`;
-                  return `$${value.toFixed(4)}`;
-                })()}
+                {tokenData?.marketCap ? formatCurrency(formatUnits(tokenData.marketCap, 6), 2, true) : formatCurrency(0)}
               </div>
             </div>
             
             <div>
               <div className="text-gray-500 text-sm mb-1">Liquidity</div>
               <div className="text-white text-lg">
-                {(() => {
-                  if (!tokenData?.liquidity) return '$0.00';
-                  const value = parseFloat(formatUnits(tokenData.liquidity, 6));
-                  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
-                  if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
-                  if (value >= 1) return `$${value.toFixed(2)}`;
-                  return `$${value.toFixed(4)}`;
-                })()}
+                {tokenData?.liquidity ? formatCurrency(formatUnits(tokenData.liquidity, 6), 2, true) : formatCurrency(0)}
               </div>
             </div>
             
@@ -452,7 +439,7 @@ export function TradingView({
               <div className="text-gray-500 text-sm mb-1">Supply</div>
               <div className="text-white text-lg">
                 {tokenData?.maxSupply 
-                  ? `${(parseFloat(formatUnits(tokenData.maxSupply, 18)) / 1e6).toFixed(0)}M`
+                  ? formatCompact(formatUnits(tokenData.maxSupply, 18))
                   : '0'}
               </div>
             </div>
@@ -460,7 +447,7 @@ export function TradingView({
             <div>
               <div className="text-gray-500 text-sm mb-1">Holders</div>
               <div className="text-white text-lg">
-                {subgraphData?.holders ? parseInt(subgraphData.holders).toLocaleString() : '0'}
+                {subgraphData?.holders ? formatNumber(subgraphData.holders, 0, false) : '0'}
               </div>
             </div>
             
@@ -468,11 +455,10 @@ export function TradingView({
               <div className="text-gray-500 text-sm mb-1">Floor price</div>
               <div className="text-white text-lg">
                 {(() => {
-                  if (!tokenData?.floorPrice) return '$0.00';
+                  if (!tokenData?.floorPrice) return formatCurrency(0);
                   const value = parseFloat(formatUnits(tokenData.floorPrice, 18));
-                  if (value >= 1) return `$${value.toFixed(2)}`;
-                  if (value >= 0.01) return `$${value.toFixed(3)}`;
-                  return `$${value.toFixed(6)}`;
+                  const decimals = value >= 1 ? 2 : value >= 0.01 ? 3 : 6;
+                  return formatCurrency(value, decimals);
                 })()}
               </div>
             </div>
@@ -481,11 +467,10 @@ export function TradingView({
               <div className="text-gray-500 text-sm mb-1">Market price</div>
               <div className="text-white text-lg">
                 {(() => {
-                  if (!tokenData?.marketPrice) return '$0.00';
+                  if (!tokenData?.marketPrice) return formatCurrency(0);
                   const value = parseFloat(formatUnits(tokenData.marketPrice, 18));
-                  if (value >= 1) return `$${value.toFixed(2)}`;
-                  if (value >= 0.01) return `$${value.toFixed(3)}`;
-                  return `$${value.toFixed(6)}`;
+                  const decimals = value >= 1 ? 2 : value >= 0.01 ? 3 : 6;
+                  return formatCurrency(value, decimals);
                 })()}
               </div>
             </div>
@@ -493,7 +478,7 @@ export function TradingView({
             <div>
               <div className="text-gray-500 text-sm mb-1">Stickers</div>
               <div className="text-white text-lg">
-                {subgraphData?.contents ? parseInt(subgraphData.contents).toLocaleString() : '0'}
+                {subgraphData?.contents ? formatNumber(subgraphData.contents, 0, false) : '0'}
               </div>
             </div>
             
@@ -501,8 +486,8 @@ export function TradingView({
               <div className="text-gray-500 text-sm mb-1">Collection value</div>
               <div className="text-white text-lg">
                 {subgraphData?.contentBalance 
-                  ? `$${parseFloat(subgraphData.contentBalance).toFixed(2)}`
-                  : '$0.00'}
+                  ? formatCurrency(subgraphData.contentBalance)
+                  : formatCurrency(0)}
               </div>
             </div>
             
@@ -510,7 +495,7 @@ export function TradingView({
               <div className="text-gray-500 text-sm mb-1">Collection APR</div>
               <div className="text-white text-lg">
                 {tokenData?.contentApr 
-                  ? `${(parseFloat(formatUnits(tokenData.contentApr, 18)) * 100).toFixed(2)}%`
+                  ? formatPercentage(parseFloat(formatUnits(tokenData.contentApr, 18)) * 100)
                   : '0%'}
               </div>
             </div>
@@ -526,8 +511,8 @@ export function TradingView({
               <div className="text-gray-500 text-sm mb-1">Creators</div>
               <div className="text-white text-lg">
                 {subgraphData?.creatorRewardsQuote 
-                  ? `$${parseFloat(subgraphData.creatorRewardsQuote).toFixed(2)}`
-                  : '$0.00'}
+                  ? formatCurrency(subgraphData.creatorRewardsQuote)
+                  : formatCurrency(0)}
               </div>
             </div>
             
@@ -542,7 +527,7 @@ export function TradingView({
                     ? parseFloat(formatUnits(tokenData.marketPrice, 18))
                     : 0;
                   const total = curatorRewards + contentRevenueQuote + (contentRevenueToken * marketPrice);
-                  return `$${total.toFixed(2)}`;
+                  return formatCurrency(total);
                 })()}
               </div>
             </div>
@@ -551,8 +536,8 @@ export function TradingView({
               <div className="text-gray-500 text-sm mb-1">Holders</div>
               <div className="text-white text-lg">
                 {subgraphData?.holderRewardsQuote 
-                  ? `$${parseFloat(subgraphData.holderRewardsQuote).toFixed(2)}`
-                  : '$0.00'}
+                  ? formatCurrency(subgraphData.holderRewardsQuote)
+                  : formatCurrency(0)}
               </div>
             </div>
           </div>
@@ -569,7 +554,7 @@ export function TradingView({
                 Today's swap volume
               </div>
               <div className="text-white text-2xl font-bold">
-                ${todayVolume}
+                {formatCurrency(todayVolume)}
               </div>
             </div>
             

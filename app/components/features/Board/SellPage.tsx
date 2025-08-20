@@ -9,6 +9,7 @@ import { formatUnits } from "viem";
 import { useTokenData } from "@/app/hooks/useMulticall";
 import { useDebouncedSellQuote } from "@/app/hooks/useSellQuote";
 import { useSendCallsSellToken } from "@/app/hooks/useSendCallsSellToken";
+import { formatNumber, formatCurrency, formatTokenAmount } from "@/lib/utils/formatters";
 
 interface SellPageProps {
   tokenAddress: string;
@@ -29,7 +30,8 @@ export function SellPage({
   themeColor = '#0052FF',
   onTransactionSuccess
 }: SellPageProps) {
-  const [inputValue, setInputValue] = useState("0.00");
+  const [inputValue, setInputValue] = useState("");
+  const [displayValue, setDisplayValue] = useState("0");
   const { address } = useAccount();
 
   // Get user's token balance from token data
@@ -60,23 +62,38 @@ export function SellPage({
   });
 
   // Format the estimated USDC - use quote if available, otherwise show 0
+  // Don't use compact format on transaction pages
   const estimatedUSDC = parseFloat(inputValue) > 0 && usdcAmtOut 
-    ? parseFloat(usdcAmtOut).toFixed(2) 
-    : "0.00";
+    ? formatCurrency(usdcAmtOut, 2, false)
+    : formatCurrency(0, 2, false);
 
   const handleNumberPad = (value: string) => {
+    let newValue = inputValue;
+    
     if (value === "<") {
-      const newValue = inputValue.slice(0, -1) || "0";
-      setInputValue(newValue === "" ? "0.00" : newValue);
+      newValue = inputValue.slice(0, -1) || "";
     } else if (value === ".") {
       if (!inputValue.includes(".")) {
-        setInputValue(inputValue + ".");
+        newValue = inputValue + ".";
       }
     } else {
-      if (inputValue === "0.00" || inputValue === "0") {
-        setInputValue(value);
+      if (inputValue === "0" || inputValue === "") {
+        newValue = value;
       } else {
-        setInputValue(inputValue + value);
+        newValue = inputValue + value;
+      }
+    }
+    
+    setInputValue(newValue);
+    // Format display value
+    if (newValue === "" || newValue === ".") {
+      setDisplayValue("0");
+    } else {
+      const num = parseFloat(newValue);
+      if (!isNaN(num)) {
+        setDisplayValue(formatNumber(num, 2, true, false));  // No compact format on transaction pages
+      } else {
+        setDisplayValue(newValue);
       }
     }
   };
@@ -182,10 +199,10 @@ export function SellPage({
                 Pay
               </label>
               <div className="text-white text-3xl font-medium mb-1 tracking-wide">
-                {inputValue}
+                {displayValue}
               </div>
               <div className="text-gray-600 text-xs">
-                Available: {isLoadingBalance ? "Loading..." : `${parseFloat(userTokenBalance).toFixed(2)} ${tokenSymbol.toUpperCase()}`}
+                Available: {isLoadingBalance ? "Loading..." : formatTokenAmount(userTokenBalance, tokenSymbol.toUpperCase(), undefined, false)}
               </div>
             </div>
 
@@ -197,7 +214,7 @@ export function SellPage({
                 {isLoadingQuote && parseFloat(inputValue) > 0 ? (
                   <span className="text-gray-500">Calculating...</span>
                 ) : (
-                  `$${estimatedUSDC}`
+                  estimatedUSDC
                 )}
               </div>
             </div>
@@ -258,7 +275,7 @@ export function SellPage({
             {/* Balance warning */}
             {parseFloat(inputValue) > parseFloat(userTokenBalance) && parseFloat(inputValue) > 0 && (
               <div className="text-yellow-500 text-xs text-center mb-2">
-                Insufficient balance. You have {parseFloat(userTokenBalance).toFixed(2)} {tokenSymbol.toUpperCase()}
+                Insufficient balance. You have {formatTokenAmount(userTokenBalance, tokenSymbol.toUpperCase(), undefined, false)}
               </div>
             )}
 

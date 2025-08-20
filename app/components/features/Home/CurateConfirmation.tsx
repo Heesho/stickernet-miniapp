@@ -11,6 +11,7 @@ import { USDC_CONTRACT, USDC_DECIMALS } from "@/lib/constants/contracts";
 import { isValidTokenId } from "@/types";
 import { fetchTokenBoardData } from "@/lib/api/subgraph";
 import type { Curate } from "@/lib/constants";
+import { formatCurrency } from "@/lib/utils/formatters";
 
 interface CurateConfirmationProps {
   curate: Curate;
@@ -154,7 +155,7 @@ export function CurateConfirmation({ curate, nextPrice, onClose, onSuccess }: Cu
               {nextPrice}
             </div>
             <div className="text-gray-600 text-xs mt-2">
-              ${parseFloat(formattedBalance).toFixed(2)} available
+              {formatCurrency(formattedBalance, 2, false)} available
             </div>
             {!hasEnoughBalance && (
               <div className="text-red-400 text-xs mt-2">

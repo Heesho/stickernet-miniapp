@@ -9,6 +9,7 @@ import { AnimatedNumber } from "../../ui/AnimatedNumber";
 import { CreateSticker } from "./CreateSticker";
 import { TradingView } from "./TradingView";
 import { formatUnits } from "viem";
+import { formatNumber, formatCurrency, formatTokenAmount } from '@/lib/utils/formatters';
 
 // Client-only OnchainKit Identity components to prevent hydration issues
 const Avatar = dynamic(
@@ -191,7 +192,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         },
         curates: curates,
         stats: {
-          totalVolume: parseFloat(todayVolume).toLocaleString(),
+          totalVolume: todayVolume,  // Pass raw value, TradingView will format it
           priceChange24h: priceChange24h,
           priceChangeAmount: priceChangeAmount,
           priceChange1h: priceChange1h
@@ -312,7 +313,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
             },
             curates: curates,
             stats: {
-              totalVolume: parseFloat(todayVolume).toLocaleString(),
+              totalVolume: todayVolume,  // Pass raw value, TradingView will format it
               priceChange24h: priceChange24h,
               priceChangeAmount: priceChangeAmount,
               priceChange1h: priceChange1h

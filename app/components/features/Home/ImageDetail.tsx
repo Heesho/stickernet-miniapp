@@ -10,6 +10,7 @@ import { CurateConfirmation } from "./CurateConfirmation";
 import { isValidTokenId } from "@/types";
 import { fetchTokenBoardData } from "@/lib/api/subgraph";
 import type { ImageDetailProps } from "./Home.types";
+import { formatCurrency } from "@/lib/utils/formatters";
 
 // Dynamic imports for OnchainKit components to prevent SSR issues
 const Avatar = dynamic(() => import("@coinbase/onchainkit/identity").then(mod => ({ default: mod.Avatar })), { 
@@ -190,7 +191,7 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
             </div>
             {/* Price on the right side - bright and prominent */}
             <div className="text-white text-2xl font-bold">
-              ${nextPrice && parseFloat(nextPrice) > 0 ? parseFloat(nextPrice).toFixed(2) : parseFloat(curate.price).toFixed(2)}
+              {nextPrice && parseFloat(nextPrice) > 0 ? formatCurrency(nextPrice, 2, false) : formatCurrency(curate.price, 2, false)}
             </div>
           </div>
 
@@ -251,7 +252,7 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
               <div>
                 <div className="text-white text-sm opacity-70">Owner's Weekly Earnings</div>
                 <div className="text-white text-2xl font-bold">
-                  ${weeklyReward && parseFloat(weeklyReward) > 0 ? parseFloat(weeklyReward).toFixed(2) : '1.81'}
+                  {weeklyReward && parseFloat(weeklyReward) > 0 ? formatCurrency(weeklyReward, 2, false) : formatCurrency(1.81, 2, false)}
                 </div>
               </div>
               

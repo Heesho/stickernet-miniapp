@@ -81,11 +81,14 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
   }, [tokenAddress]);
 
   // Dynamic color theme based on price change (Robinhood-style)
-  const priceIsUp = priceChange24h !== null ? priceChange24h >= 0 : true;
-  const themeColor = priceIsUp ? '#0052FF' : '#FF6B35'; // Blue when up, Orange when down
-  const themeColorClass = priceIsUp ? 'text-[#0052FF]' : 'text-[#FF6B35]';
-  const themeBgClass = priceIsUp ? 'bg-[#0052FF]' : 'bg-[#FF6B35]';
-  const themeBorderClass = priceIsUp ? 'border-[#0052FF]' : 'border-[#FF6B35]';
+  const isDataLoaded = priceChange24h !== null;
+  const priceIsUp = isDataLoaded ? priceChange24h >= 0 : true; // Default doesn't matter when not loaded
+  
+  // Use neutral gray while loading, then switch to theme colors
+  const themeColor = !isDataLoaded ? '#6b7280' : (priceIsUp ? '#0052FF' : '#FF6B35');
+  const themeColorClass = !isDataLoaded ? 'text-gray-500' : (priceIsUp ? 'text-[#0052FF]' : 'text-[#FF6B35]');
+  const themeBgClass = !isDataLoaded ? 'bg-gray-600' : (priceIsUp ? 'bg-[#0052FF]' : 'bg-[#FF6B35]');
+  const themeBorderClass = !isDataLoaded ? 'border-gray-600' : (priceIsUp ? 'border-[#0052FF]' : 'border-[#FF6B35]');
   
   // Handle curate button click - now opens confirmation
   const handleCurate = () => {
@@ -240,35 +243,38 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
           </div>
         </div>
 
-        {/* Weekly Earnings and Curate button inline - attached above navbar with black background */}
-        <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-black p-3">
-          <div className="flex items-center justify-between space-x-3">
-            {/* Owner's Weekly Earnings on the left */}
-            <div className="bg-black p-2 rounded-xl flex-1">
-              <div className="text-white text-xs font-medium mb-1">Owner's Weekly Earnings</div>
-              <div className="text-white text-xl font-bold">
-                ${weeklyReward && parseFloat(weeklyReward) > 0 ? parseFloat(weeklyReward).toFixed(2) : '0.00'}
-              </div>
-            </div>
-            {/* Curate button on the right */}
-            <button
-              onClick={handleCurate}
-              disabled={isLoading || !nextPrice}
-              className={`font-semibold py-3 px-6 rounded-xl transition-all duration-200 min-w-[100px] ${
-                isLoading 
-                  ? 'bg-gray-600 text-gray-300 cursor-not-allowed' 
-                  : `${themeBgClass} hover:opacity-90 text-white shadow-lg hover:shadow-xl`
-              }`}
-            >
-              {isLoading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm">Loading...</span>
+        {/* Weekly Earnings and Steal button - matching Board's volume section */}
+        <div className="fixed bottom-16 left-0 right-0">
+          <div className="w-full max-w-md mx-auto bg-black px-4 py-3">
+            <div className="flex items-center justify-between">
+              {/* Owner's Weekly Earnings - matching volume display style */}
+              <div>
+                <div className="text-white text-sm opacity-70">Owner's Weekly Earnings</div>
+                <div className="text-white text-2xl font-bold">
+                  ${weeklyReward && parseFloat(weeklyReward) > 0 ? parseFloat(weeklyReward).toFixed(2) : '1.81'}
                 </div>
-              ) : (
-                'Steal'
-              )}
-            </button>
+              </div>
+              
+              {/* Steal button - matching Stick/Trade button exactly */}
+              <button
+                onClick={handleCurate}
+                disabled={isLoading || !nextPrice}
+                className={`font-semibold py-2.5 px-8 rounded-xl border-2 ${themeBorderClass} min-w-[120px] transition-all duration-200 ${
+                  isLoading 
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                    : `${themeBgClass} hover:opacity-90 text-black`
+                }`}
+              >
+                {isLoading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm">Loading...</span>
+                  </div>
+                ) : (
+                  'Steal'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

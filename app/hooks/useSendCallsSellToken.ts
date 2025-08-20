@@ -14,6 +14,34 @@ import {
   ROUTER_ABI,
 } from '@/lib/constants';
 
+// Standard ERC20 ABI for approve function
+const TOKEN_ABI = [
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "approve",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+] as const;
+
 interface SellTokenParams {
   tokenAddress: string;
   tokenAmount: string;
@@ -21,19 +49,21 @@ interface SellTokenParams {
 }
 
 interface BatchTransactionStatus {
+  approveStatus: 'idle' | 'pending' | 'success' | 'error';
   sellStatus: 'idle' | 'pending' | 'success' | 'error';
   error?: string;
   txHash?: string;
 }
 
 /**
- * Hook for executing sell transaction
+ * Hook for executing bundled approve + sell transaction
  * Uses the same pattern as buy - direct wallet_sendCalls without polling
  */
 export function useSendCallsSellToken() {
   const { address: userAddress } = useAccount();
   const { data: walletClient } = useWalletClient();
   const [status, setStatus] = useState<BatchTransactionStatus>({
+    approveStatus: 'idle',
     sellStatus: 'idle',
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -59,8 +89,8 @@ export function useSendCallsSellToken() {
   }, [walletClient, userAddress]);
 
   /**
-   * Execute sell transaction using wallet_sendCalls
-   * This follows the EXACT pattern from buy/curate
+   * Execute batch sell transaction using wallet_sendCalls
+   * This follows the EXACT pattern from buy - approve token then sell
    */
   const executeSell = useCallback(async (params: SellTokenParams) => {
     const { tokenAddress, tokenAmount, minUsdcAmountOut } = params;
@@ -84,6 +114,7 @@ export function useSendCallsSellToken() {
     try {
       setIsLoading(true);
       setStatus({
+        approveStatus: 'pending',
         sellStatus: 'pending',
       });
 
@@ -93,9 +124,10 @@ export function useSendCallsSellToken() {
       // Set expiry to 20 minutes from now
       const expireTimestamp = BigInt(Math.floor(Date.now() / 1000) + 1200);
 
-      console.log('Starting sell transaction:', {
+      console.log('Starting batch transaction:', {
         tokenAddress,
         tokenAmount,
+        amountTokenIn: amountTokenIn.toString(),
         minUsdcAmountOut: minUsdcAmountOut.toString(),
         userAddress,
       });
@@ -104,8 +136,14 @@ export function useSendCallsSellToken() {
       const batchSupported = await checkBatchSupport();
       console.log('Batch transactions supported:', batchSupported);
 
-      // For sell, we only need one call - the router sell function
-      // The router will handle the token transfer internally
+      // Encode the token approve call
+      const approveCallData = encodeFunctionData({
+        abi: TOKEN_ABI,
+        functionName: 'approve',
+        args: [ROUTER_ADDRESS as Address, amountTokenIn],
+      });
+
+      // Encode the router sell call
       const sellCallData = encodeFunctionData({
         abi: ROUTER_ABI,
         functionName: 'sell',
@@ -118,8 +156,13 @@ export function useSendCallsSellToken() {
         ],
       });
 
-      // Prepare the call
+      // Prepare batch calls - approve token first, then sell
       const calls = [
+        {
+          to: tokenAddress as Address,
+          value: '0x0',
+          data: approveCallData,
+        },
         {
           to: ROUTER_ADDRESS as Address,
           value: '0x0',
@@ -127,9 +170,9 @@ export function useSendCallsSellToken() {
         }
       ];
 
-      console.log('Executing sell call:', calls);
+      console.log('Executing batch calls:', calls);
 
-      // Send transaction using wallet_sendCalls - EXACTLY like buy/curate
+      // Send batch transaction using wallet_sendCalls - EXACTLY like buy
       const result = await walletClient.request({
         method: 'wallet_sendCalls' as any,
         params: [{
@@ -141,18 +184,19 @@ export function useSendCallsSellToken() {
         }]
       });
 
-      console.log('Sell transaction sent:', result);
+      console.log('Batch transaction sent:', result);
 
-      // Update status to success IMMEDIATELY - just like buy/curate
+      // Update status to success IMMEDIATELY - just like buy
       setStatus({
+        approveStatus: 'success',
         sellStatus: 'success',
         txHash: (result as any)?.transactionHash || result,
       });
 
     } catch (error: any) {
-      console.error('Sell transaction failed:', error);
+      console.error('Batch transaction failed:', error);
       
-      let errorMessage = 'Sell transaction failed';
+      let errorMessage = 'Batch transaction failed';
       
       if (error.code === 4001) {
         errorMessage = 'User rejected the transaction';
@@ -165,6 +209,7 @@ export function useSendCallsSellToken() {
       }
 
       setStatus({
+        approveStatus: 'error',
         sellStatus: 'error',
         error: errorMessage,
       });
@@ -178,6 +223,7 @@ export function useSendCallsSellToken() {
    */
   const reset = useCallback(() => {
     setStatus({
+      approveStatus: 'idle',
       sellStatus: 'idle',
     });
     setIsLoading(false);
@@ -186,12 +232,13 @@ export function useSendCallsSellToken() {
   // Return the same interface structure for compatibility
   return {
     executeSell,
-    status: status.sellStatus === 'success' ? 'success' : 
-            status.sellStatus === 'pending' ? 'confirming' :
-            status.sellStatus === 'error' ? 'error' : 'idle',
+    status: status.approveStatus === 'success' && status.sellStatus === 'success' ? 'success' : 
+            status.approveStatus === 'pending' || status.sellStatus === 'pending' ? 'confirming' :
+            status.approveStatus === 'error' || status.sellStatus === 'error' ? 'error' : 'idle',
     isLoading,
-    isSuccess: status.sellStatus === 'success',
+    isSuccess: status.approveStatus === 'success' && status.sellStatus === 'success',
     error: status.error ? new Error(status.error) : undefined,
+    callsId: status.txHash,
     reset,
   };
 }

@@ -1,12 +1,12 @@
 import type { Address, Hash, Hex } from 'viem';
 
-// Branded types for better type safety
+// Branded types for enhanced type safety and preventing mix-ups
 export type TokenId = bigint & { readonly brand: unique symbol };
 export type ChainId = number & { readonly brand: unique symbol };
-export type Wei = bigint & { readonly brand: unique symbol };
-export type Gwei = bigint & { readonly brand: unique symbol };
+export type Wei = bigint & { readonly brand: unique symbol }; // Base unit (18 decimals)
+export type Gwei = bigint & { readonly brand: unique symbol }; // Gas unit (9 decimals)
 
-// Contract-specific types based on existing multicall ABI
+// Content NFT data returned from multicall contract
 export interface ContentData {
   readonly tokenId: TokenId;
   readonly price: Wei;
@@ -18,6 +18,7 @@ export interface ContentData {
   readonly isApproved: boolean;
 }
 
+// Complete token and account data returned from multicall contract
 export interface TokenData {
   readonly index: bigint;
   readonly token: Address;
@@ -48,7 +49,7 @@ export interface TokenData {
   readonly accountIsModerator: boolean;
 }
 
-// Removed Phase enum as it's no longer in the new contract structure
+// Phase system was removed from the contract - trading is always available
 
 // Transaction types
 export interface TransactionRequest {

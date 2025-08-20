@@ -37,16 +37,54 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
   }, [height]);
-
+  
   // Calculate chart path and points
-  const { marketPath, floorPath, points, scales } = useMemo(() => {
-    if (!priceData.length || dimensions.width === 0) {
-      return { marketPath: '', floorPath: '', points: [], scales: null };
+  const { marketPath, floorPath, points, scales, isFlat } = useMemo(() => {
+    if (dimensions.width === 0) {
+      // Create default flat lines even without dimensions
+      const defaultPath = 'M 0 150 L 400 150';
+      return { 
+        marketPath: defaultPath, 
+        floorPath: defaultPath, 
+        points: [], 
+        scales: null, 
+        isFlat: true 
+      };
     }
 
     const padding = { top: 20, right: 0, bottom: 20, left: 0 };
     const chartWidth = dimensions.width - padding.left - padding.right;
     const chartHeight = dimensions.height - padding.top - padding.bottom;
+    
+    // Always use current price if available, fallback to data or default
+    const fallbackPrice = parseFloat(currentPrice || '0.0001');
+    
+    // Check if all data points have the same price (flat line from no trading activity)
+    const uniquePrices = new Set(priceData.map(d => d.marketPrice));
+    const hasNoVolume = priceData.every(d => d.volume === 0);
+    const isFlat = priceData.length > 0 && (uniquePrices.size === 1 || hasNoVolume);
+    
+    // For LIVE timeframe or no data, always show flat lines
+    // This ensures chart is always visible
+    if (!priceData.length || isFlat || (timeframe === 'LIVE' && priceData.length < 2)) {
+      const price = currentPrice ? parseFloat(currentPrice) : fallbackPrice;
+      const floorPrice = price * 0.95;
+      
+      // Create two points for a horizontal line
+      const y = padding.top + chartHeight / 2;
+      const floorY = padding.top + chartHeight * 0.6;
+      
+      const flatMarketPath = `M ${padding.left} ${y} L ${dimensions.width - padding.right} ${y}`;
+      const flatFloorPath = `M ${padding.left} ${floorY} L ${dimensions.width - padding.right} ${floorY}`;
+      
+      return {
+        marketPath: flatMarketPath,
+        floorPath: flatFloorPath,
+        points: [],
+        scales: null,
+        isFlat: true
+      };
+    }
 
     // Don't separate data - treat all as one continuous line
     // Find min and max values for scaling
@@ -112,12 +150,16 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
       floorPath,
       points: chartPoints,
       scales: { xScale, yScale, minPrice: scaledMin, maxPrice: scaledMax, minTime, maxTime },
+      isFlat: false
     };
-  }, [priceData, dimensions]);
+  }, [priceData, dimensions, currentPrice, timeframe]);
 
   // Handle mouse/touch interactions
   const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement> | React.TouchEvent<SVGSVGElement>) => {
-    if (!svgRef.current || !points.length) return;
+    // Don't handle any mouse events when flat
+    if (!svgRef.current || !points.length || isFlat) {
+      return;
+    }
 
     const rect = svgRef.current.getBoundingClientRect();
     const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
@@ -135,13 +177,22 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
       setHoveredPoint({ x: closestPoint.x, y: closestPoint.marketY, data: closestPoint.data });
       onPriceHover?.(closestPoint.data);
     }
-  }, [points, onPriceHover]);
+  }, [points, onPriceHover, isFlat]);
 
   const handleMouseLeave = useCallback(() => {
     setMousePosition(null);
     setHoveredPoint(null);
     onPriceHover?.(null);
   }, [onPriceHover]);
+  
+  // Clear hover state immediately when chart becomes flat or data changes
+  useEffect(() => {
+    if (isFlat || !points.length) {
+      setMousePosition(null);
+      setHoveredPoint(null);
+      onPriceHover?.(null);
+    }
+  }, [isFlat, points.length, onPriceHover]);
 
   // Format display values
   const formatPrice = (price: number) => {
@@ -174,27 +225,31 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
   return (
     <div className="relative w-full">
       {/* Chart Container */}
-      <div className="relative" style={{ height: `${height}px` }}>
+      <div className="relative" style={{ height: `${height}px`, minHeight: '200px' }}>
         <svg
           ref={svgRef}
-          width={dimensions.width}
-          height={dimensions.height}
+          width={dimensions.width || 400}
+          height={dimensions.height || height}
           className="w-full"
-          onMouseMove={handleMouseMove}
-          onTouchMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onTouchEnd={handleMouseLeave}
+          style={{ 
+            display: 'block',
+            cursor: isFlat || points.length === 0 ? 'default' : 'crosshair'
+          }}
+          onMouseMove={!isFlat && points.length > 0 ? handleMouseMove : undefined}
+          onTouchMove={!isFlat && points.length > 0 ? handleMouseMove : undefined}
+          onMouseLeave={!isFlat && points.length > 0 ? handleMouseLeave : undefined}
+          onTouchEnd={!isFlat && points.length > 0 ? handleMouseLeave : undefined}
         >
           {/* Gradient definition */}
           <defs>
             <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor={primaryColor} stopOpacity="0.3" />
+              <stop offset="0%" stopColor={primaryColor} stopOpacity="0.15" />
               <stop offset="100%" stopColor={primaryColor} stopOpacity="0" />
             </linearGradient>
           </defs>
 
-          {/* Area fill */}
-          {areaPath && (
+          {/* Area fill - only show if not flat */}
+          {areaPath && !isFlat && (
             <path
               d={areaPath}
               fill={`url(#${gradientId})`}
@@ -202,31 +257,34 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
             />
           )}
 
-          {/* Floor price line (dashed) */}
-          {floorPath && (
+          {/* Floor price line (solid colored) - always show if path exists */}
+          {floorPath ? (
             <path
               d={floorPath}
               fill="none"
-              stroke="rgba(128, 128, 128, 0.3)"
-              strokeWidth="1"
-              strokeDasharray="4 4"
+              stroke={isPositive ? "rgba(0, 82, 255, 0.4)" : "rgba(255, 107, 53, 0.4)"}
+              strokeWidth="1.5"
               className="pointer-events-none"
+              opacity={isFlat ? 0.5 : 1}
+              style={{ display: 'block' }}
             />
-          )}
+          ) : null}
 
-          {/* Market price line */}
-          {marketPath && (
+          {/* Market price line - always show if path exists */}
+          {marketPath ? (
             <path
               d={marketPath}
               fill="none"
               stroke={primaryColor}
               strokeWidth="2"
               className="pointer-events-none"
+              opacity={isFlat ? 0.7 : 1}
+              style={{ display: 'block' }}
             />
-          )}
+          ) : null}
 
-          {/* Hover elements */}
-          {mousePosition && hoveredPoint && (
+          {/* Hover elements - only show when not flat and have real data points */}
+          {mousePosition && hoveredPoint && !isFlat && points.length > 0 && (
             <>
               {/* Vertical line */}
               <line
@@ -239,44 +297,33 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
                 className="pointer-events-none"
               />
 
-              {/* Hover circle */}
-              <circle
-                cx={hoveredPoint.x}
-                cy={hoveredPoint.y}
-                r="4"
-                fill={primaryColor}
-                stroke="white"
-                strokeWidth="2"
-                className="pointer-events-none"
-              />
+              {/* No hover circle - removed per user request */}
             </>
           )}
         </svg>
 
-        {/* Hover tooltip */}
-        {hoveredPoint && (
+        {/* Hover tooltip - Time only - hide when flat or no points */}
+        {hoveredPoint && !isFlat && points.length > 0 && (
           <div 
-            className="absolute pointer-events-none z-10 bg-black/90 rounded-lg px-3 py-2 text-sm"
+            className="absolute pointer-events-none z-10 bg-black/90 rounded-lg px-3 py-1.5 text-sm"
             style={{ 
-              left: `${Math.min(hoveredPoint.x, dimensions.width - 120)}px`, 
-              top: `${Math.max(hoveredPoint.y - 50, 10)}px` 
+              left: `${Math.min(hoveredPoint.x, dimensions.width - 100)}px`, 
+              top: `${Math.max(hoveredPoint.y - 40, 10)}px` 
             }}
           >
-            <div className="text-white font-medium">
-              ${formatPrice(hoveredPoint.data.marketPrice)}
-            </div>
-            <div className="text-gray-400 text-xs mt-0.5">
+            <div className="text-white text-xs">
               {formatTimestamp(hoveredPoint.data.timestamp)}
             </div>
           </div>
         )}
 
-        {/* Loading state */}
-        {priceData.length === 0 && (
+        {/* Loading state - only show when dimensions aren't set yet */}
+        {dimensions.width === 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-gray-500 text-sm">Loading chart data...</div>
+            <div className="text-gray-500 text-sm">Loading chart...</div>
           </div>
         )}
+        
       </div>
 
       {/* Timeframe Selector - Below Chart */}
@@ -287,8 +334,8 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
             onClick={() => onTimeframeChange?.(tf)}
             className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
               timeframe === tf
-                ? `${isPositive ? 'bg-[#0052FF]' : 'bg-[#FF6B35]'} text-white`
-                : 'text-gray-400 hover:text-white'
+                ? `${isPositive ? 'bg-[#0052FF]' : 'bg-[#FF6B35]'} text-black`
+                : `${isPositive ? 'text-[#0052FF]' : 'text-[#FF6B35]'} hover:opacity-80`
             }`}
           >
             {tf}

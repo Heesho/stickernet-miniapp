@@ -375,6 +375,71 @@ body::-webkit-scrollbar {
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Price Animation Classes */
+@keyframes priceIncrease {
+  0% {
+    transform: scale(1);
+    color: inherit;
+  }
+  50% {
+    transform: scale(1.1);
+    color: #0052FF;
+  }
+  100% {
+    transform: scale(1);
+    color: inherit;
+  }
+}
+
+@keyframes priceDecrease {
+  0% {
+    transform: scale(1);
+    color: inherit;
+  }
+  50% {
+    transform: scale(0.95);
+    color: #FF6B35;
+  }
+  100% {
+    transform: scale(1);
+    color: inherit;
+  }
+}
+
+@keyframes pulsateGreen {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes pulsateRed {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.animate-price-increase {
+  animation: priceIncrease 0.6s ease-out;
+}
+
+.animate-price-decrease {
+  animation: priceDecrease 0.6s ease-out;
+}
+
+.animate-pulse-green {
+  animation: pulsateGreen 1s ease-out;
+}
+
+.animate-pulse-red {
+  animation: pulsateRed 1s ease-out;
+}
+
 /* Utility Classes */
 .glass-morphism {
   background: var(--app-glass-bg);

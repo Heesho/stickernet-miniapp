@@ -157,6 +157,15 @@ export const GET_TOKEN_BOARD_DATA_QUERY = `
       symbol
       uri
       marketPrice
+      floorPrice
+      holders
+      contents
+      contentBalance
+      creatorRewardsQuote
+      curatorRewardsQuote
+      holderRewardsQuote
+      contentRevenueQuote
+      contentRevenueToken
       owner {
         id
       }
@@ -181,6 +190,12 @@ export const GET_TOKEN_BOARD_DATA_QUERY = `
         surplus
       }
       tokenDayData(orderBy: timestamp, orderDirection: desc, first: 2) {
+        timestamp
+        marketPrice
+        floorPrice
+        volume
+      }
+      tokenHourData(orderBy: timestamp, orderDirection: desc, first: 2) {
         timestamp
         marketPrice
         floorPrice
@@ -536,6 +551,15 @@ export interface TokenBoardDataEntity {
   symbol: string;
   uri: string;
   marketPrice: string;
+  floorPrice?: string;
+  holders?: string;
+  contents?: string;
+  contentBalance?: string;
+  creatorRewardsQuote?: string;
+  curatorRewardsQuote?: string;
+  holderRewardsQuote?: string;
+  contentRevenueQuote?: string;
+  contentRevenueToken?: string;
   owner: {
     id: string;
   };
@@ -543,6 +567,7 @@ export interface TokenBoardDataEntity {
   contentPositions: ContentPositionEntity[];
   contentDayData: ContentDayDataEntity[];
   tokenDayData: TokenDayDataEntity[];
+  tokenHourData?: TokenHourDataEntity[];
 }
 
 /**
@@ -614,7 +639,17 @@ export async function executeGraphQLQuery<TData = unknown, TVariables = Record<s
 
     return result;
   } catch (error) {
-    console.error('Error executing GraphQL query:', error);
+    console.error('Error executing GraphQL query:', {
+      error: error instanceof Error ? error.message : error,
+      url: SUBGRAPH_URL,
+      query: query.substring(0, 200) + '...'
+    });
+    
+    // More helpful error message
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      console.error('Network error: The Graph API might be down or rate limiting. Check: https://status.thegraph.com/');
+    }
+    
     throw error;
   }
 }

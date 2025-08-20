@@ -46,6 +46,7 @@ export interface UseTokenDataParams {
 
 export interface UseTokenDataReturn extends BaseHookReturn {
   readonly tokenData: TokenData | undefined;
+  readonly refetch?: () => Promise<any>;
 }
 
 // Wallet connection hooks

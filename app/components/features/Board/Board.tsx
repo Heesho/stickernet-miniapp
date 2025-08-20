@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useAccount } from "wagmi";
 import dynamic from "next/dynamic";
 import { Button, Icon } from "../../ui";
+import { AnimatedNumber } from "../../ui/AnimatedNumber";
 import { CreateSticker } from "./CreateSticker";
 import { TradingView } from "./TradingView";
 import { formatUnits } from "viem";
@@ -32,7 +33,7 @@ import {
   type Curate,
   type ContentPositionEntity 
 } from "@/lib/constants";
-import { useTokenData } from "@/app/hooks/useMulticall";
+import { useMulticallAutoRefresh } from "@/app/hooks/useMulticallAutoRefresh";
 import type { BoardProps } from "./Board.types";
 
 export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
@@ -50,6 +51,19 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
       totalVolume: string;
       priceChange24h: number;
       priceChangeAmount: string;
+      priceChange1h?: number;
+    };
+    subgraphData?: {
+      holders?: string;
+      contents?: string;
+      contentBalance?: string;
+      creatorRewardsQuote?: string;
+      curatorRewardsQuote?: string;
+      holderRewardsQuote?: string;
+      contentRevenueQuote?: string;
+      contentRevenueToken?: string;
+      marketPrice?: string;
+      floorPrice?: string;
     };
   } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,73 +74,118 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
   const [scrollY, setScrollY] = useState(0);
   const [showTradingView, setShowTradingView] = useState(false);
   const [hoveredPrice, setHoveredPrice] = useState<string | null>(null);
+  const [hoveredFloorPrice, setHoveredFloorPrice] = useState<string | null>(null);
   const symbolRef = useRef<HTMLDivElement>(null);
   const { address: account, isConnected } = useAccount();
   
-  // Fetch token data from multicall - use 0x0 address if no account connected
-  const { tokenData, isLoading: multicallLoading } = useTokenData({
+  // Use simplified multicall auto-refresh hook
+  const { 
+    tokenData, 
+    isLoading: multicallLoading,
+    refreshAfterTransaction
+  } = useMulticallAutoRefresh({
     tokenAddress: tokenAddress as `0x${string}`,
     account: account || '0x0000000000000000000000000000000000000000' as `0x${string}`,
-    enabled: !!tokenAddress
+    enabled: !!tokenAddress,
+    refetchInterval: 15000 // Refresh every 15 seconds
   });
 
 
-  // Function to refresh board data
+  // Simplified refresh function that only refreshes board data from subgraph
   const refreshBoardData = useCallback(async () => {
     if (!tokenAddress || !tokenData) return;
     
     try {
-      setLoading(true);
-      setError(null);
+      console.log('Refreshing board data from subgraph...');
       
-      // Fetch board data from subgraph
+      // Fetch fresh subgraph data
       const boardDataFromSubgraph = await fetchTokenBoardData(tokenAddress.toLowerCase());
       
-      if (!boardDataFromSubgraph) {
-        setError('Token not found');
-        setLoading(false);
-        return;
+      if (boardDataFromSubgraph) {
+        await updateBoardDataFromSubgraph(boardDataFromSubgraph);
       }
       
-      // Transform content positions to curates format
-      const curates: Curate[] = boardDataFromSubgraph.contentPositions.map((content: ContentPositionEntity) => ({
-        id: content.id,
-        tokenId: BigInt(content.tokenId),
-        uri: content.uri,
-        timestamp: Date.now().toString(),
-        price: content.price,
-        creator: content.creator,
-        user: content.owner,
-        token: {
-          id: boardDataFromSubgraph.id,
-          name: tokenData.name,
-          symbol: tokenData.symbol,
-          uri: tokenData.uri
-        }
-      }));
+      console.log('Board data refresh complete');
+    } catch (err) {
+      console.error('Error refreshing board data:', err);
+      setError('Failed to refresh board data');
+    }
+  }, [tokenAddress, tokenData]);
+  
+  // Helper function to update board data from subgraph
+  const updateBoardDataFromSubgraph = useCallback(async (boardDataFromSubgraph: any) => {
+    if (!tokenData) return;
+    
+    // Transform subgraph content positions to app's curate format
+    const curates: Curate[] = boardDataFromSubgraph.contentPositions.map((content: ContentPositionEntity) => ({
+      id: content.id,
+      tokenId: BigInt(content.tokenId),
+      uri: content.uri,
+      timestamp: Date.now().toString(),
+      price: content.price,
+      creator: content.creator,
+      user: content.owner,
+      token: {
+        id: boardDataFromSubgraph.id,
+        name: tokenData.name,
+        symbol: tokenData.symbol,
+        uri: tokenData.uri
+      }
+    }));
+    
+    // Calculate metrics
+    // Use contentDayData for steal volume (most recent day)
+    const todayVolume = boardDataFromSubgraph.contentDayData?.[0]?.volume || "0";
+    
+    let priceChange24h = 0;
+    let priceChangeAmount = "0";
+    
+    if (boardDataFromSubgraph.tokenDayData?.length >= 2) {
+      const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
+      const yesterdayPrice = parseFloat(boardDataFromSubgraph.tokenDayData[1].marketPrice || "0");
       
-      // Calculate today's volume and price change
-      const todayVolume = boardDataFromSubgraph.contentDayData?.[0]?.volume || "0";
+      if (yesterdayPrice > 0) {
+        priceChangeAmount = (currentPrice - yesterdayPrice).toFixed(6);
+        priceChange24h = ((currentPrice - yesterdayPrice) / yesterdayPrice) * 100;
+      }
+    }
+    
+    let priceChange1h = 0;
+    
+    if (boardDataFromSubgraph.tokenHourData?.length >= 2) {
+      const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
+      const hourAgoPrice = parseFloat(boardDataFromSubgraph.tokenHourData[1].marketPrice || "0");
       
-      let priceChange24h = 0;
-      let priceChangeAmount = "0";
+      if (hourAgoPrice > 0) {
+        priceChange1h = ((currentPrice - hourAgoPrice) / hourAgoPrice) * 100;
+      }
+    } else if (boardDataFromSubgraph.tokenHourData?.length === 1) {
+      // If we only have current hour data, compare with opening price
+      const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
+      const openPrice = parseFloat(boardDataFromSubgraph.tokenHourData[0].marketPrice || "0");
       
-      if (boardDataFromSubgraph.tokenDayData?.length >= 2) {
-        const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
-        const yesterdayPrice = parseFloat(boardDataFromSubgraph.tokenDayData[1].marketPrice || "0");
-        
-        if (yesterdayPrice > 0) {
-          priceChangeAmount = (currentPrice - yesterdayPrice).toFixed(6);
-          priceChange24h = ((currentPrice - yesterdayPrice) / yesterdayPrice) * 100;
-        }
+      if (openPrice > 0) {
+        priceChange1h = ((currentPrice - openPrice) / openPrice) * 100;
+      }
+    }
+    
+    // Only update if data has actually changed to prevent unnecessary re-renders
+    setBoardData(prevData => {
+      const newPrice = parseFloat(formatUnits(tokenData.marketPrice || BigInt(0), 18)).toFixed(6);
+      
+      // Check if price actually changed
+      if (prevData && prevData.token.price === newPrice && 
+          prevData.curates.length === curates.length) {
+        // No significant changes, keep the same reference to prevent re-render
+        return prevData;
       }
       
-      setBoardData({
+      return {
         token: {
-          id: tokenAddress,
+          id: tokenAddress || '',
           name: tokenData.name,
           uri: tokenData.uri,
-          price: parseFloat(formatUnits(tokenData.marketPrice || BigInt(0), 18)).toFixed(6),
+          price: newPrice,
           symbol: tokenData.symbol,
           owner: tokenData.owner
         },
@@ -134,26 +193,27 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         stats: {
           totalVolume: parseFloat(todayVolume).toLocaleString(),
           priceChange24h: priceChange24h,
-          priceChangeAmount: priceChangeAmount
+          priceChangeAmount: priceChangeAmount,
+          priceChange1h: priceChange1h
+        },
+        subgraphData: {
+          holders: boardDataFromSubgraph.holders,
+          contents: boardDataFromSubgraph.contents,
+          contentBalance: boardDataFromSubgraph.contentBalance,
+          creatorRewardsQuote: boardDataFromSubgraph.creatorRewardsQuote,
+          curatorRewardsQuote: boardDataFromSubgraph.curatorRewardsQuote,
+          holderRewardsQuote: boardDataFromSubgraph.holderRewardsQuote,
+          contentRevenueQuote: boardDataFromSubgraph.contentRevenueQuote,
+          contentRevenueToken: boardDataFromSubgraph.contentRevenueToken,
+          marketPrice: boardDataFromSubgraph.marketPrice,
+          floorPrice: boardDataFromSubgraph.floorPrice
         }
-      });
-    } catch (err) {
-      console.error('Error refreshing board data:', err);
-      setError('Failed to refresh board data');
-    } finally {
-      setLoading(false);
-    }
+      };
+    });
   }, [tokenAddress, tokenData]);
 
-  // Load board data from subgraph and multicall
+  // Load board data from subgraph and multicall with polling
   useEffect(() => {
-    console.log('Board useEffect triggered', { 
-      tokenAddress, 
-      multicallLoading, 
-      hasTokenData: !!tokenData,
-      tokenDataKeys: tokenData ? Object.keys(tokenData) : 'none',
-      loading
-    });
     
     let isMounted = true;
     
@@ -193,7 +253,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
           }
         }));
         
-        // Calculate today's volume from contentDayData
+        // Calculate today's steal volume from contentDayData
         const todayVolume = boardDataFromSubgraph.contentDayData?.[0]?.volume || "0";
         
         // Calculate price change from tokenDayData
@@ -219,6 +279,26 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
           }
         }
         
+        // Calculate 1-hour price change for theme colors
+        let priceChange1h = 0;
+        
+        if (boardDataFromSubgraph.tokenHourData?.length >= 2) {
+          const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
+          const hourAgoPrice = parseFloat(boardDataFromSubgraph.tokenHourData[1].marketPrice || "0");
+          
+          if (hourAgoPrice > 0) {
+            priceChange1h = ((currentPrice - hourAgoPrice) / hourAgoPrice) * 100;
+          }
+        } else if (boardDataFromSubgraph.tokenHourData?.length === 1) {
+          // If we only have current hour data, compare with opening price
+          const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
+          const openPrice = parseFloat(boardDataFromSubgraph.tokenHourData[0].marketPrice || "0");
+          
+          if (openPrice > 0) {
+            priceChange1h = ((currentPrice - openPrice) / openPrice) * 100;
+          }
+        }
+        
         if (isMounted) {
           // Use multicall data for token info
           setBoardData({
@@ -234,12 +314,24 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
             stats: {
               totalVolume: parseFloat(todayVolume).toLocaleString(),
               priceChange24h: priceChange24h,
-              priceChangeAmount: priceChangeAmount
+              priceChangeAmount: priceChangeAmount,
+              priceChange1h: priceChange1h
+            },
+            subgraphData: {
+              holders: boardDataFromSubgraph.holders,
+              contents: boardDataFromSubgraph.contents,
+              contentBalance: boardDataFromSubgraph.contentBalance,
+              creatorRewardsQuote: boardDataFromSubgraph.creatorRewardsQuote,
+              curatorRewardsQuote: boardDataFromSubgraph.curatorRewardsQuote,
+              holderRewardsQuote: boardDataFromSubgraph.holderRewardsQuote,
+              contentRevenueQuote: boardDataFromSubgraph.contentRevenueQuote,
+              contentRevenueToken: boardDataFromSubgraph.contentRevenueToken,
+              marketPrice: boardDataFromSubgraph.marketPrice,
+              floorPrice: boardDataFromSubgraph.floorPrice
             }
           });
         }
       } catch (err) {
-        console.error('Error loading board data:', err);
         if (isMounted) {
           const isRateLimit = err instanceof Error && err.message.includes('Rate limit exceeded');
           if (isRateLimit) {
@@ -258,6 +350,10 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
     // Only load if we have the required data and multicall isn't loading
     if (!multicallLoading && tokenData && tokenAddress) {
       loadBoardData();
+      
+      // Setup polling for board data refresh
+      // Polling is now handled by useMulticallAutoRefresh
+      // We only load the initial board data here
     }
 
     return () => {
@@ -279,12 +375,21 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
     setActiveTab?.("home");
   };
 
-  // Dynamic color theme based on price change (Robinhood-style)
-  const priceIsUp = boardData?.stats?.priceChange24h ? boardData.stats.priceChange24h >= 0 : true;
-  const themeColor = priceIsUp ? '#0052FF' : '#FF6B35'; // Blue when up, Orange when down
-  const themeColorClass = priceIsUp ? 'text-[#0052FF]' : 'text-[#FF6B35]';
-  const themeBgClass = priceIsUp ? 'bg-[#0052FF]' : 'bg-[#FF6B35]';
-  const themeBorderClass = priceIsUp ? 'border-[#0052FF]' : 'border-[#FF6B35]';
+  // Dynamic color theme based on price performance
+  // Use the 24h price change which is displayed as "Today"
+  let isPricePositive = true; // Default to positive (blue)
+  let isDataLoaded = false;
+  
+  if (boardData?.stats?.priceChange24h !== undefined) {
+    isPricePositive = boardData.stats.priceChange24h >= 0;
+    isDataLoaded = true;
+  }
+  
+  // Use actual price direction colors when data is loaded
+  const themeColor = !isDataLoaded ? '#6b7280' : (isPricePositive ? '#0052FF' : '#FF6B35');
+  const themeColorClass = !isDataLoaded ? 'text-gray-500' : (isPricePositive ? 'text-[#0052FF]' : 'text-[#FF6B35]');
+  const themeBgClass = !isDataLoaded ? 'bg-gray-600' : (isPricePositive ? 'bg-[#0052FF]' : 'bg-[#FF6B35]');
+  const themeBorderClass = !isDataLoaded ? 'border-gray-600' : (isPricePositive ? 'border-[#0052FF]' : 'border-[#FF6B35]');
 
   if (loading) {
     return (
@@ -401,8 +506,26 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
             <div ref={symbolRef} className="text-white text-5xl font-bold mb-2">
               {boardData.token.symbol || "PEPE"}
             </div>
-            <div className="text-white text-3xl">
-              ${hoveredPrice || boardData.token.price}
+            <div>
+              <div className="text-white text-3xl">
+                <AnimatedNumber 
+                  value={hoveredPrice || boardData.token.price}
+                  prefix="$"
+                  decimals={6}
+                  duration={600}
+                  animateOnMount={false}
+                />
+              </div>
+              <div className="text-gray-500 text-sm mt-1">
+                ${(() => {
+                  // Use hovered floor price if available, otherwise use subgraph floor price
+                  const floorPrice = hoveredFloorPrice || 
+                    (boardData.subgraphData?.floorPrice ? 
+                      parseFloat(boardData.subgraphData.floorPrice).toFixed(6) : 
+                      (parseFloat(boardData.token.price) * 0.95).toFixed(6));
+                  return floorPrice;
+                })()} floor
+              </div>
             </div>
           </div>
           
@@ -429,7 +552,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         <div className="flex items-center mb-6">
           <div className={`flex items-center space-x-1 ${themeColorClass}`}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" 
-                 className={boardData.stats.priceChange24h >= 0 ? '' : 'rotate-180'}>
+                 className={isPricePositive ? '' : 'rotate-180'}>
               <path d="m7 14 5-5 5 5"/>
             </svg>
             <span className="text-base font-medium">
@@ -499,12 +622,18 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
           tokenPrice={boardData.token.price}
           priceChange24h={boardData.stats.priceChange24h}
           priceChangeAmount={boardData.stats.priceChangeAmount}
+          priceChange1h={boardData.stats.priceChange1h}
           userPosition={{
             shares: parseInt(tokenData?.accountTokenBalance?.toString() || '0') || 0,
             marketValue: ((parseInt(tokenData?.accountTokenBalance?.toString() || '0') || 0) * parseFloat(boardData.token.price)).toFixed(2)
           }}
           todayVolume={boardData.stats.totalVolume}
-          onPriceHover={(price) => setHoveredPrice(price)}
+          onPriceHover={(price, floorPrice) => {
+            setHoveredPrice(price);
+            setHoveredFloorPrice(floorPrice);
+          }}
+          tokenData={tokenData}
+          subgraphData={boardData.subgraphData}
         />
       )}
 
@@ -522,12 +651,16 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
               </div>
               
               {/* Create button */}
-              <Button 
+              <button 
                 onClick={() => setShowCreateSticker(true)}
-                className={`${themeBgClass} hover:opacity-90 text-black font-semibold py-2.5 px-8 rounded-xl border-2 border-[#0052FF] min-w-[120px]`}
+                className="hover:opacity-90 text-black font-semibold py-2.5 px-8 rounded-xl border-2 min-w-[120px] transition-opacity"
+                style={{ 
+                  backgroundColor: themeColor,
+                  borderColor: themeColor
+                }}
               >
                 Stick
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -538,8 +671,17 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         <ImageDetail
           curate={selectedCurate}
           onClose={() => setSelectedCurate(null)}
-          onCurate={() => {
-            console.log('Curating:', selectedCurate);
+          onCurate={async () => {
+            // Refresh strategy after successful steal
+            console.log('Steal successful, refreshing data...');
+            
+            // Use the multicall auto-refresh
+            await refreshAfterTransaction();
+            
+            // Also refresh board data from subgraph
+            setTimeout(() => {
+              refreshBoardData();
+            }, 3000);
           }}
         />
       )}

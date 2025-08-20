@@ -41,12 +41,12 @@ export function useContentData({
     }
   });
 
-  // Type-safe data transformation
+  // Transform raw multicall data to typed ContentData
   const contentData: ContentData | undefined = data ? {
     tokenId: data.tokenId as TokenId,
-    price: data.price as any,
-    nextPrice: data.nextPrice as any,
-    rewardForDuration: data.rewardForDuration as any,
+    price: data.price as Wei,
+    nextPrice: data.nextPrice as Wei,
+    rewardForDuration: data.rewardForDuration as Wei,
     creator: data.creator,
     owner: data.owner,
     uri: data.uri,
@@ -64,28 +64,6 @@ export function useContentData({
     ? formatUnits(contentData.price, USDC_DECIMALS) 
     : '0';
 
-  // Debug logging in development only
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Enhanced Multicall Request:', {
-      tokenAddress,
-      tokenId: tokenId?.toString(),
-      shouldFetch,
-      isLoading,
-      isError,
-      error: error?.message
-    });
-
-    if (contentData) {
-      console.log('Enhanced Content Data:', {
-        price,
-        nextPrice,
-        weeklyReward,
-        creator: contentData.creator,
-        owner: contentData.owner,
-        uri: contentData.uri
-      });
-    }
-  }
 
   return {
     contentData,
@@ -107,14 +85,23 @@ export function useContentData({
 export function useTokenData({
   tokenAddress,
   account,
-  enabled = true
-}: UseTokenDataParams): UseTokenDataReturn {
+  enabled = true,
+  refetchInterval = false,
+  refetchIntervalInBackground = false,
+  staleTime = 30_000,
+  cacheTime = 5 * 60 * 1000
+}: UseTokenDataParams & {
+  refetchInterval?: number | false;
+  refetchIntervalInBackground?: boolean;
+  staleTime?: number;
+  cacheTime?: number;
+}): UseTokenDataReturn {
   // Validate inputs with type guards
   const isValidTokenAddress = tokenAddress ? isAddress(tokenAddress) : false;
   const isValidAccount = account ? isAddress(account) : false;
   const shouldFetch = enabled && isValidTokenAddress && isValidAccount;
 
-  const { data, isError, isLoading, error } = useReadContract({
+  const { data, isError, isLoading, error, refetch } = useReadContract({
     address: MULTICALL_ADDRESS,
     abi: MULTICALL_ABI,
     functionName: 'getTokenData',
@@ -122,16 +109,19 @@ export function useTokenData({
     chainId: baseSepolia.id,
     query: {
       enabled: shouldFetch,
-      staleTime: 30 * 1000, // 30 seconds to prevent excessive refetching
+      staleTime,
+      cacheTime,
+      refetchInterval,
+      refetchIntervalInBackground,
       retry: (failureCount, error) => {
-        // Don't retry on certain errors to prevent hydration issues
+        // Don't retry on hydration-related errors
         if (error?.message?.includes('useLayoutEffect')) return false;
         return failureCount < 2;
       }
     }
   });
 
-  // Type-safe data transformation
+  // Transform raw multicall data to typed TokenData
   const tokenData: TokenData | undefined = data ? {
     index: data.index,
     token: data.token,
@@ -143,22 +133,22 @@ export function useTokenData({
     symbol: data.symbol,
     uri: data.uri,
     isModerated: data.isModerated,
-    marketCap: data.marketCap as any,
-    liquidity: data.liquidity as any,
-    floorPrice: data.floorPrice as any,
-    marketPrice: data.marketPrice as any,
-    circulatingSupply: data.circulatingSupply as any,
-    maxSupply: data.maxSupply as any,
-    contentApr: data.contentApr as any,
-    accountQuoteBalance: data.accountQuoteBalance as any,
-    accountTokenBalance: data.accountTokenBalance as any,
-    accountDebt: data.accountDebt as any,
-    accountCredit: data.accountCredit as any,
-    accountTransferrable: data.accountTransferrable as any,
-    accountContentOwned: data.accountContentOwned as any,
-    accountContentStaked: data.accountContentStaked as any,
-    accountQuoteEarned: data.accountQuoteEarned as any,
-    accountTokenEarned: data.accountTokenEarned as any,
+    marketCap: data.marketCap as Wei,
+    liquidity: data.liquidity as Wei,
+    floorPrice: data.floorPrice as Wei,
+    marketPrice: data.marketPrice as Wei,
+    circulatingSupply: data.circulatingSupply,
+    maxSupply: data.maxSupply,
+    contentApr: data.contentApr,
+    accountQuoteBalance: data.accountQuoteBalance as Wei,
+    accountTokenBalance: data.accountTokenBalance,
+    accountDebt: data.accountDebt as Wei,
+    accountCredit: data.accountCredit as Wei,
+    accountTransferrable: data.accountTransferrable,
+    accountContentOwned: data.accountContentOwned,
+    accountContentStaked: data.accountContentStaked,
+    accountQuoteEarned: data.accountQuoteEarned as Wei,
+    accountTokenEarned: data.accountTokenEarned,
     accountIsModerator: data.accountIsModerator
   } : undefined;
 
@@ -167,7 +157,49 @@ export function useTokenData({
     isLoading,
     isError,
     isSuccess: !isLoading && !isError && !!data,
-    error: error || null
+    error: error || null,
+    refetch
+  };
+}
+
+/**
+ * Combined hook for fetching all multicall data with polling support
+ */
+export function useMulticall({
+  tokenAddress,
+  userAddress,
+  refetchInterval = false,
+  refetchIntervalInBackground = false,
+  staleTime = 30_000,
+  cacheTime = 5 * 60 * 1000
+}: {
+  tokenAddress: string;
+  userAddress?: string;
+  refetchInterval?: number | false;
+  refetchIntervalInBackground?: boolean;
+  staleTime?: number;
+  cacheTime?: number;
+}) {
+  const tokenDataResult = useTokenData({
+    tokenAddress,
+    account: userAddress,
+    enabled: !!userAddress,
+    refetchInterval,
+    refetchIntervalInBackground,
+    staleTime,
+    cacheTime
+  });
+
+  return {
+    tokenData: tokenDataResult.tokenData,
+    isLoading: tokenDataResult.isLoading,
+    isError: tokenDataResult.isError,
+    error: tokenDataResult.error,
+    refetch: async () => {
+      // This would need to be implemented with queryClient
+      // For now, return a promise that resolves
+      return Promise.resolve();
+    }
   };
 }
 

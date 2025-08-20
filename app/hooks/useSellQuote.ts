@@ -61,7 +61,7 @@ export function useDebouncedSellQuote({
     args: tokenAddress && parsedAmount ? [
       tokenAddress as `0x${string}`,
       parsedAmount,
-      BigInt(300) // 3% slippage tolerance (300 basis points)
+      BigInt(9500) // 95% slippage tolerance (for getting minimum amount)
     ] : undefined,
     query: {
       enabled: !!tokenAddress && !!parsedAmount && enabled,

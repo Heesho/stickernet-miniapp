@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import Image from 'next/image';
 import { Icon, LoadingSpinner } from "../../ui";
 import type { CurateImageProps } from "./Home.types";
@@ -18,7 +18,7 @@ import type { CurateImageProps } from "./Home.types";
  * @param props Component props including curate data and handlers
  * @returns Curate image element
  */
-export function CurateImage({ curate, index, onImageClick, isNew }: CurateImageProps) {
+export const CurateImage = memo(function CurateImage({ curate, index, onImageClick, isNew }: CurateImageProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -53,10 +53,10 @@ export function CurateImage({ curate, index, onImageClick, isNew }: CurateImageP
       </div>
     </div>
   );
-}
+});
 
 /**
- * Image content sub-component
+ * Image content sub-component  
  */
 interface ImageContentProps {
   curate: { id: string; uri: string };

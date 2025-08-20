@@ -223,15 +223,6 @@ export function useBuyQuote({
         const minTokenOut = data[2] as bigint;
         const autoMinTokenOut = data[3] as bigint;
         
-        console.log('Buy quote details:', {
-          usdcAmount: formatUnits(validation.parsedAmount, USDC_DECIMALS),
-          tokenAmountOut: formatUnits(tokenOut, 18),
-          slippageRaw: slippageRaw.toString(),
-          slippageDecimal: slippageDecimal.toFixed(6),
-          slippagePercent: slippagePercent.toFixed(2) + '%',
-          minTokenAmountOut: minTokenOut ? formatUnits(minTokenOut, 18) : '0',
-          autoMinTokenAmountOut: autoMinTokenOut ? formatUnits(autoMinTokenOut, 18) : '0'
-        });
         
         // Validation checks
         if (tokenOut <= autoMinTokenOut) {

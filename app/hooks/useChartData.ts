@@ -15,46 +15,60 @@ interface UseChartDataReturn {
   refetch: () => void;
 }
 
+// Helper function to get time range in milliseconds for each timeframe
+const getTimeRangeForTimeframe = (timeframe: Timeframe): number => {
+  switch (timeframe) {
+    case 'LIVE': return 3600000; // 1 hour
+    case '4H': return 14400000; // 4 hours
+    case '1D': return 86400000; // 1 day
+    case '1W': return 604800000; // 1 week
+    case '1M': return 2592000000; // 30 days
+    case 'MAX': return Date.now(); // From beginning to now
+    default: return 86400000; // 1 day
+  }
+};
+
 // Helper function to calculate data points needed for each timeframe
 const getDataPointsConfig = (timeframe: Timeframe) => {
   const now = Math.floor(Date.now() / 1000);
   
   switch (timeframe) {
-    case 'LIVE': // Past hour, use minute data
+    case 'LIVE': // Past hour, use hour data (minute data might not be available)
       return {
-        since: now - 3600, // 1 hour ago
-        dataType: 'minute',
-        maxPoints: 100 // Get more points to ensure we have enough
+        since: now - 7200, // 2 hours ago to ensure we get data
+        dataType: 'hour',
+        maxPoints: 10 // Get more points
       };
-    case '4H': // Past 4 hours, use minute data
+    case '4H': // Past 4 hours, use hour data
       return {
         since: now - 14400, // 4 hours ago
-        dataType: 'minute',
-        maxPoints: 300 // Get all minutes we can
+        dataType: 'hour',
+        maxPoints: 20 // Get more hours
       };
     case '1D': // Past day, use hour data
       return {
         since: now - 86400, // 1 day ago
         dataType: 'hour',
-        maxPoints: 30 // Get all hours
+        maxPoints: 50 // Get more hours
       };
-    case '1W': // Past week, use hour data
+    case '1W': // Past week, use day data
       return {
         since: now - 604800, // 1 week ago
-        dataType: 'hour',
-        maxPoints: 200 // Get all hours in a week
+        dataType: 'day',
+        maxPoints: 30 // Get more days
       };
     case '1M': // Past month, use day data
       return {
         since: now - 2592000, // 30 days ago
         dataType: 'day',
-        maxPoints: 35 // Get all days
+        maxPoints: 60 // Get more days
       };
     case 'MAX': // All time, use day data
       return {
-        since: 0, // From beginning
+        since: 0, // Will be adjusted to token creation time
         dataType: 'day',
-        maxPoints: 1000 // Get as many as possible
+        maxPoints: 365, // Get up to a year of daily data
+        isMax: true // Flag to handle differently
       };
     default:
       return {
@@ -149,7 +163,6 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       const config = getDataPointsConfig(timeframe);
       const token = tokenAddress.toLowerCase(); // Token ID must be lowercase for subgraph
 
-      console.log('Fetching chart data for token:', token, 'timeframe:', timeframe);
 
       // First get token info to know the current price
       const tokenInfoResponse = await fetch(SUBGRAPH_URL, {
@@ -165,7 +178,6 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       });
 
       const tokenInfoResult = await tokenInfoResponse.json();
-      console.log('Token info response:', tokenInfoResult);
       
       if (tokenInfoResult.errors) {
         console.error('GraphQL errors:', tokenInfoResult.errors);
@@ -181,8 +193,13 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       }
 
       const currentPrice = parseFloat(tokenInfo.marketPrice || '0');
-      const tokenCreatedAt = parseInt(tokenInfo.createdAtTimestamp);
-      const actualSince = Math.max(config.since, tokenCreatedAt);
+      const tokenCreatedAt = parseInt(tokenInfo.createdAtTimestamp || '0');
+      
+      // For MAX timeframe, use token creation time
+      // For other timeframes, use the configured since time
+      const actualSince = timeframe === 'MAX' 
+        ? tokenCreatedAt 
+        : Math.max(config.since, tokenCreatedAt);
 
       // Select appropriate query based on data type
       let query = GET_TOKEN_DAY_DATA;
@@ -210,17 +227,26 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
 
       const result = await response.json();
       
-      console.log(`${dataKey} response:`, result);
       if (result.errors) {
         console.error(`${dataKey} GraphQL errors:`, result.errors);
       }
       
       const rawData = result.data?.token?.[dataKey] || [];
-      console.log(`${dataKey} extracted data (${rawData.length} points):`, rawData);
-
-      // Process the data to exactly 60 points
-      const processedData = processChartData(rawData, currentPrice);
-      console.log(`Processed to ${processedData.length} points for display`);
+      console.log(`Chart data for ${timeframe}:`, {
+        dataKey,
+        rawDataLength: rawData.length,
+        since: new Date(actualSince * 1000).toISOString(),
+        tokenCreatedAt: new Date(tokenCreatedAt * 1000).toISOString(),
+        firstDataPoint: rawData[0],
+        lastDataPoint: rawData[rawData.length - 1]
+      });
+      
+      // Log sample data if available
+      if (rawData.length > 0) {
+        console.log(`Sample data for ${timeframe}:`, rawData.slice(0, 3));
+      }
+      // Process the data to exactly 60 points for optimal chart display
+      const processedData = processChartData(rawData, currentPrice, timeframe);
       setData(processedData);
       
     } catch (err) {
@@ -232,18 +258,20 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
   }, [tokenAddress, timeframe, enabled]);
 
   // Process raw subgraph data into exactly 60 chart points
-  const processChartData = (rawData: any[], currentPrice: number): PriceDataPoint[] => {
+  const processChartData = (rawData: any[], currentPrice: number, timeframe: Timeframe): PriceDataPoint[] => {
     if (rawData.length === 0) {
+      console.log(`No data for ${timeframe}, creating flat line at current price:`, currentPrice);
       // If no historical data, create a flat line at current price
       const now = Date.now();
-      const hourAgo = now - 3600000;
+      const range = getTimeRangeForTimeframe(timeframe);
+      const startTime = now - range;
       const points: PriceDataPoint[] = [];
       
       for (let i = 0; i < 60; i++) {
         points.push({
-          timestamp: hourAgo + (i * 60000), // One point per minute
+          timestamp: startTime + (i * (range / 59)), // Spread across the timeframe
           marketPrice: currentPrice,
-          floorPrice: currentPrice,
+          floorPrice: currentPrice * 0.95, // Floor is 95% of market price
           volume: 0
         });
       }
@@ -264,15 +292,37 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     }));
 
     // Always return exactly 60 points
-    return resampleTo60Points(dataPoints);
+    return resampleTo60Points(dataPoints, timeframe);
   };
 
   // Resample data to exactly 60 points
-  const resampleTo60Points = (data: PriceDataPoint[]): PriceDataPoint[] => {
+  const resampleTo60Points = (data: PriceDataPoint[], timeframe: Timeframe): PriceDataPoint[] => {
     if (data.length === 0) return [];
     
     // If we have exactly 60 points, return as is
     if (data.length === 60) return data;
+    
+    // If we only have 1 point, create a flat line
+    if (data.length === 1) {
+      console.log(`Only 1 point for ${timeframe}, creating flat line`);
+      const singlePoint = data[0];
+      const result: PriceDataPoint[] = [];
+      const range = getTimeRangeForTimeframe(timeframe);
+      const now = Date.now();
+      const startTime = now - range;
+      
+      for (let i = 0; i < 60; i++) {
+        result.push({
+          timestamp: startTime + (i * (range / 59)),
+          marketPrice: singlePoint.marketPrice,
+          floorPrice: singlePoint.floorPrice,
+          volume: i === 59 ? singlePoint.volume : 0
+        });
+      }
+      return result;
+    }
+    
+    console.log(`Resampling ${data.length} points to 60 for ${timeframe}`);
     
     const result: PriceDataPoint[] = [];
     
@@ -293,14 +343,29 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
           dataIndex++;
         }
         
-        // Use the most recent known price (forward fill)
-        const point = data[dataIndex];
-        result.push({
-          timestamp: targetTime,
-          marketPrice: point.marketPrice,
-          floorPrice: point.floorPrice,
-          volume: i === 59 ? point.volume : 0 // Only show volume on actual data points
-        });
+        // Interpolate between points if we're between two data points
+        if (dataIndex < data.length - 1) {
+          const currentPoint = data[dataIndex];
+          const nextPoint = data[dataIndex + 1];
+          const timeFraction = (targetTime - currentPoint.timestamp) / (nextPoint.timestamp - currentPoint.timestamp);
+          
+          // Linear interpolation for smoother transitions
+          result.push({
+            timestamp: targetTime,
+            marketPrice: currentPoint.marketPrice + (nextPoint.marketPrice - currentPoint.marketPrice) * Math.max(0, Math.min(1, timeFraction)),
+            floorPrice: currentPoint.floorPrice + (nextPoint.floorPrice - currentPoint.floorPrice) * Math.max(0, Math.min(1, timeFraction)),
+            volume: 0 // Only show volume on actual data points
+          });
+        } else {
+          // Use the last known price for points beyond data
+          const point = data[dataIndex];
+          result.push({
+            timestamp: targetTime,
+            marketPrice: point.marketPrice,
+            floorPrice: point.floorPrice,
+            volume: i === 59 ? point.volume : 0
+          });
+        }
       }
     } else {
       // If we have more than 60 points, sample evenly

@@ -73,11 +73,14 @@ export function CurateConfirmation({ curate, nextPrice, onClose, onSuccess }: Cu
   }, [tokenAddress]);
 
   // Dynamic color theme based on price change (Robinhood-style)
-  const priceIsUp = priceChange24h !== null ? priceChange24h >= 0 : true;
-  const themeColor = priceIsUp ? '#0052FF' : '#FF6B35'; // Blue when up, Orange when down
-  const themeColorClass = priceIsUp ? 'text-[#0052FF]' : 'text-[#FF6B35]';
-  const themeBgClass = priceIsUp ? 'bg-[#0052FF]' : 'bg-[#FF6B35]';
-  const themeBorderClass = priceIsUp ? 'border-[#0052FF]' : 'border-[#FF6B35]';
+  const isDataLoaded = priceChange24h !== null;
+  const priceIsUp = isDataLoaded ? priceChange24h >= 0 : true; // Default doesn't matter when not loaded
+  
+  // Use neutral gray while loading, then switch to theme colors
+  const themeColor = !isDataLoaded ? '#6b7280' : (priceIsUp ? '#0052FF' : '#FF6B35');
+  const themeColorClass = !isDataLoaded ? 'text-gray-500' : (priceIsUp ? 'text-[#0052FF]' : 'text-[#FF6B35]');
+  const themeBgClass = !isDataLoaded ? 'bg-gray-600' : (priceIsUp ? 'bg-[#0052FF]' : 'bg-[#FF6B35]');
+  const themeBorderClass = !isDataLoaded ? 'border-gray-600' : (priceIsUp ? 'border-[#0052FF]' : 'border-[#FF6B35]');
 
   // Handle successful transaction
   useEffect(() => {
@@ -146,12 +149,12 @@ export function CurateConfirmation({ curate, nextPrice, onClose, onSuccess }: Cu
         <div className="space-y-6 flex-1">
           {/* Pay Section */}
           <div>
-            <div className={`${themeColorClass} text-base mb-2 italic`}>Pay</div>
-            <div className="text-white text-4xl font-bold">
-              {nextPrice} <span className="text-2xl font-normal">USDC</span>
+            <div className={`${themeColorClass} text-sm mb-2`}>Pay</div>
+            <div className="text-white text-3xl font-medium tracking-wide">
+              {nextPrice}
             </div>
-            <div className="text-gray-400 text-sm mt-2">
-              Available: {parseFloat(formattedBalance).toFixed(2)} USDC
+            <div className="text-gray-600 text-xs mt-2">
+              ${parseFloat(formattedBalance).toFixed(2)} available
             </div>
             {!hasEnoughBalance && (
               <div className="text-red-400 text-xs mt-2">
@@ -162,7 +165,7 @@ export function CurateConfirmation({ curate, nextPrice, onClose, onSuccess }: Cu
 
           {/* Get Section */}
           <div>
-            <div className={`${themeColorClass} text-base mb-2 italic`}>Get</div>
+            <div className={`${themeColorClass} text-sm mb-2`}>Get</div>
             <div className="flex items-center space-x-3">
               {!imageError ? (
                 <div className="relative w-20 h-20">
@@ -223,20 +226,20 @@ export function CurateConfirmation({ curate, nextPrice, onClose, onSuccess }: Cu
 
       </div>
 
-      {/* Curate Button - Fixed above navbar, matching ImageDetail exact positioning */}
-      <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-black p-3">
-        <div className="flex items-center">
+      {/* Steal Button - Fixed above navbar, matching Board button styling */}
+      <div className="fixed bottom-16 left-0 right-0">
+        <div className="w-full max-w-md mx-auto bg-black px-4 py-3">
           <button
             onClick={handleCurate}
             disabled={isCurateLoading || !hasEnoughBalance}
-            className={`font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex-1 ${
+            className={`w-full font-semibold py-2.5 rounded-xl border-2 ${themeBorderClass} transition-all duration-200 focus:outline-none ${
               isCurateLoading 
-                ? 'bg-gray-600 text-gray-300 cursor-not-allowed' 
+                ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
                 : !hasEnoughBalance
-                ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                 : status.approveStatus === 'success' && status.curateStatus === 'success'
-                ? 'bg-green-500 text-white'
-                : `${themeBgClass} hover:opacity-90 text-white shadow-lg hover:shadow-xl`
+                ? 'bg-green-500 hover:bg-green-600 text-black'
+                : `${themeBgClass} hover:opacity-90 text-black`
             }`}
           >
             {isCurateLoading ? (

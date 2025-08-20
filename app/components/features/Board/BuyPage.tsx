@@ -17,6 +17,8 @@ interface BuyPageProps {
   tokenName: string;
   tokenPrice: string;
   onClose: () => void;
+  themeColor?: string;
+  onTransactionSuccess?: () => void;
 }
 
 export function BuyPage({
@@ -24,7 +26,9 @@ export function BuyPage({
   tokenSymbol,
   tokenName,
   tokenPrice,
-  onClose
+  onClose,
+  themeColor = '#0052FF',
+  onTransactionSuccess
 }: BuyPageProps) {
   const [inputValue, setInputValue] = useState("0.00");
   const { address } = useAccount();
@@ -131,13 +135,16 @@ export function BuyPage({
   // Handle successful transaction - EXACTLY like steal page (CurateConfirmation)
   useEffect(() => {
     if (txStatus === 'success') {
+      // Trigger refresh of data
+      onTransactionSuccess?.();
+      
       // Wait a moment to show success state, then close
       const timer = setTimeout(() => {
         onClose();
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [txStatus, onClose]);
+  }, [txStatus, onClose, onTransactionSuccess]);
 
   // Use portal to render outside of parent component hierarchy
   const [mounted, setMounted] = useState(false);
@@ -158,7 +165,8 @@ export function BuyPage({
             <button
               onClick={handleClose}
               disabled={isTxLoading}
-              className="text-[#0052FF] hover:opacity-80 transition-opacity disabled:opacity-50"
+              className="hover:opacity-80 transition-opacity disabled:opacity-50"
+              style={{ color: themeColor }}
             >
               <X size={24} />
             </button>
@@ -171,19 +179,19 @@ export function BuyPage({
 
           <div className="space-y-4">
             <div>
-              <label className="text-[#0052FF] text-sm mb-2 block">
+              <label className="text-sm mb-2 block" style={{ color: themeColor }}>
                 Pay
               </label>
               <div className="text-white text-3xl font-medium mb-1 tracking-wide">
                 {inputValue}
               </div>
               <div className="text-gray-600 text-xs">
-                Available: {isLoadingBalance ? "Loading..." : `${parseFloat(userBalance).toFixed(2)} USDC`}
+                {isLoadingBalance ? "Loading..." : `$${parseFloat(userBalance).toFixed(2)} available`}
               </div>
             </div>
 
             <div>
-              <label className="text-[#0052FF] text-sm mb-2 block">
+              <label className="text-sm mb-2 block" style={{ color: themeColor }}>
                 Get
               </label>
               <div className="text-white text-3xl font-medium tracking-wide">
@@ -199,7 +207,7 @@ export function BuyPage({
 
         <div className="flex-1 flex flex-col justify-end pb-16">
           <div className="px-4">
-            <Button
+            <button
               onClick={handleBuy}
               disabled={
                 parseFloat(inputValue) <= 0 || 
@@ -209,11 +217,24 @@ export function BuyPage({
               }
               className={`w-full ${
                 txStatus === 'success'
-                  ? 'bg-green-500 hover:bg-green-600' 
+                  ? '' 
                   : txError 
-                  ? 'bg-red-500 hover:bg-red-600'
-                  : 'bg-[#0052FF] hover:bg-[#0052FF]/90'
-              } disabled:bg-gray-700 disabled:text-gray-500 text-black font-semibold py-3 rounded-xl text-lg transition-colors mb-3 flex items-center justify-center gap-2 focus:outline-none`}
+                  ? ''
+                  : ''
+              } disabled:bg-gray-700 disabled:text-gray-500 text-black font-semibold py-2.5 rounded-xl transition-colors mb-3 flex items-center justify-center gap-2 focus:outline-none hover:opacity-90`}
+              style={{
+                backgroundColor: 
+                  (parseFloat(inputValue) <= 0 || 
+                   parseFloat(inputValue) > parseFloat(userBalance) ||
+                   isTxLoading ||
+                   !autoMinTokenAmtOut) 
+                    ? '#374151' // gray when disabled
+                    : txStatus === 'success'
+                    ? '#10b981' // green on success
+                    : txError
+                    ? '#ef4444' // red on error
+                    : themeColor // theme color when normal
+              }}
             >
               {isTxLoading ? (
                 <>
@@ -233,7 +254,7 @@ export function BuyPage({
               ) : (
                 'Buy'
               )}
-            </Button>
+            </button>
             
             {/* Balance warning */}
             {parseFloat(inputValue) > parseFloat(userBalance) && parseFloat(inputValue) > 0 && (
@@ -245,76 +266,88 @@ export function BuyPage({
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => handleNumberPad("1")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               1
             </button>
             <button
               onClick={() => handleNumberPad("2")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               2
             </button>
             <button
               onClick={() => handleNumberPad("3")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               3
             </button>
 
             <button
               onClick={() => handleNumberPad("4")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               4
             </button>
             <button
               onClick={() => handleNumberPad("5")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               5
             </button>
             <button
               onClick={() => handleNumberPad("6")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               6
             </button>
 
             <button
               onClick={() => handleNumberPad("7")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               7
             </button>
             <button
               onClick={() => handleNumberPad("8")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               8
             </button>
             <button
               onClick={() => handleNumberPad("9")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               9
             </button>
 
             <button
               onClick={() => handleNumberPad(".")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               .
             </button>
             <button
               onClick={() => handleNumberPad("0")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               0
             </button>
             <button
               onClick={() => handleNumberPad("<")}
-              className="text-[#0052FF] py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              style={{ color: themeColor }}
             >
               &lt;
             </button>

@@ -135,12 +135,77 @@ export const GET_TOKEN_QUERY = `
       owner {
         id
       }
-      marketOpen
       isModerated
       marketPrice
       floorPrice
       liquidity
       marketCap
+    }
+  }
+`;
+
+/**
+ * GraphQL query to fetch all tokens sorted by market cap
+ */
+export const GET_TOKENS_QUERY = `
+  query GetTokens($first: Int, $skip: Int, $orderBy: String, $orderDirection: String) {
+    tokens(
+      first: $first
+      skip: $skip
+      orderBy: $orderBy
+      orderDirection: $orderDirection
+    ) {
+      id
+      name
+      symbol
+      uri
+      marketPrice
+      floorPrice
+      marketCap
+      liquidity
+      holders
+      contents
+      swapVolume
+      curateVolume
+      createdAtTimestamp
+      owner {
+        id
+      }
+    }
+  }
+`;
+
+/**
+ * GraphQL query to fetch trending tokens based on 24h volume
+ */
+export const GET_TRENDING_TOKENS_QUERY = `
+  query GetTrendingTokens($first: Int, $skip: Int, $timestamp: BigInt) {
+    tokenDayDatas(
+      first: $first
+      skip: $skip
+      orderBy: volume
+      orderDirection: desc
+      where: { timestamp_gte: $timestamp }
+    ) {
+      token {
+        id
+        name
+        symbol
+        uri
+        marketPrice
+        floorPrice
+        marketCap
+        liquidity
+        holders
+        contents
+        swapVolume
+        curateVolume
+        createdAtTimestamp
+        owner {
+          id
+        }
+      }
+      volume
     }
   }
 `;
@@ -239,6 +304,14 @@ export interface GetCuratesByCreatorVariables extends PaginationVariables {
  */
 export interface GetTokenVariables {
   id: string;
+}
+
+/**
+ * GraphQL query variables for fetching tokens list
+ */
+export interface GetTokensVariables extends PaginationVariables {
+  orderBy?: string;
+  orderDirection?: string;
 }
 
 /**
@@ -343,8 +416,6 @@ export interface TokenEntity {
   contentRevenueToken?: string;
   createdAtTimestamp?: string;
   createdAtBlockNumber?: string;
-  marketOpen?: boolean;
-  marketOpensAt?: string;
   isModerated?: boolean;
 }
 
@@ -374,6 +445,13 @@ export interface GetCuratesByCreatorResponse {
  */
 export interface GetTokenResponse {
   token: TokenEntity | null;
+}
+
+/**
+ * Response type for getTokens query
+ */
+export interface GetTokensResponse {
+  tokens: TokenEntity[];
 }
 
 /**
@@ -755,6 +833,59 @@ export async function fetchToken(id: string): Promise<TokenEntity | null> {
   );
   
   return result.data?.token || null;
+}
+
+/**
+ * Fetch all tokens with pagination and sorting
+ */
+export async function fetchTokens(
+  first: number = 50,
+  skip: number = 0,
+  orderBy: string = 'marketCap',
+  orderDirection: string = 'desc'
+): Promise<TokenEntity[]> {
+  const result = await executeGraphQLQuery<GetTokensResponse, GetTokensVariables>(
+    GET_TOKENS_QUERY,
+    { first, skip, orderBy, orderDirection }
+  );
+  
+  console.log('Tokens found:', result.data?.tokens?.length || 0);
+  
+  return result.data?.tokens || [];
+}
+
+/**
+ * Fetch trending tokens based on 24h volume
+ */
+export async function fetchTrendingTokens(
+  first: number = 50,
+  skip: number = 0
+): Promise<TokenEntity[]> {
+  // Get timestamp for 24 hours ago
+  const timestamp24hAgo = Math.floor(Date.now() / 1000) - (24 * 60 * 60);
+  
+  interface TrendingResponse {
+    tokenDayDatas: Array<{
+      token: TokenEntity;
+      volume: string;
+    }>;
+  }
+  
+  interface TrendingVariables {
+    first: number;
+    skip: number;
+    timestamp: string;
+  }
+  
+  const result = await executeGraphQLQuery<TrendingResponse, TrendingVariables>(
+    GET_TRENDING_TOKENS_QUERY,
+    { first, skip, timestamp: timestamp24hAgo.toString() }
+  );
+  
+  console.log('Trending tokens found:', result.data?.tokenDayDatas?.length || 0);
+  
+  // Extract just the token entities from the response
+  return result.data?.tokenDayDatas?.map(td => td.token) || [];
 }
 
 /**

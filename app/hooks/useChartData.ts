@@ -262,6 +262,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       }
 
       const currentPrice = parseFloat(tokenInfo.marketPrice || '0');
+      const currentFloorPrice = parseFloat(tokenInfo.floorPrice || '0');
       const tokenCreatedAt = parseInt(tokenInfo.createdAtTimestamp || '0');
       
       // Get config
@@ -322,8 +323,8 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
         // Process data - fill in missing minutes
         const startTime = now - (numMinutes * 60); // Start time based on timeframe
         const processedData = timeframe === 'LIVE' 
-          ? processLiveChartData(minuteData, currentPrice, startTime, now)
-          : process4HChartData(minuteData, currentPrice, startTime, now);
+          ? processLiveChartData(minuteData, currentPrice, currentFloorPrice, startTime, now)
+          : process4HChartData(minuteData, currentPrice, currentFloorPrice, startTime, now);
         
         setData(processedData);
         
@@ -391,8 +392,8 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
           : now - (168 * 3600); // Full week
         
         const processedData = timeframe === '1D'
-          ? process1DChartData(hourData, currentPrice, startTime, now)
-          : process1WChartData(hourData, currentPrice, startTime, now, tokenCreatedAt);
+          ? process1DChartData(hourData, currentPrice, currentFloorPrice, startTime, now)
+          : process1WChartData(hourData, currentPrice, currentFloorPrice, startTime, now, tokenCreatedAt);
         
         setData(processedData);
         
@@ -452,7 +453,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
         
         // Process 1M data - always use full month period
         const monthAgoTimestamp = now - (30 * 86400);
-        const processedData = process1MChartData(dayData, currentPrice, monthAgoTimestamp, now, tokenCreatedAt);
+        const processedData = process1MChartData(dayData, currentPrice, currentFloorPrice, monthAgoTimestamp, now, tokenCreatedAt);
         
         setData(processedData);
         
@@ -502,7 +503,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
           }
           
           const hourData = result.data?.tokenHourDatas || [];
-          processedData = processMAXChartData(hourData, currentPrice, tokenCreatedAt, now, 'hour');
+          processedData = processMAXChartData(hourData, currentPrice, currentFloorPrice, tokenCreatedAt, now, 'hour');
           
         } else {
           // Token is older - use day data
@@ -538,7 +539,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
           }
           
           const dayData = result.data?.tokenDayDatas || [];
-          processedData = processMAXChartData(dayData, currentPrice, tokenCreatedAt, now, 'day');
+          processedData = processMAXChartData(dayData, currentPrice, currentFloorPrice, tokenCreatedAt, now, 'day');
         }
         
         setData(processedData);
@@ -597,7 +598,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
           });
           
           // Process the data
-          const processedData = processChartData(rawData, currentPrice, timeframe);
+          const processedData = processChartData(rawData, currentPrice, currentFloorPrice, timeframe);
           setData(processedData);
         } else {
           // Legacy path for time-based queries (not used anymore)
@@ -618,7 +619,8 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
   // Process MAX chart data - intelligently samples to ~100 points
   const processMAXChartData = (
     data: any[], 
-    currentPrice: number, 
+    currentPrice: number,
+    currentFloorPrice: number,
     tokenCreatedAt: number,
     endTimestamp: number,
     dataType: 'hour' | 'day'
@@ -660,7 +662,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     
     // Start with the first available price
     let lastKnownPrice = currentPrice;
-    let lastKnownFloorPrice = currentPrice * 0.95;
+    let lastKnownFloorPrice = currentFloorPrice;
     let hasSeenData = false;
     
     // Find first real data point
@@ -729,12 +731,12 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
         result.push({
           timestamp: nowTimestamp,
           marketPrice: currentPrice,
-          floorPrice: currentPrice * 0.95,
+          floorPrice: currentFloorPrice,
           volume: 0
         });
       } else {
         result[result.length - 1].marketPrice = currentPrice;
-        result[result.length - 1].floorPrice = currentPrice * 0.95;
+        result[result.length - 1].floorPrice = currentFloorPrice;
       }
     }
     
@@ -752,7 +754,8 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
   // Process 1M chart data - fills in missing day points with baseline price for pre-creation period
   const process1MChartData = (
     dayData: any[], 
-    currentPrice: number, 
+    currentPrice: number,
+    currentFloorPrice: number,
     startTimestamp: number, 
     endTimestamp: number,
     tokenCreatedAt: number
@@ -831,7 +834,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     // Make sure the last point reflects the current price
     if (result.length > 0) {
       result[result.length - 1].marketPrice = currentPrice;
-      result[result.length - 1].floorPrice = currentPrice * 0.95;
+      result[result.length - 1].floorPrice = currentFloorPrice;
     }
     
     console.log(`1M chart processed:`, {
@@ -849,7 +852,8 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
   // Process 1W chart data - fills in missing hour points with baseline price for pre-creation period
   const process1WChartData = (
     hourData: any[], 
-    currentPrice: number, 
+    currentPrice: number,
+    currentFloorPrice: number,
     startTimestamp: number, 
     endTimestamp: number,
     tokenCreatedAt: number
@@ -942,7 +946,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     // Make sure the last point reflects the current price
     if (result.length > 0) {
       result[result.length - 1].marketPrice = currentPrice;
-      result[result.length - 1].floorPrice = currentPrice * 0.95;
+      result[result.length - 1].floorPrice = currentFloorPrice;
     }
     
     console.log(`1W chart processed:`, {
@@ -960,7 +964,8 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
   // Process 1D chart data - fills in missing hour points with forward-filling
   const process1DChartData = (
     hourData: any[], 
-    currentPrice: number, 
+    currentPrice: number,
+    currentFloorPrice: number,
     startTimestamp: number, 
     endTimestamp: number
   ): PriceDataPoint[] => {
@@ -986,7 +991,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     
     // Start with the first available price or current price if no data
     let lastKnownPrice = currentPrice;
-    let lastKnownFloorPrice = currentPrice * 0.95;
+    let lastKnownFloorPrice = currentFloorPrice;
     
     // Find the earliest data point to use as starting price if available
     let earliestDataPoint = null;
@@ -1002,7 +1007,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     // If no historical data at all, use current price
     if (!earliestDataPoint && hourData.length === 0) {
       lastKnownPrice = currentPrice;
-      lastKnownFloorPrice = currentPrice * 0.95;
+      lastKnownFloorPrice = currentFloorPrice;
     }
     
     // Process each hour forward in time (all 24 hours)
@@ -1036,7 +1041,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     // Make sure the last point reflects the current price
     if (result.length > 0) {
       result[result.length - 1].marketPrice = currentPrice;
-      result[result.length - 1].floorPrice = currentPrice * 0.95;
+      result[result.length - 1].floorPrice = currentFloorPrice;
     }
     
     console.log(`1D chart processed:`, {
@@ -1053,7 +1058,8 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
   // Process 4H chart data - fills in missing minute points with forward-filling
   const process4HChartData = (
     minuteData: any[], 
-    currentPrice: number, 
+    currentPrice: number,
+    currentFloorPrice: number,
     startTimestamp: number, 
     endTimestamp: number
   ): PriceDataPoint[] => {
@@ -1079,7 +1085,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     
     // Start with the first available price or current price if no data
     let lastKnownPrice = currentPrice;
-    let lastKnownFloorPrice = currentPrice * 0.95;
+    let lastKnownFloorPrice = currentFloorPrice;
     
     // Find the earliest data point to use as starting price if available
     let earliestDataPoint = null;
@@ -1095,7 +1101,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     // If no historical data at all, use current price
     if (!earliestDataPoint && minuteData.length === 0) {
       lastKnownPrice = currentPrice;
-      lastKnownFloorPrice = currentPrice * 0.95;
+      lastKnownFloorPrice = currentFloorPrice;
     }
     
     // Process each minute forward in time
@@ -1139,7 +1145,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     // Make sure the last point reflects the current price
     if (result.length > 0) {
       result[result.length - 1].marketPrice = currentPrice;
-      result[result.length - 1].floorPrice = currentPrice * 0.95;
+      result[result.length - 1].floorPrice = currentFloorPrice;
     }
     
     console.log(`4H chart processed:`, {
@@ -1156,7 +1162,8 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
   // Process LIVE chart data - fills in missing minute points with forward-filling
   const processLiveChartData = (
     minuteData: any[], 
-    currentPrice: number, 
+    currentPrice: number,
+    currentFloorPrice: number,
     startTimestamp: number, 
     endTimestamp: number
   ): PriceDataPoint[] => {
@@ -1187,7 +1194,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     
     // Start with the first available price or current price if no data
     let lastKnownPrice = currentPrice;
-    let lastKnownFloorPrice = currentPrice * 0.95;
+    let lastKnownFloorPrice = currentFloorPrice;
     
     // Find the earliest data point to use as starting price if available
     let earliestDataPoint = null;
@@ -1203,7 +1210,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     // If no historical data at all, use current price
     if (!earliestDataPoint && minuteData.length === 0) {
       lastKnownPrice = currentPrice;
-      lastKnownFloorPrice = currentPrice * 0.95;
+      lastKnownFloorPrice = currentFloorPrice;
     }
     
     // Process each minute forward in time
@@ -1240,7 +1247,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     // Make sure the last point reflects the current price
     if (result.length > 0) {
       result[result.length - 1].marketPrice = currentPrice;
-      result[result.length - 1].floorPrice = currentPrice * 0.95;
+      result[result.length - 1].floorPrice = currentFloorPrice;
     }
     
     console.log(`LIVE chart processed (forward-filled):`, {
@@ -1261,7 +1268,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
   };
 
   // Process raw subgraph data into exactly 60 chart points
-  const processChartData = (rawData: any[], currentPrice: number, timeframe: Timeframe): PriceDataPoint[] => {
+  const processChartData = (rawData: any[], currentPrice: number, currentFloorPrice: number, timeframe: Timeframe): PriceDataPoint[] => {
     if (rawData.length === 0) {
       console.log(`No data for ${timeframe}, creating minimal points at current price:`, currentPrice);
       // If no historical data, create just 2 points to show current state
@@ -1274,13 +1281,13 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
         {
           timestamp: startTime,
           marketPrice: currentPrice,
-          floorPrice: currentPrice * 0.95,
+          floorPrice: currentFloorPrice,
           volume: 0
         },
         {
           timestamp: now,
           marketPrice: currentPrice,
-          floorPrice: currentPrice * 0.95,
+          floorPrice: currentFloorPrice,
           volume: 0
         }
       ];
@@ -1300,7 +1307,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
         {
           timestamp: now,
           marketPrice: currentPrice,
-          floorPrice: currentPrice * 0.95,
+          floorPrice: currentFloorPrice,
           volume: 0
         }
       ];

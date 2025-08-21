@@ -7,7 +7,7 @@ import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { baseSepolia } from 'wagmi/chains';
 import { fetchTokenBoardData } from "@/lib/api/subgraph";
-import { ROUTER_ADDRESS, ROUTER_ABI } from "@/lib/constants/contracts";
+import { ROUTER_ADDRESS, ROUTER_ABI } from "@/lib/constants";
 
 interface CreateStickerProps {
   tokenAddress: string;

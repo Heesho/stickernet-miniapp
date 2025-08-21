@@ -7,7 +7,7 @@ import { parseUnits, formatUnits } from 'viem';
 import { baseSepolia } from 'wagmi/chains';
 import { useCurateContent } from "../../../hooks/useCurateContent";
 import { useContentData, useTokenData } from "../../../hooks/useMulticall";
-import { USDC_CONTRACT, USDC_DECIMALS } from "@/lib/constants/contracts";
+import { USDC_CONTRACT, USDC_DECIMALS } from "@/lib/constants";
 import { isValidTokenId } from "@/types";
 import { fetchTokenBoardData } from "@/lib/api/subgraph";
 import type { Curate } from "@/lib/constants";

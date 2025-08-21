@@ -20,16 +20,34 @@ export function useBaseAccount(): BaseAccountInfo {
   const isBaseSmartWallet = useMemo(() => {
     if (!isConnected || !connector) return false;
     
-    // Check if it's a Coinbase Wallet connector
-    const isCoinbaseWallet = connector.name?.toLowerCase().includes('coinbase');
+    // Check if it's a Coinbase Wallet connector (various possible names)
+    const connectorName = connector.name?.toLowerCase() || '';
+    const connectorId = connector.id?.toLowerCase() || '';
+    const connectorType = connector.type?.toLowerCase() || '';
+    
+    const isCoinbaseWallet = (
+      connectorName.includes('coinbase') ||
+      connectorName.includes('smart wallet') ||
+      connectorName.includes('minikit') ||
+      connectorId.includes('coinbase') ||
+      connectorId.includes('smart') ||
+      connectorType.includes('coinbase')
+    );
     
     // Additional checks for Smart Wallet characteristics
     const hasSmartWalletFeatures = (
       connector.type === 'coinbaseWallet' || 
-      connector.id === 'coinbaseWalletSDK'
+      connector.id === 'coinbaseWalletSDK' ||
+      connector.id === 'coinbaseWallet' ||
+      connector.id === 'smartWallet' ||
+      // Check for MiniKit context which indicates Smart Wallet
+      (typeof window !== 'undefined' && (window as any).MiniKit)
     );
     
-    return isCoinbaseWallet && hasSmartWalletFeatures;
+    // If we're in a MiniKit context, we should assume Smart Wallet
+    const inMiniKit = typeof window !== 'undefined' && (window as any).MiniKit;
+    
+    return isCoinbaseWallet && (hasSmartWalletFeatures || inMiniKit);
   }, [connector, isConnected]);
 
   return {

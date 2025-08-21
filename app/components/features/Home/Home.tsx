@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAccount } from "wagmi";
+import { useRouter } from "next/navigation";
 import { 
   LoadingSpinner, 
   ErrorMessage, 
   PullToRefreshIndicator 
 } from "../../ui";
+import { useEnforceBaseWallet } from "../../../hooks/useBaseAccount";
 import { CurateImage } from "./CurateImage";
 import { ImageDetail } from "./ImageDetail";
 import { SkeletonGrid } from "./SkeletonGrid";
@@ -34,6 +37,9 @@ import type { HomeProps } from "./Home.types";
  */
 export function Home({ setActiveTab, onNavigateToBoard }: HomeProps) {
   const [selectedCurate, setSelectedCurate] = useState<Curate | null>(null);
+  const { isConnected } = useAccount();
+  const { isValidConnection } = useEnforceBaseWallet();
+  const router = useRouter();
 
   // Custom hooks for state management
   const {
@@ -137,6 +143,7 @@ export function Home({ setActiveTab, onNavigateToBoard }: HomeProps) {
       />
 
       <div className="animate-fade-in">
+
         {useMockData && (
           <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-center">
             <p className="text-sm text-yellow-600 dark:text-yellow-400">
@@ -151,7 +158,10 @@ export function Home({ setActiveTab, onNavigateToBoard }: HomeProps) {
               key={curate.id} 
               curate={curate} 
               index={index}
-              onImageClick={() => setSelectedCurate(curate)}
+              onImageClick={() => {
+                // Navigate to sticker page with cleaner URL structure
+                router.push(`/${curate.token.id}/${curate.tokenId}`);
+              }}
               isNew={newItems.has(curate.id)}
             />
           ))}
@@ -188,7 +198,9 @@ export function Home({ setActiveTab, onNavigateToBoard }: HomeProps) {
               checkForNewCurates();
             }, 5000); // Wait 5 seconds for blockchain/subgraph to update
           }}
-          onNavigateToBoard={onNavigateToBoard}
+          onNavigateToBoard={(tokenId: string, tokenAddress: string) => {
+            router.push(`/${tokenAddress}`);
+          }}
         />
       )}
     </div>

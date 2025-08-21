@@ -2,266 +2,209 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Button, Icon } from "../../ui";
-import { ImageDetail } from "../Home/ImageDetail";
 import { 
   executeGraphQLQuery,
-  transformCurateEntities,
-  SKELETON_HEIGHTS,
-  type Curate,
-  type CurateEntity,
+  fetchTokens,
+  fetchTrendingTokens,
+  type TokenEntity,
   type GraphQLResponse
-} from "@/lib/constants";
+} from "@/lib/api/subgraph";
 import type { SearchProps, SearchState } from "./Search.types";
 
-// GraphQL query for search functionality
-const SEARCH_CURATES_QUERY = `
-  query SearchCurates($searchTerm: String!, $first: Int) {
-    curates(
-      first: $first
-      orderBy: timestamp
-      orderDirection: desc
-      where: {
-        or: [
-          { token_: { name_contains_nocase: $searchTerm } }
-          { creator_: { id_contains: $searchTerm } }
-          { user_: { id_contains: $searchTerm } }
-        ]
-      }
-    ) {
-      id
-      tokenId
-      uri
-      timestamp
-      price
-      creator {
-        id
-      }
-      user {
-        id
-      }
-      token {
-        id
-        name
-        uri
-      }
-    }
-  }
-`;
-
-interface SearchCuratesResponse {
-  curates: CurateEntity[];
+interface ExtendedSearchState extends SearchState {
+  tokens: TokenEntity[];
+  activeTab: 'top' | 'trending' | 'new';
+  loadingTokens: boolean;
 }
 
-interface SearchCuratesVariables {
-  searchTerm: string;
-  first?: number;
+function formatPrice(price: string | undefined): string {
+  if (!price) return '$0.00';
+  const numPrice = parseFloat(price);
+  if (numPrice < 0.01) return `$${numPrice.toFixed(6)}`;
+  if (numPrice < 1) return `$${numPrice.toFixed(4)}`;
+  if (numPrice < 100) return `$${numPrice.toFixed(2)}`;
+  return `$${numPrice.toFixed(0)}`;
 }
 
-// Search Image Component (similar to CurateImage)
-function SearchImageResult({ curate, onImageClick }: { curate: Curate; onImageClick: () => void }) {
+function formatMarketCap(marketCap: string | undefined): string {
+  if (!marketCap) return '$0';
+  const num = parseFloat(marketCap);
+  if (num >= 1e9) return `$${(num / 1e9).toFixed(1)}B`;
+  if (num >= 1e6) return `$${(num / 1e6).toFixed(1)}M`;
+  if (num >= 1e3) return `$${(num / 1e3).toFixed(1)}K`;
+  return `$${num.toFixed(0)}`;
+}
+
+function TokenListItem({ 
+  token, 
+  rank,
+  onClick 
+}: { 
+  token: TokenEntity; 
+  rank: number;
+  onClick?: () => void;
+}) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
-    <div className="mb-4 break-inside-avoid">
-      <div 
-        className="bg-[var(--app-card-bg)] rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-        onClick={onImageClick}
-      >
+    <div 
+      className="flex items-center space-x-3 py-2 px-1 hover:bg-[var(--app-hover)] transition-all duration-200 cursor-pointer"
+      onClick={onClick}
+    >
+      {/* Rank */}
+      <div className="text-[var(--app-foreground-muted)] font-mono text-sm w-8 text-center">
+        {rank}
+      </div>
+
+      {/* Token Image */}
+      <div className="relative w-10 h-10 flex-shrink-0">
         {!imageError ? (
-          <div className="relative">
+          <>
             {!imageLoaded && (
-              <div className="aspect-square bg-[var(--app-gray)] animate-pulse rounded-2xl flex items-center justify-center">
-                <div className="w-8 h-8 bg-[var(--app-accent-light)] rounded-full"></div>
-              </div>
+              <div className="w-10 h-10 bg-[var(--app-gray)] animate-pulse rounded-full" />
             )}
             <Image
-              src={curate.uri}
-              alt={`Search result ${curate.id}`}
-              width={300}
-              height={300}
-              className={`w-full object-cover rounded-2xl transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'}`}
+              src={token.uri}
+              alt={token.name}
+              width={40}
+              height={40}
+              className={`rounded-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'}`}
               onLoad={() => setImageLoaded(true)}
               onError={() => setImageError(true)}
-              loading="lazy"
             />
-            {/* Search result indicator */}
-            <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-              {curate.token.name || 'Curate'}
-            </div>
-          </div>
+          </>
         ) : (
-          <div className="aspect-square bg-[var(--app-gray)] rounded-2xl flex items-center justify-center">
-            <div className="text-center">
-              <Icon name="search" size="lg" className="text-[var(--app-foreground-muted)] mx-auto mb-2" />
-              <p className="text-xs text-[var(--app-foreground-muted)]">Image not available</p>
-            </div>
+          <div className="w-10 h-10 bg-[var(--app-gray)] rounded-full flex items-center justify-center">
+            <span className="text-xs text-[var(--app-foreground-muted)]">
+              {token.symbol?.charAt(0) || '?'}
+            </span>
           </div>
         )}
+      </div>
+
+      {/* Token Info - Symbol and Name stacked */}
+      <div className="flex-1 min-w-0">
+        <div className="text-lg font-semibold text-white truncate">
+          {token.symbol || '???'}
+        </div>
+        <div className="text-sm text-gray-500 truncate">
+          {token.name || 'Unknown'}
+        </div>
+      </div>
+
+      {/* Price and Holders */}
+      <div className="text-right">
+        <div className="font-medium text-[var(--app-foreground)]">
+          {formatPrice(token.marketPrice)}
+        </div>
+        <div className="flex items-center justify-end space-x-1 text-xs text-[var(--app-foreground-muted)]">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+          </svg>
+          <span>{token.holders || '0'}</span>
+        </div>
       </div>
     </div>
   );
 }
 
-// Search function
-async function searchCurates(searchTerm: string): Promise<Curate[]> {
-  if (!searchTerm.trim()) {
-    return [];
-  }
-
-  try {
-    const result = await executeGraphQLQuery<SearchCuratesResponse, SearchCuratesVariables>(
-      SEARCH_CURATES_QUERY,
-      { searchTerm: searchTerm.trim(), first: 50 }
-    );
-    
-    console.log('Search results found:', result.data?.curates?.length || 0);
-    
-    const entities = result.data?.curates || [];
-    return transformCurateEntities(entities);
-  } catch (error) {
-    console.error('Search error:', error);
-    throw error;
-  }
-}
-
 export function Search({}: SearchProps) {
-  const [searchState, setSearchState] = useState<SearchState>({
+  const router = useRouter();
+  const [searchState, setSearchState] = useState<ExtendedSearchState>({
     query: '',
     results: [],
     loading: false,
     error: null,
     hasSearched: false,
+    tokens: [],
+    activeTab: 'top',
+    loadingTokens: true,
   });
-  const [selectedCurate, setSelectedCurate] = useState<Curate | null>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounced search function
-  const debouncedSearch = useCallback(async (searchTerm: string) => {
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
+  // Load tokens on mount
+  useEffect(() => {
+    loadTokens('top');
+  }, []);
 
-    debounceTimer.current = setTimeout(async () => {
-      if (!searchTerm.trim()) {
-        setSearchState(prev => ({
-          ...prev,
-          results: [],
-          loading: false,
-          error: null,
-          hasSearched: false,
-        }));
-        return;
+  // Load tokens based on tab
+  const loadTokens = useCallback(async (tab: 'top' | 'trending' | 'new') => {
+    setSearchState(prev => ({
+      ...prev,
+      loadingTokens: true,
+      activeTab: tab,
+      error: null,
+    }));
+
+    try {
+      let tokens: TokenEntity[] = [];
+
+      if (tab === 'trending') {
+        // Use 24h volume data for trending
+        tokens = await fetchTrendingTokens(50, 0);
+      } else if (tab === 'new') {
+        // Sort by creation timestamp for new tokens
+        tokens = await fetchTokens(50, 0, 'createdAtTimestamp', 'desc');
+      } else {
+        // Default to top by market cap
+        tokens = await fetchTokens(50, 0, 'marketCap', 'desc');
       }
-
+      
       setSearchState(prev => ({
         ...prev,
-        loading: true,
-        error: null,
-        hasSearched: true,
+        tokens,
+        loadingTokens: false,
       }));
-
-      try {
-        const results = await searchCurates(searchTerm);
-        setSearchState(prev => ({
-          ...prev,
-          results,
-          loading: false,
-        }));
-      } catch (error) {
-        console.error('Search failed:', error);
-        setSearchState(prev => ({
-          ...prev,
-          results: [],
-          loading: false,
-          error: 'Failed to search. Please try again.',
-        }));
-      }
-    }, 500); // 500ms debounce delay
+    } catch (error) {
+      console.error('Failed to load tokens:', error);
+      setSearchState(prev => ({
+        ...prev,
+        tokens: [],
+        loadingTokens: false,
+        error: 'Failed to load tokens. Please try again.',
+      }));
+    }
   }, []);
+
+  // Filter tokens based on search query
+  const filteredTokens = searchState.query.trim() 
+    ? searchState.tokens.filter(token => 
+        token.name?.toLowerCase().includes(searchState.query.toLowerCase()) ||
+        token.symbol?.toLowerCase().includes(searchState.query.toLowerCase())
+      )
+    : searchState.tokens;
 
   // Handle search input change
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchState(prev => ({ ...prev, query }));
-    debouncedSearch(query);
-  }, [debouncedSearch]);
+  }, []);
 
   // Clear search
   const clearSearch = useCallback(() => {
-    setSearchState({
+    setSearchState(prev => ({
+      ...prev,
       query: '',
-      results: [],
-      loading: false,
-      error: null,
-      hasSearched: false,
-    });
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
+    }));
+  }, []);
+
+  // Handle tab change
+  const handleTabChange = useCallback((tab: 'top' | 'trending' | 'new') => {
+    if (tab !== searchState.activeTab) {
+      loadTokens(tab);
     }
-  }, []);
+  }, [searchState.activeTab, loadTokens]);
 
-  // Cleanup debounce timer on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, []);
-
-  // Loading skeleton
-  if (searchState.loading) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        {/* Search Input */}
-        <div className="relative">
-          <div className="flex items-center space-x-2">
-            <div className="relative flex-1">
-              <Icon 
-                name="profile" 
-                size="sm" 
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--app-foreground-muted)]" 
-              />
-              <input
-                type="text"
-                placeholder="Search stickernet"
-                value={searchState.query}
-                onChange={handleSearchChange}
-                className="w-full pl-10 pr-10 py-3 bg-[var(--app-card-bg)] rounded-2xl text-[var(--app-foreground)] placeholder-[var(--app-foreground-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]"
-              />
-              {searchState.query && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--app-foreground-muted)] hover:text-[var(--app-foreground)] transition-colors"
-                >
-                  <Icon name="search" size="sm" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Loading Results */}
-        <div className="columns-2 gap-4 space-y-4">
-          {SKELETON_HEIGHTS.slice(0, 6).map((height, i) => (
-            <div key={i} className="mb-4 break-inside-avoid">
-              <div className="bg-[var(--app-card-bg)] rounded-2xl overflow-hidden">
-                <div 
-                  className="w-full bg-[var(--app-gray)] animate-pulse rounded-2xl"
-                  style={{ height: `${height}px` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Navigate to token page
+  const handleTokenClick = useCallback((tokenId: string) => {
+    router.push(`/${tokenId}`);
+  }, [router]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 animate-fade-in">
       {/* Search Input */}
       <div className="relative">
         <div className="flex items-center space-x-2">
@@ -273,7 +216,7 @@ export function Search({}: SearchProps) {
             />
             <input
               type="text"
-              placeholder="Search stickernet"
+              placeholder="Search"
               value={searchState.query}
               onChange={handleSearchChange}
               className="w-full pl-10 pr-10 py-3 bg-[var(--app-card-bg)] border border-[var(--app-card-border)] rounded-2xl text-[var(--app-foreground)] placeholder-[var(--app-foreground-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)] focus:border-transparent"
@@ -283,13 +226,97 @@ export function Search({}: SearchProps) {
                 onClick={clearSearch}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--app-foreground-muted)] hover:text-[var(--app-foreground)] transition-colors"
               >
-                <Icon name="search" size="sm" />
+                <Icon name="close" size="sm" />
               </button>
             )}
           </div>
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex space-x-2">
+        <button
+          onClick={() => handleTabChange('top')}
+          className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+            searchState.activeTab === 'top'
+              ? 'bg-[var(--app-accent)] text-white'
+              : 'bg-[var(--app-card-bg)] text-[var(--app-foreground-muted)] hover:bg-[var(--app-hover)]'
+          }`}
+        >
+          Top
+        </button>
+        <button
+          onClick={() => handleTabChange('trending')}
+          className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+            searchState.activeTab === 'trending'
+              ? 'bg-[var(--app-accent)] text-white'
+              : 'bg-[var(--app-card-bg)] text-[var(--app-foreground-muted)] hover:bg-[var(--app-hover)]'
+          }`}
+        >
+          Trending
+        </button>
+        <button
+          onClick={() => handleTabChange('new')}
+          className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+            searchState.activeTab === 'new'
+              ? 'bg-[var(--app-accent)] text-white'
+              : 'bg-[var(--app-card-bg)] text-[var(--app-foreground-muted)] hover:bg-[var(--app-hover)]'
+          }`}
+        >
+          New
+        </button>
+      </div>
+
+      {/* Token List */}
+      <div className="space-y-2">
+        {searchState.loadingTokens ? (
+          // Loading skeleton
+          <>
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-3 py-2 px-1 animate-pulse">
+                <div className="w-8 h-8 bg-[var(--app-gray)] rounded" />
+                <div className="w-10 h-10 bg-[var(--app-gray)] rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 bg-[var(--app-gray)] rounded w-1/4" />
+                  <div className="h-3 bg-[var(--app-gray)] rounded w-1/3" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-[var(--app-gray)] rounded w-20" />
+                  <div className="h-3 bg-[var(--app-gray)] rounded w-10" />
+                </div>
+              </div>
+            ))}
+          </>
+        ) : searchState.error ? (
+          <div className="text-center py-8">
+            <Icon name="alert" size="lg" className="text-red-500 mx-auto mb-2" />
+            <p className="text-[var(--app-foreground-muted)]">{searchState.error}</p>
+            <Button
+              onClick={() => loadTokens(searchState.activeTab)}
+              className="mt-4"
+              variant="secondary"
+            >
+              Try Again
+            </Button>
+          </div>
+        ) : filteredTokens.length === 0 ? (
+          <div className="text-center py-8">
+            <Icon name="search" size="lg" className="text-[var(--app-foreground-muted)] mx-auto mb-2" />
+            <p className="text-[var(--app-foreground-muted)]">
+              {searchState.query ? 'No tokens found matching your search' : 'No tokens available'}
+            </p>
+          </div>
+        ) : (
+          filteredTokens.map((token, index) => (
+            <TokenListItem
+              key={token.id}
+              token={token}
+              rank={index + 1}
+              onClick={() => handleTokenClick(token.id)}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 }

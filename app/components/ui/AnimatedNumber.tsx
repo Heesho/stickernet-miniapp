@@ -40,7 +40,26 @@ export function AnimatedNumber({
     if (!isMountedRef.current && !animateOnMount) {
       isMountedRef.current = true;
       previousValueRef.current = targetNum;
-      setDisplayValue(targetNum.toFixed(decimals));
+      
+      // Apply the same formatting logic as in animation
+      let formatted: string;
+      if (Math.abs(targetNum) >= 1000000) {
+        formatted = (targetNum / 1000000).toFixed(2) + 'M';
+      } else if (Math.abs(targetNum) >= 10000) {
+        formatted = (targetNum / 1000).toFixed(2) + 'K';
+      } else if (Math.abs(targetNum) >= 1000) {
+        // Add comma for thousands
+        const wholePart = Math.floor(targetNum);
+        const decimalPart = targetNum - wholePart;
+        const formattedWhole = wholePart.toLocaleString('en-US');
+        formatted = formattedWhole + decimalPart.toFixed(decimals).substring(1);
+      } else if (Math.abs(targetNum) < 1 && targetNum !== 0) {
+        formatted = targetNum.toFixed(Math.max(decimals, 6));
+      } else {
+        formatted = targetNum.toFixed(decimals);
+      }
+      
+      setDisplayValue(formatted);
       return;
     }
 

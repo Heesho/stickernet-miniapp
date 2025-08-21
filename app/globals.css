@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure Coinbase Wallet modals appear above everything */
+@layer base {
+  /* Coinbase Wallet SDK modal */
+  [data-testid="cb-wallet-modal"],
+  [data-testid="ck-modal-container"],
+  .coinbase-wallet-modal,
+  .ck-modal-container {
+    z-index: 999999 !important;
+  }
+  
+  /* Transaction preview and confirmation modals */
+  [role="dialog"] {
+    z-index: 999999 !important;
+  }
+}
+
 :root {
   /* Core Colors */
   --background: #ffffff;

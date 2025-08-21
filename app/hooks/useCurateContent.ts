@@ -15,7 +15,7 @@ import {
   USDC_CONTRACT, 
   ROUTER_CONTRACT, 
   USDC_DECIMALS 
-} from '@/lib/constants/contracts';
+} from '@/lib/constants';
 import type { 
   CurateContentParams, 
   BatchTransactionStatus, 

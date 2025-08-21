@@ -3,9 +3,11 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import Image from 'next/image';
 import { useAccount } from "wagmi";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button, Icon } from "../../ui";
 import { AnimatedNumber } from "../../ui/AnimatedNumber";
+import { useEnforceBaseWallet } from "../../../hooks/useBaseAccount";
 import { CreateSticker } from "./CreateSticker";
 import { TradingView } from "./TradingView";
 import { formatUnits } from "viem";
@@ -38,6 +40,7 @@ import { useMulticallAutoRefresh } from "@/app/hooks/useMulticallAutoRefresh";
 import type { BoardProps } from "./Board.types";
 
 export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
+  const router = useRouter();
   const [boardData, setBoardData] = useState<{
     token: {
       id: string;
@@ -85,6 +88,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
   });
   const symbolRef = useRef<HTMLDivElement>(null);
   const { address: account, isConnected } = useAccount();
+  const { isValidConnection } = useEnforceBaseWallet();
   
   // Use simplified multicall auto-refresh hook
   const { 
@@ -399,7 +403,11 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
   }, [boardData?.stats?.priceChange1h, boardData?.stats?.priceChange24h, boardData?.stats?.priceChangeAmount]);
 
   const handleBackToHome = () => {
-    setActiveTab?.("home");
+    if (setActiveTab) {
+      setActiveTab("home");
+    } else {
+      router.push("/");
+    }
   };
 
   // Create the callback outside of conditional rendering
@@ -535,6 +543,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
       {/* Add spacing for the fixed header */}
       <div className="h-16"></div>
 
+
       {/* Token info section */}
       <div>
         {/* Token name, symbol, price and cover image */}
@@ -648,7 +657,10 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
                 key={curate.id} 
                 curate={curate} 
                 index={index}
-                onImageClick={() => setSelectedCurate(curate)}
+                onImageClick={() => {
+                  // Navigate to sticker page URL
+                  router.push(`/${tokenAddress}/${curate.tokenId}`);
+                }}
                 isNew={false}
               />
             ))}

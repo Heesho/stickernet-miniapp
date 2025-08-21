@@ -279,93 +279,39 @@ export function SellPage({
               </div>
             )}
 
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => handleNumberPad("1")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
-              style={{ color: themeColor }}
-            >
-              1
-            </button>
-            <button
-              onClick={() => handleNumberPad("2")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
-              style={{ color: themeColor }}
-            >
-              2
-            </button>
-            <button
-              onClick={() => handleNumberPad("3")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
-              style={{ color: themeColor }}
-            >
-              3
-            </button>
-
-            <button
-              onClick={() => handleNumberPad("4")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
-              style={{ color: themeColor }}
-            >
-              4
-            </button>
-            <button
-              onClick={() => handleNumberPad("5")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
-              style={{ color: themeColor }}
-            >
-              5
-            </button>
-            <button
-              onClick={() => handleNumberPad("6")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
-              style={{ color: themeColor }}
-            >
-              6
-            </button>
-
-            <button
-              onClick={() => handleNumberPad("7")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
-              style={{ color: themeColor }}
-            >
-              7
-            </button>
-            <button
-              onClick={() => handleNumberPad("8")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
-              style={{ color: themeColor }}
-            >
-              8
-            </button>
-            <button
-              onClick={() => handleNumberPad("9")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
-              style={{ color: themeColor }}
-            >
-              9
-            </button>
-
+          <div className="grid grid-cols-3 gap-1">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+              <button
+                key={num}
+                onClick={() => handleNumberPad(num.toString())}
+                className="h-10 text-2xl font-medium hover:bg-gray-900 active:bg-gray-800 rounded-xl transition-all"
+                style={{ color: themeColor }}
+              >
+                {num}
+              </button>
+            ))}
             <button
               onClick={() => handleNumberPad(".")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="h-10 text-2xl font-medium hover:bg-gray-900 active:bg-gray-800 rounded-xl transition-all"
               style={{ color: themeColor }}
             >
               .
             </button>
             <button
               onClick={() => handleNumberPad("0")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="h-10 text-2xl font-medium hover:bg-gray-900 active:bg-gray-800 rounded-xl transition-all"
               style={{ color: themeColor }}
             >
               0
             </button>
             <button
               onClick={() => handleNumberPad("<")}
-              className="py-2.5 text-xl font-medium active:opacity-70 transition-opacity"
+              className="h-10 text-2xl font-medium hover:bg-gray-900 active:bg-gray-800 rounded-xl transition-all flex items-center justify-center"
               style={{ color: themeColor }}
             >
-              &lt;
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
+              </svg>
             </button>
           </div>
           </div>

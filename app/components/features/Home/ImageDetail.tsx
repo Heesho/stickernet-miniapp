@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import { useRouter } from "next/navigation";
 import { Icon } from "../../ui";
 import { useContentData, useTokenData } from "../../../hooks/useMulticall";
 import { useAccount } from 'wagmi';
@@ -24,6 +25,7 @@ const Name = dynamic(() => import("@coinbase/onchainkit/identity").then(mod => (
 });
 
 export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: ImageDetailProps) {
+  const router = useRouter();
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [tokenAvatarError, setTokenAvatarError] = useState(false);
@@ -106,7 +108,19 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
     if (onNavigateToBoard) {
       onNavigateToBoard(curate.tokenId.toString(), curate.token.id);
       onClose();
+    } else {
+      router.push(`/${curate.token.id}`);
     }
+  };
+
+  // Handle clicking on the sticker image to go to dedicated sticker page
+  const handleStickerClick = () => {
+    router.push(`/${curate.token.id}/${curate.tokenId}`);
+  };
+
+  // Handle clicking on user profiles
+  const handleUserClick = (userAddress: string) => {
+    router.push(`/account/${userAddress}`);
   };
   
   if (isError) {
@@ -143,7 +157,7 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
           </svg>
         </button>
 
-        {/* Image at top */}
+        {/* Image at top - clickable to go to dedicated sticker page */}
         <div className="relative">
           {!imageError ? (
             <div className="relative">
@@ -152,16 +166,21 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
                   <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
                 </div>
               )}
-              <Image
-                src={curate.uri}
-                alt={`Curate ${curate.id}`}
-                width={400}
-                height={600}
-                className={`w-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'} max-h-screen`}
-                onLoad={() => setImageLoaded(true)}
-                onError={() => setImageError(true)}
-                style={{ height: 'auto', minHeight: '60vh' }}
-              />
+              <button 
+                onClick={handleStickerClick}
+                className="w-full relative block"
+              >
+                <Image
+                  src={curate.uri}
+                  alt={`Curate ${curate.id}`}
+                  width={400}
+                  height={600}
+                  className={`w-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'} max-h-screen hover:scale-[1.02] transition-transform duration-200`}
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
+                  style={{ height: 'auto', minHeight: '60vh' }}
+                />
+              </button>
             </div>
           ) : (
             <div className="h-screen bg-gray-800 flex items-center justify-center">
@@ -231,15 +250,25 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
             {/* Created by */}
             <div className="flex items-center space-x-2">
               <span className="text-gray-400 text-sm">Created by</span>
-              <Avatar address={curate.creator.id as `0x${string}`} className="w-5 h-5" />
-              <Name address={curate.creator.id as `0x${string}`} className="text-white text-sm" />
+              <button
+                onClick={() => handleUserClick(curate.creator.id)}
+                className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+              >
+                <Avatar address={curate.creator.id as `0x${string}`} className="w-5 h-5" />
+                <Name address={curate.creator.id as `0x${string}`} className="text-white text-sm" />
+              </button>
             </div>
 
             {/* Owned by */}
             <div className="flex items-center space-x-2">
               <span className="text-gray-400 text-sm">Owned by</span>
-              <Avatar address={curate.user?.id as `0x${string}` || curate.creator.id as `0x${string}`} className="w-5 h-5" />
-              <Name address={curate.user?.id as `0x${string}` || curate.creator.id as `0x${string}`} className="text-white text-sm" />
+              <button
+                onClick={() => handleUserClick(curate.user?.id || curate.creator.id)}
+                className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+              >
+                <Avatar address={curate.user?.id as `0x${string}` || curate.creator.id as `0x${string}`} className="w-5 h-5" />
+                <Name address={curate.user?.id as `0x${string}` || curate.creator.id as `0x${string}`} className="text-white text-sm" />
+              </button>
             </div>
           </div>
         </div>

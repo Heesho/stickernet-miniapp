@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@coinbase/onchainkit": "latest",
+    "@coinbase/onchainkit": "^0.38.19",
     "@farcaster/miniapp-sdk": "^0.1.8",
     "@tanstack/react-query": "^5",
     "@types/lodash": "^4.17.20",

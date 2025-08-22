@@ -4,19 +4,7 @@ import { type ReactNode, useCallback, useMemo, useState, useEffect } from "react
 import { useAccount, useReadContract, useChainId, useSwitchChain } from "wagmi";
 import dynamic from "next/dynamic";
 import { ProfileView } from "./ProfileView";
-import {
-  Name,
-  Identity,
-  Address,
-  Avatar,
-  EthBalance,
-} from "@coinbase/onchainkit/identity";
-import {
-  ConnectWallet,
-  Wallet,
-  WalletDropdown,
-  WalletDropdownDisconnect,
-} from "@coinbase/onchainkit/wallet";
+import { ConnectedIdentity } from "../BaseAccount/ConnectedIdentity";
 import {
   Transaction,
   TransactionButton,
@@ -39,24 +27,9 @@ import { useEnforceBaseWallet } from "../../../hooks/useBaseAccount";
 import { getPaymasterActions } from "@/lib/paymaster";
 import type { ProfileProps } from "./Profile.types";
 
-// Create a client-only wallet component to prevent hydration issues
-const ClientOnlyWallet = dynamic(
-  () => Promise.resolve(function ClientWallet() {
-    return (
-      <Wallet>
-        <ConnectWallet className="w-full" />
-        <WalletDropdown>
-          <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
-            <Avatar className="w-12 h-12" />
-            <Name className="text-sm font-semibold" />
-            <Address className="text-xs" />
-            <EthBalance className="text-xs" />
-          </Identity>
-          <WalletDropdownDisconnect />
-        </WalletDropdown>
-      </Wallet>
-    );
-  }),
+// Create a client-only identity component to prevent hydration issues
+const ClientOnlyIdentity = dynamic(
+  () => import('../BaseAccount/ConnectedIdentity').then(mod => mod.ConnectedIdentity),
   { ssr: false }
 );
 
@@ -159,17 +132,9 @@ export function Profile({ setActiveTab }: ProfileProps) {
         )}
 
 
-      {/* User Identity or Connect Wallet - Top Left */}
+      {/* User Identity with Base Account - Clickable */}
       <div className="flex justify-start mb-6">
-        {!isConnected ? (
-          <div>
-            <ClientOnlyWallet />
-          </div>
-        ) : (
-          <div>
-            <ClientOnlyWallet />
-          </div>
-        )}
+        <ClientOnlyIdentity />
       </div>
 
       {/* Additional Content for Connected Users */}

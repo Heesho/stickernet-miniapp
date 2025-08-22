@@ -10,13 +10,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { baseSepolia } from "wagmi/chains";
 import {
-  Identity,
-  Name,
-  Address,
-  Avatar,
-  EthBalance,
-} from "@coinbase/onchainkit/identity";
-import {
   ConnectWallet,
 } from "@coinbase/onchainkit/wallet";
 import {
@@ -24,6 +17,8 @@ import {
   TransactionButton,
 } from "@coinbase/onchainkit/transaction";
 import { getPaymasterActions } from "@/lib/paymaster";
+import { BaseIdentityProfile } from "../BaseAccount/BaseIdentityProfile";
+import { BaseAccountAuth } from "../BaseAccount";
 
 // GraphQL query to fetch all user data
 const GET_USER_PROFILE_QUERY = `
@@ -186,15 +181,17 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
     let cashValue = 0;
     
     // Add value from token positions (shares)
-    profileData.user.tokenPositions.forEach(position => {
-      const balance = parseFloat(position.balance || '0');
-      const marketPrice = parseFloat(position.token.marketPrice || '0');
-      const value = balance * marketPrice;
-      totalValue += value;
-      
-      // Assuming debt represents cash/USDC
-      cashValue += parseFloat(position.debt || '0');
-    });
+    if (profileData.user.tokenPositions) {
+      profileData.user.tokenPositions.forEach(position => {
+        const balance = parseFloat(position.balance || '0');
+        const marketPrice = parseFloat(position.token.marketPrice || '0');
+        const value = balance * marketPrice;
+        totalValue += value;
+        
+        // Assuming debt represents cash/USDC
+        cashValue += parseFloat(position.debt || '0');
+      });
+    }
     
     return { total: totalValue, cash: cashValue };
   };
@@ -244,11 +241,8 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
                 <h2 className="text-lg font-semibold text-gray-400">Not connected</h2>
               </div>
             </div>
-            {/* Sign In Button */}
-            <ConnectWallet 
-              className="px-4 py-2 bg-[#0052FF] text-white rounded-lg font-medium hover:bg-[#0041CC] transition-colors"
-              text="Sign in"
-            />
+            {/* Sign In with Base Button */}
+            <BaseAccountAuth className="" />
           </div>
           
           {/* Portfolio Value Placeholder */}
@@ -291,19 +285,18 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
   }
 
   const { total: portfolioValue, cash: cashValue } = calculatePortfolioValue();
-  const displayAddress = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+  // Display name will be handled by BaseIdentity component
 
   return (
     <div className="animate-fade-in">
       {/* Profile Header */}
       <div className="mb-6 pb-6 -mx-4 px-4">
         <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600" />
-            <div>
-              <h2 className="text-lg font-semibold text-white">{displayAddress}</h2>
-            </div>
-          </div>
+          {/* User Identity - Show compact for own profile, expanded for others */}
+          <BaseIdentityProfile 
+            address={userAddress as `0x${string}`}
+            isOwnProfile={connectedAddress && userAddress && connectedAddress.toLowerCase() === userAddress.toLowerCase()}
+          />
           
           {/* Deposit Button - Far Right - Only show on own profile */}
           {isConnected && chainId === baseSepolia.id && connectedAddress && userAddress && connectedAddress.toLowerCase() === userAddress.toLowerCase() && (
@@ -397,7 +390,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
         {/* Shares Tab */}
         {activeTab === 'shares' && (
           <div className="space-y-3">
-            {profileData.user.tokenPositions.length > 0 ? (
+            {profileData.user?.tokenPositions?.length > 0 ? (
               profileData.user.tokenPositions.map((position) => {
                 const balance = parseFloat(position.balance || '0');
                 const marketPrice = parseFloat(position.token.marketPrice || '0');
@@ -446,7 +439,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
         {/* Collection Tab */}
         {activeTab === 'collection' && (
           <div className="grid grid-cols-2 gap-3">
-            {profileData.user.contentOwned.length > 0 ? (
+            {profileData.user?.contentOwned?.length > 0 ? (
               profileData.user.contentOwned.map((content) => (
                 <div
                   key={content.id}
@@ -480,7 +473,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
         {/* Boards Tab */}
         {activeTab === 'boards' && (
           <div className="space-y-3">
-            {profileData.user.tokensOwned.length > 0 ? (
+            {profileData.user?.tokensOwned?.length > 0 ? (
               profileData.user.tokensOwned.map((token) => (
                 <div
                   key={token.id}
@@ -523,7 +516,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
         {/* Stickers Tab */}
         {activeTab === 'stickers' && (
           <div className="grid grid-cols-2 gap-3">
-            {profileData.user.contentCreated.length > 0 ? (
+            {profileData.user?.contentCreated?.length > 0 ? (
               profileData.user.contentCreated.map((content) => (
                 <div
                   key={content.id}

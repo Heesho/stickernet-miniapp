@@ -38,20 +38,11 @@ export default function App() {
     router.push(`/b/${tokenAddress}`);
   };
 
-  // Enhanced setActiveTab handler that uses router for certain tabs
+  // Enhanced setActiveTab handler
   const handleSetActiveTab = useCallback((tab: string) => {
-    if (tab === "profile") {
-      // Navigate to user's own profile page
-      if (address) {
-        router.push(`/u/${address}`);
-      } else {
-        // If not connected, stay on current page and show profile tab
-        setActiveTab(tab);
-      }
-    } else {
-      setActiveTab(tab);
-    }
-  }, [router, address]);
+    // For profile tab, just show the profile component, don't redirect
+    setActiveTab(tab);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">

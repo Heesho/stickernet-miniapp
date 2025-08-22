@@ -1,13 +1,15 @@
 "use client";
 
 import { type ReactNode, useState, useEffect } from "react";
-import { base, baseSepolia } from "wagmi/chains";
+import { base, baseSepolia } from "viem/chains";
 import { MiniKitProvider } from "@coinbase/onchainkit/minikit";
+import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createConfig, http } from "wagmi";
 import { coinbaseWallet } from "wagmi/connectors";
 import { LoadingProvider } from "@/app/contexts/LoadingContext";
+import { UserProvider } from "@/app/contexts/UserContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,7 +25,7 @@ const queryClient = new QueryClient({
 const wagmiConfig = createConfig({
   chains: [base, baseSepolia],
   transports: {
-    [base.id]: http(),
+    [base.id]: http(`https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || ''}`),
     [baseSepolia.id]: http(),
   },
   connectors: [
@@ -54,39 +56,42 @@ function ClientOnlyProviders({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <LoadingProvider>
-          <MiniKitProvider
-            apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
-            chain={baseSepolia}
-            config={{
-              appearance: {
-                mode: "auto",
-                theme: "mini-app",
-                name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "StickerNet",
-                logo: "/stickernet-logo.png",
-              },
-              wallet: {
-                termsUrl: "https://yourapp.com/terms",
-                privacyUrl: "https://yourapp.com/privacy",
-                // Force Smart Wallet only in the UI
-                smartWalletOnly: true,
-              },
-            }}
-            // Additional OnchainKit provider props for Identity components
-            projectId={process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_ID}
-            schemaId={process.env.NEXT_PUBLIC_ONCHAINKIT_SCHEMA_ID as `0x${string}` | undefined}
-          >
-            {!isMounted ? (
-              <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] bg-black">
-                <div className="flex items-center justify-center h-screen">
-                  <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              </div>
-            ) : (
-              children
-            )}
-          </MiniKitProvider>
-        </LoadingProvider>
+        <UserProvider>
+          <LoadingProvider>
+            <OnchainKitProvider
+              apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY || ""}
+              chain={base}
+            >
+              <MiniKitProvider
+                apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+                chain={baseSepolia}
+                config={{
+                  appearance: {
+                    mode: "auto",
+                    theme: "mini-app",
+                    name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "StickerNet",
+                    logo: "/stickernet-logo.png",
+                  },
+                  wallet: {
+                    termsUrl: "https://yourapp.com/terms",
+                    privacyUrl: "https://yourapp.com/privacy",
+                    smartWalletOnly: true,
+                  },
+                }}
+              >
+                {!isMounted ? (
+                  <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] bg-black">
+                    <div className="flex items-center justify-center h-screen">
+                      <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  </div>
+                ) : (
+                  children
+                )}
+              </MiniKitProvider>
+            </OnchainKitProvider>
+          </LoadingProvider>
+        </UserProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

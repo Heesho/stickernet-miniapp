@@ -108,16 +108,16 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
       onNavigateToBoard(curate.tokenId.toString(), curate.token.id);
       onClose();
     } else {
-      router.push(`/${curate.token.id}`);
+      router.push(`/b/${curate.token.id}`);
     }
   }, [onNavigateToBoard, curate.tokenId, curate.token.id, onClose, router]);
 
   const handleStickerClick = useCallback(() => {
-    router.push(`/${curate.token.id}/${curate.tokenId}`);
+    router.push(`/b/${curate.token.id}/${curate.tokenId}`);
   }, [router, curate.token.id, curate.tokenId]);
 
   const handleUserClick = useCallback((userAddress: string) => {
-    router.push(`/account/${userAddress}`);
+    router.push(`/u/${userAddress}`);
   }, [router]);
   
   if (isError) {

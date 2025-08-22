@@ -1,8 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAccount } from "wagmi";
 import { BottomNavigation } from "./components/ui";
 
@@ -19,14 +19,23 @@ const AppContent = dynamic(() => import("./AppContent"), {
 });
 
 export default function App() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("home");
   const [boardData, setBoardData] = useState<{tokenId?: string; tokenAddress?: string} | null>(null);
   const router = useRouter();
   const { address } = useAccount();
+  
+  // Handle tab from URL query parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['home', 'browse', 'create', 'activity', 'profile'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const handleNavigateToBoard = (tokenId: string, tokenAddress: string) => {
     // Use URL-based routing with cleaner URL structure
-    router.push(`/${tokenAddress}`);
+    router.push(`/b/${tokenAddress}`);
   };
 
   // Enhanced setActiveTab handler that uses router for certain tabs
@@ -34,7 +43,7 @@ export default function App() {
     if (tab === "profile") {
       // Navigate to user's own profile page
       if (address) {
-        router.push(`/account/${address}`);
+        router.push(`/u/${address}`);
       } else {
         // If not connected, stay on current page and show profile tab
         setActiveTab(tab);

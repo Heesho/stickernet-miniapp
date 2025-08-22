@@ -10,13 +10,15 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { baseSepolia } from "wagmi/chains";
 import {
-  ConnectWallet,
   Identity,
   Name,
   Address,
   Avatar,
   EthBalance,
 } from "@coinbase/onchainkit/identity";
+import {
+  ConnectWallet,
+} from "@coinbase/onchainkit/wallet";
 import {
   Transaction,
   TransactionButton,
@@ -40,6 +42,7 @@ const GET_USER_PROFILE_QUERY = `
         marketCap
         holders
         contents
+        contentBalance
       }
       
       # Token positions (shares)
@@ -102,6 +105,7 @@ interface UserProfileData {
       marketCap: string;
       holders: string;
       contents: string;
+      contentBalance?: string;
     }>;
     tokenPositions: Array<{
       id: string;
@@ -301,8 +305,8 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
             </div>
           </div>
           
-          {/* Deposit Button - Far Right */}
-          {isConnected && chainId === baseSepolia.id && connectedAddress && (
+          {/* Deposit Button - Far Right - Only show on own profile */}
+          {isConnected && chainId === baseSepolia.id && connectedAddress && userAddress && connectedAddress.toLowerCase() === userAddress.toLowerCase() && (
             <div>
               <Transaction
                 calls={[{
@@ -402,7 +406,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
                 return (
                   <div
                     key={position.id}
-                    onClick={() => router.push(`/${position.token.id}`)}
+                    onClick={() => router.push(`/b/${position.token.id}`)}
                     className="flex items-center justify-between py-3 rounded-lg hover:bg-gray-900/50 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center space-x-3">
@@ -446,7 +450,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
               profileData.user.contentOwned.map((content) => (
                 <div
                   key={content.id}
-                  onClick={() => router.push(`/${content.token.id}/${content.tokenId}`)}
+                  onClick={() => router.push(`/b/${content.token.id}/${content.tokenId}`)}
                   className="relative bg-gray-900 rounded-lg overflow-hidden hover:ring-2 hover:ring-blue-500 cursor-pointer transition-all"
                 >
                   <div className="aspect-square">
@@ -480,11 +484,11 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
               profileData.user.tokensOwned.map((token) => (
                 <div
                   key={token.id}
-                  onClick={() => router.push(`/${token.id}`)}
-                  className="flex items-center justify-between p-4 bg-gray-900 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors"
+                  onClick={() => router.push(`/b/${token.id}`)}
+                  className="flex items-center justify-between py-3 rounded-lg hover:bg-gray-900/50 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden">
+                    <div className="w-10 h-10 rounded-full bg-gray-800 overflow-hidden">
                       {token.uri && (
                         <Image
                           src={token.uri}
@@ -505,7 +509,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
                       {formatCurrency(token.marketCap)}
                     </div>
                     <div className="text-sm text-gray-400">
-                      {token.holders} holders · {token.contents} stickers
+                      {formatCurrency(token.contentBalance || '0')}
                     </div>
                   </div>
                 </div>
@@ -523,7 +527,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
               profileData.user.contentCreated.map((content) => (
                 <div
                   key={content.id}
-                  onClick={() => router.push(`/${content.token.id}/${content.tokenId}`)}
+                  onClick={() => router.push(`/b/${content.token.id}/${content.tokenId}`)}
                   className="relative bg-gray-900 rounded-lg overflow-hidden hover:ring-2 hover:ring-blue-500 cursor-pointer transition-all"
                 >
                   <div className="aspect-square">

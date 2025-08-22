@@ -203,7 +203,7 @@ export function Search({}: SearchProps) {
 
   // Navigate to token page
   const handleTokenClick = useCallback((tokenId: string) => {
-    router.push(`/${tokenId}`);
+    router.push(`/b/${tokenId}`);
   }, [router]);
 
   return (

@@ -13,9 +13,9 @@
  */
 export const NAV_ITEMS = [
   { id: "home", icon: "home", label: "Home" },
-  { id: "search", icon: "search", label: "Browse" },
+  { id: "browse", icon: "search", label: "Browse" },
   { id: "create", icon: "create", label: "Create" },
-  { id: "notifications", icon: "notifications", label: "Activity" },
+  { id: "activity", icon: "notifications", label: "Activity" },
   { id: "profile", icon: "profile", label: "Profile" },
 ] as const;
 

@@ -6,25 +6,29 @@ import { useAccount } from "wagmi";
 import { BottomNavigation } from "../../components/ui";
 import { ProfileView } from "../../components/features/Profile/ProfileView";
 
-export default function AccountPage() {
+export default function UserProfilePage() {
   const params = useParams();
   const router = useRouter();
   const { address: currentUserAddress } = useAccount();
   const profileAddress = params.address as string;
-  const [activeTab] = useState("profile"); // Set active tab for account pages
+  // Only show profile as active if it's the user's own profile
+  const isOwnProfile = currentUserAddress && currentUserAddress.toLowerCase() === profileAddress.toLowerCase();
+  const [activeTab] = useState(isOwnProfile ? "profile" : "");
 
   // Handle navigation from bottom nav
   const handleSetActiveTab = useCallback((tab: string) => {
-    if (tab === "home" || tab === "browse") {
-      router.push("/");
+    if (tab === "home") {
+      router.push("/?tab=home");
+    } else if (tab === "browse") {
+      router.push("/?tab=browse");
     } else if (tab === "create") {
-      router.push("/");
+      router.push("/?tab=create");
     } else if (tab === "activity") {
-      router.push("/");
+      router.push("/?tab=activity");
     } else if (tab === "profile") {
       // If viewing own profile, stay here, otherwise go to own profile
       if (currentUserAddress && currentUserAddress.toLowerCase() !== profileAddress.toLowerCase()) {
-        router.push(`/account/${currentUserAddress}`);
+        router.push(`/u/${currentUserAddress}`);
       }
     }
   }, [router, currentUserAddress, profileAddress]);
@@ -33,8 +37,6 @@ export default function AccountPage() {
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
-
-  const isOwnProfile = currentUserAddress && currentUserAddress.toLowerCase() === profileAddress.toLowerCase();
 
   return (
     <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">

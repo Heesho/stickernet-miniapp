@@ -116,7 +116,7 @@ export function BoardEnhanced({
       componentLoading.globalLoading.showPageTransition('Loading sticker...');
     }
     
-    router.push(`/${tokenId}/${curate.tokenId}`);
+    router.push(`/b/${tokenId}/${curate.tokenId}`);
   }, [router, tokenId, showGlobalLoading, componentLoading]);
 
   // Memoized loading states

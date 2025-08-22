@@ -59,7 +59,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
   }, [setActiveTab, router]);
 
   const handleImageClick = useCallback((curate: Curate) => {
-    router.push(`/${tokenAddress}/${curate.tokenId}`);
+    router.push(`/b/${tokenAddress}/${curate.tokenId}`);
   }, [router, tokenAddress]);
 
   // Memoize modal handlers

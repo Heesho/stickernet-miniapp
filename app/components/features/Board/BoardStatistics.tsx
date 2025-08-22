@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import Image from 'next/image';
 import dynamic from "next/dynamic";
+import { useRouter } from 'next/navigation';
 import { AnimatedNumber } from "../../ui/AnimatedNumber";
 import type { BoardStatisticsProps } from './Board.types';
 
@@ -31,6 +32,14 @@ export const BoardStatistics = memo(function BoardStatistics({
   showTradingView,
   subgraphData
 }: BoardStatisticsProps) {
+  const router = useRouter();
+  
+  const handleOwnerClick = () => {
+    if (token.owner) {
+      router.push(`/u/${token.owner}`);
+    }
+  };
+
   return (
     <div>
       {/* Token name, symbol, price and cover image */}
@@ -109,8 +118,11 @@ export const BoardStatistics = memo(function BoardStatistics({
 
           {/* Owner info and options */}
           <div className="flex items-center justify-between mb-8">
-            {/* Owner with OnchainKit Identity */}
-            <div className="flex items-center space-x-2">
+            {/* Owner with OnchainKit Identity - clickable */}
+            <button 
+              onClick={handleOwnerClick}
+              className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+            >
               <Avatar 
                 address={token.owner as `0x${string}`} 
                 className="w-8 h-8" 
@@ -119,7 +131,7 @@ export const BoardStatistics = memo(function BoardStatistics({
                 address={token.owner as `0x${string}`} 
                 className="text-white text-base" 
               />
-            </div>
+            </button>
             
             {/* Options button */}
             <button className="text-white">

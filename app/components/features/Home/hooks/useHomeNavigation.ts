@@ -23,11 +23,11 @@ export function useHomeNavigation(): UseHomeNavigationReturn {
 
   const navigateToSticker = useCallback((curate: Curate) => {
     // Navigate to sticker page with cleaner URL structure
-    router.push(`/${curate.token.id}/${curate.tokenId}`);
+    router.push(`/b/${curate.token.id}/${curate.tokenId}`);
   }, [router]);
 
   const navigateToBoard = useCallback((tokenId: string, tokenAddress: string) => {
-    router.push(`/${tokenAddress}`);
+    router.push(`/b/${tokenAddress}`);
   }, [router]);
 
   return {

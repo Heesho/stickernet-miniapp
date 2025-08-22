@@ -44,6 +44,8 @@ export interface ImageDetailProps {
   onCurate: () => void;
   /** Optional handler to navigate to board */
   onNavigateToBoard?: (tokenId: string, tokenAddress: string) => void;
+  /** Optional callback when steal confirmation state changes */
+  onStealConfirmationChange?: (showing: boolean) => void;
 }
 
 /**

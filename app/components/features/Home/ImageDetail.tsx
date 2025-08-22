@@ -24,7 +24,7 @@ const Name = dynamic(() => import("@coinbase/onchainkit/identity").then(mod => (
   loading: () => <div className="w-20 h-4 bg-gray-600 rounded animate-pulse" />
 });
 
-export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: ImageDetailProps) {
+export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard, onStealConfirmationChange }: ImageDetailProps) {
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -101,7 +101,8 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
     
     // Show confirmation page
     setShowConfirmation(true);
-  }, [nextPrice]);
+    onStealConfirmationChange?.(true);
+  }, [nextPrice, onStealConfirmationChange]);
 
   const handleBoardClick = useCallback(() => {
     if (onNavigateToBoard) {
@@ -130,9 +131,13 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
       <CurateConfirmation
         curate={curate}
         nextPrice={nextPrice}
-        onClose={() => setShowConfirmation(false)}
+        onClose={() => {
+          setShowConfirmation(false);
+          onStealConfirmationChange?.(false);
+        }}
         onSuccess={() => {
           setShowConfirmation(false);
+          onStealConfirmationChange?.(false);
           onCurate();
           onClose();
         }}

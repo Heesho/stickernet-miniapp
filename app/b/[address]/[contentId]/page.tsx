@@ -17,7 +17,8 @@ export default function StickerPage() {
   const [curate, setCurate] = useState<Curate | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab] = useState("board"); // Set as board since we're viewing board content
+  const [activeTab] = useState(""); // No tab active since this is a detail view
+  const [showingStealConfirmation, setShowingStealConfirmation] = useState(false);
 
   useEffect(() => {
     const fetchStickerData = async () => {
@@ -153,10 +154,11 @@ export default function StickerPage() {
             onClose={handleClose}
             onCurate={handleCurate}
             onNavigateToBoard={handleNavigateToBoard}
+            onStealConfirmationChange={setShowingStealConfirmation}
           />
         </div>
       </div>
-      <BottomNavigation activeTab={activeTab} setActiveTab={handleSetActiveTab} />
+      {!showingStealConfirmation && <BottomNavigation activeTab={activeTab} setActiveTab={handleSetActiveTab} />}
     </div>
   );
 }

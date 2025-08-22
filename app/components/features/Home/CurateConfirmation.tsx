@@ -9,7 +9,6 @@ import { useCurateContent } from "../../../hooks/useCurateContent";
 import { useContentData, useTokenData } from "../../../hooks/useMulticall";
 import { USDC_CONTRACT, USDC_DECIMALS } from "@/lib/constants";
 import { isValidTokenId } from "@/types";
-import { fetchTokenBoardData } from "@/lib/api/subgraph";
 import type { Curate } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils/formatters";
 
@@ -24,7 +23,6 @@ export function CurateConfirmation({ curate, nextPrice, onClose, onSuccess }: Cu
   const { address: userAddress, isConnected } = useAccount();
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [priceChange24h, setPriceChange24h] = useState<number | null>(null);
   
   // Get token data for weekly reward
   const tokenAddress = curate.token.id as `0x${string}`;
@@ -53,35 +51,12 @@ export function CurateConfirmation({ curate, nextPrice, onClose, onSuccess }: Cu
     reset 
   } = useCurateContent();
 
-  // Fetch price change from subgraph
-  useEffect(() => {
-    const fetchPriceChange = async () => {
-      try {
-        const boardData = await fetchTokenBoardData(tokenAddress.toLowerCase());
-        if (boardData?.tokenDayData && boardData.tokenDayData.length >= 2) {
-          const currentPrice = parseFloat(boardData.marketPrice || "0");
-          const yesterdayPrice = parseFloat(boardData.tokenDayData[1].marketPrice || "0");
-          if (yesterdayPrice > 0) {
-            const change = ((currentPrice - yesterdayPrice) / yesterdayPrice) * 100;
-            setPriceChange24h(change);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching price change:', error);
-      }
-    };
-    fetchPriceChange();
-  }, [tokenAddress]);
-
-  // Dynamic color theme based on price change (Robinhood-style)
-  const isDataLoaded = priceChange24h !== null;
-  const priceIsUp = isDataLoaded ? priceChange24h >= 0 : true; // Default doesn't matter when not loaded
-  
-  // Use neutral gray while loading, then switch to theme colors
-  const themeColor = !isDataLoaded ? '#6b7280' : (priceIsUp ? '#0052FF' : '#FF6B35');
-  const themeColorClass = !isDataLoaded ? 'text-gray-500' : (priceIsUp ? 'text-[#0052FF]' : 'text-[#FF6B35]');
-  const themeBgClass = !isDataLoaded ? 'bg-gray-600' : (priceIsUp ? 'bg-[#0052FF]' : 'bg-[#FF6B35]');
-  const themeBorderClass = !isDataLoaded ? 'border-gray-600' : (priceIsUp ? 'border-[#0052FF]' : 'border-[#FF6B35]');
+  // Always use blue theme to match MAX timeframe default
+  // This ensures consistency across all pages
+  const themeColor = '#0052FF';
+  const themeColorClass = 'text-[#0052FF]';
+  const themeBgClass = 'bg-[#0052FF]';
+  const themeBorderClass = 'border-[#0052FF]';
 
   // Handle successful transaction
   useEffect(() => {
@@ -227,13 +202,13 @@ export function CurateConfirmation({ curate, nextPrice, onClose, onSuccess }: Cu
 
       </div>
 
-      {/* Steal Button - Fixed above navbar, matching Board button styling */}
+      {/* Steal Button - Fixed at same position as previous page */}
       <div className="fixed bottom-16 left-0 right-0">
-        <div className="w-full max-w-md mx-auto bg-black px-4 py-3">
+        <div className="w-full max-w-md mx-auto px-4">
           <button
             onClick={handleCurate}
             disabled={isCurateLoading || !hasEnoughBalance}
-            className={`w-full font-semibold py-2.5 rounded-xl border-2 ${themeBorderClass} transition-all duration-200 focus:outline-none ${
+            className={`w-full font-semibold py-3 rounded-xl border-2 ${themeBorderClass} transition-all duration-200 focus:outline-none ${
               isCurateLoading 
                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
                 : !hasEnoughBalance

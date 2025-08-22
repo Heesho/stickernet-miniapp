@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Card, Icon } from "../../ui";
+import { IconName } from "../../ui/Icon/Icon.types";
 import { APP_FEATURES } from "@/lib/constants";
 import type { FeaturesProps } from "../Home/Home.types";
 
@@ -11,7 +12,7 @@ export function Features({ setActiveTab }: FeaturesProps) {
         <ul className="space-y-3 mb-4">
           {APP_FEATURES.map((feature, index) => (
             <li key={index} className="flex items-start">
-              <Icon name={feature.icon as any} className="text-[var(--app-accent)] mt-1 mr-2" />
+              <Icon name={feature.icon as IconName} className="text-[var(--app-accent)] mt-1 mr-2" />
               <span className="text-[var(--app-foreground-muted)]">
                 {feature.description}
               </span>

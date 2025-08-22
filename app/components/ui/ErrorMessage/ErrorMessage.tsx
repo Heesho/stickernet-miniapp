@@ -7,7 +7,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Button } from '../Button';
 import { Icon } from '../Icon';
 import type { ErrorMessageProps } from './ErrorMessage.types';
@@ -18,7 +18,7 @@ import type { ErrorMessageProps } from './ErrorMessage.types';
  * @param props Error message configuration props
  * @returns Error message element
  */
-export function ErrorMessage({
+export const ErrorMessage = memo(function ErrorMessage({
   title = 'Something went wrong',
   message,
   onRetry,
@@ -83,4 +83,4 @@ export function ErrorMessage({
       )}
     </div>
   );
-}
+});

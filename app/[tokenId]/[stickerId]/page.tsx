@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useState, useEffect } from "react";
 import { fetchTokenBoardData } from "@/lib/api/subgraph";
 import { LoadingSpinner } from "../../components/ui";
+import { CurateData } from "@/types";
 
 export default function StickerPage() {
   const params = useParams();
@@ -13,7 +14,7 @@ export default function StickerPage() {
   const tokenId = params.tokenId as string;
   const stickerId = params.stickerId as string;
   const [activeTab] = useState("");
-  const [curateData, setCurateData] = useState<any>(null);
+  const [curateData, setCurateData] = useState<CurateData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +34,7 @@ export default function StickerPage() {
         
         if (tokenData && tokenData.contentPositions) {
           const stickerData = tokenData.contentPositions.find(
-            (content: any) => content.tokenId === stickerId
+            (content: { tokenId: string }) => content.tokenId === stickerId
           );
           
           if (stickerData) {
@@ -60,7 +61,6 @@ export default function StickerPage() {
           setError("Token data not found");
         }
       } catch (err) {
-        console.error("Error loading sticker data:", err);
         setError("Failed to load sticker data");
       } finally {
         setLoading(false);
@@ -107,7 +107,6 @@ export default function StickerPage() {
           curate={curateData}
           onClose={() => router.back()}
           onCurate={() => {
-            console.log("Curating:", curateData);
           }}
           // Don't provide onNavigateToBoard so ImageDetail uses router directly
         />

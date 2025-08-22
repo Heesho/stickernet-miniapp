@@ -3,6 +3,7 @@ import { useAccount, usePublicClient, useWalletClient } from 'wagmi';
 import { parseUnits, parseEventLogs } from 'viem';
 import { ROUTER_ADDRESS, ROUTER_ABI, USDC_ADDRESS, USDC_ABI } from '@/lib/constants';
 import { toast } from 'sonner';
+import { useAsyncErrorHandler, type StandardError } from './useErrorHandler';
 
 interface CreateTokenParams {
   name: string;
@@ -11,27 +12,73 @@ interface CreateTokenParams {
   initialBuyAmount: string;
 }
 
-export function useCreateToken() {
+interface UseCreateTokenReturn {
+  createToken: (params: CreateTokenParams) => Promise<{ hash: string }>;
+  isCreating: boolean;
+  error: StandardError | null;
+  hasError: boolean;
+}
+
+export function useCreateToken(): UseCreateTokenReturn {
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
   const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
+  const errorHandler = useAsyncErrorHandler({
+    hookName: 'useCreateToken',
+    showToast: false, // We'll handle toasts manually for better UX
+    enableLogging: true,
+    customErrorMapper: (error: unknown) => {
+      // Map specific contract errors
+      const errorObj = error as { message?: string };
+      if (errorObj?.message?.includes('insufficient')) {
+        return {
+          category: 'contract' as const,
+          severity: 'high' as const,
+          userMessage: 'Insufficient funds for token creation',
+          recoverySuggestion: 'Please ensure you have enough USDC and ETH for gas fees.',
+          retryable: false
+        };
+      }
+      
+      if (errorObj?.message?.includes('approval')) {
+        return {
+          category: 'contract' as const,
+          severity: 'medium' as const,
+          userMessage: 'Token approval failed',
+          recoverySuggestion: 'Please try the transaction again.',
+          retryable: true
+        };
+      }
+      
+      return {};
+    }
+  });
 
   const createToken = async (params: CreateTokenParams) => {
-    if (!address || !walletClient || !publicClient) {
-      throw new Error('Wallet not connected');
+    // Validate inputs
+    if (!params.name?.trim()) {
+      throw new Error('Token name is required');
     }
+    if (!params.symbol?.trim()) {
+      throw new Error('Token symbol is required');
+    }
+    if (!params.uri?.trim()) {
+      throw new Error('Token URI is required');
+    }
+    
+    const result = await errorHandler.executeWithErrorHandling(async () => {
+      if (!address || !walletClient || !publicClient) {
+        throw new Error('Wallet not connected');
+      }
 
-    setIsCreating(true);
-    setError(null);
+      setIsCreating(true);
 
-    try {
       const buyAmountInUsdc = parseUnits(params.initialBuyAmount || '0', 6);
 
       // Step 1: Approve USDC spending if there's an initial buy
       if (parseFloat(params.initialBuyAmount) > 0) {
-        console.log('Approving USDC spend:', buyAmountInUsdc.toString());
         const approveHash = await walletClient.writeContract({
           address: USDC_ADDRESS,
           abi: USDC_ABI,
@@ -56,7 +103,6 @@ export function useCreateToken() {
       }
 
       // Step 2: Create token
-      console.log('Creating token with params:', params);
       const createHash = await walletClient.writeContract({
         address: ROUTER_ADDRESS,
         abi: ROUTER_ABI,
@@ -118,13 +164,12 @@ export function useCreateToken() {
           });
 
           if (buyReceipt.status !== 'success') {
+            // Log but don't fail the entire process
             console.warn('Initial buy failed, but token was created successfully');
           }
         }
 
-        toast.success(`Token ${params.symbol} created successfully!`);
-        
-        return {
+        const result = {
           success: true,
           hash: createHash,
           receipt: createReceipt,
@@ -132,23 +177,36 @@ export function useCreateToken() {
           buyHash,
           buyReceipt,
         };
+
+        toast.success(`Token ${params.symbol} created successfully!`);
+        return result;
       } else {
-        throw new Error('Transaction failed');
+        throw new Error('Token creation transaction failed');
       }
-    } catch (err: any) {
-      console.error('Error creating token:', err);
-      const errorMessage = err.message || 'Failed to create token';
-      setError(errorMessage);
-      toast.error(errorMessage);
-      throw err;
-    } finally {
-      setIsCreating(false);
+    }, {
+      operation: 'create_token',
+      tokenName: params.name,
+      tokenSymbol: params.symbol,
+      initialBuyAmount: params.initialBuyAmount
+    });
+
+    setIsCreating(false);
+
+    if (!result) {
+      // Error was handled by errorHandler
+      if (errorHandler.error) {
+        toast.error(errorHandler.error.userMessage);
+      }
+      throw errorHandler.error || new Error('Token creation failed');
     }
+
+    return result;
   };
 
   return {
     createToken,
     isCreating,
-    error,
+    error: errorHandler.error,
+    hasError: errorHandler.hasError,
   };
 }

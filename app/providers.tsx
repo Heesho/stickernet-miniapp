@@ -7,6 +7,7 @@ import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createConfig, http } from "wagmi";
 import { coinbaseWallet } from "wagmi/connectors";
+import { LoadingProvider } from "@/app/contexts/LoadingContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,37 +54,39 @@ function ClientOnlyProviders({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <MiniKitProvider
-          apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
-          chain={baseSepolia}
-          config={{
-            appearance: {
-              mode: "auto",
-              theme: "mini-app",
-              name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "StickerNet",
-              logo: "/stickernet-logo.png",
-            },
-            wallet: {
-              termsUrl: "https://yourapp.com/terms",
-              privacyUrl: "https://yourapp.com/privacy",
-              // Force Smart Wallet only in the UI
-              smartWalletOnly: true,
-            },
-          }}
-          // Additional OnchainKit provider props for Identity components
-          projectId={process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_ID}
-          schemaId={process.env.NEXT_PUBLIC_ONCHAINKIT_SCHEMA_ID as `0x${string}` | undefined}
-        >
-          {!isMounted ? (
-            <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] bg-black">
-              <div className="flex items-center justify-center h-screen">
-                <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        <LoadingProvider>
+          <MiniKitProvider
+            apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+            chain={baseSepolia}
+            config={{
+              appearance: {
+                mode: "auto",
+                theme: "mini-app",
+                name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "StickerNet",
+                logo: "/stickernet-logo.png",
+              },
+              wallet: {
+                termsUrl: "https://yourapp.com/terms",
+                privacyUrl: "https://yourapp.com/privacy",
+                // Force Smart Wallet only in the UI
+                smartWalletOnly: true,
+              },
+            }}
+            // Additional OnchainKit provider props for Identity components
+            projectId={process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_ID}
+            schemaId={process.env.NEXT_PUBLIC_ONCHAINKIT_SCHEMA_ID as `0x${string}` | undefined}
+          >
+            {!isMounted ? (
+              <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] bg-black">
+                <div className="flex items-center justify-center h-screen">
+                  <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
               </div>
-            </div>
-          ) : (
-            children
-          )}
-        </MiniKitProvider>
+            ) : (
+              children
+            )}
+          </MiniKitProvider>
+        </LoadingProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

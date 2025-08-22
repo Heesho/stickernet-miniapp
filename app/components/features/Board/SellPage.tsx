@@ -8,7 +8,7 @@ import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
 import { useTokenData } from "@/app/hooks/useMulticall";
 import { useDebouncedSellQuote } from "@/app/hooks/useSellQuote";
-import { useSendCallsSellToken } from "@/app/hooks/useSendCallsSellToken";
+import { useTokenTransaction } from "@/app/hooks/useTokenTransaction";
 import { formatNumber, formatCurrency, formatTokenAmount } from "@/lib/utils/formatters";
 
 interface SellPageProps {
@@ -100,13 +100,13 @@ export function SellPage({
 
   // Hook for executing the actual sell transaction
   const {
-    executeSell,
+    executeTransaction,
     status: txStatus,
     isLoading: isTxLoading,
     isSuccess: isTxSuccess,
     error: txError,
     reset: resetTx
-  } = useSendCallsSellToken();
+  } = useTokenTransaction();
 
   const handleClose = () => {
     // Don't allow closing during transaction
@@ -133,18 +133,26 @@ export function SellPage({
       return;
     }
 
-    console.log('Executing sell with params:', {
+    console.log('Sell transaction details:', {
       tokenAddress,
       tokenAmount: inputValue,
       minUsdcAmountOut: autoMinUsdcAmtOut?.toString(),
       minUsdcAmountOutFormatted: autoMinUsdcAmtOut ? formatUnits(autoMinUsdcAmtOut, 6) : '0'
     });
     
-    // Execute the sell - following the exact pattern from BuyPage
-    await executeSell({
+    // Execute the sell using the unified hook
+    await executeTransaction({
+      operation: 'sell',
       tokenAddress,
       tokenAmount: inputValue,
       minUsdcAmountOut: autoMinUsdcAmtOut
+    }, {
+      method: 'sendCalls', // Use sendCalls for best Smart Wallet UX
+      onSuccess: (txHash) => {
+      },
+      onError: (error) => {
+        console.error('Sell transaction failed:', error);
+      }
     });
   };
 

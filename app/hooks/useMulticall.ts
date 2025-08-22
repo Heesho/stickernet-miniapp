@@ -2,6 +2,7 @@ import { useReadContract } from 'wagmi';
 import { formatUnits } from 'viem';
 import { baseSepolia } from 'wagmi/chains';
 import { MULTICALL_ADDRESS, MULTICALL_ABI, REWARD_DECIMALS, USDC_DECIMALS } from '@/lib/constants';
+import { useErrorHandler, type StandardError } from './useErrorHandler';
 import type { 
   Address, 
   TokenId, 
@@ -25,6 +26,19 @@ export function useContentData({
   tokenId,
   enabled = true
 }: UseContentDataParams): UseContentDataReturn {
+  const errorHandler = useErrorHandler({
+    hookName: 'useContentData',
+    showToast: false, // Don't show toast for data fetching
+    enableLogging: true,
+    customErrorMapper: (error: unknown) => ({
+      context: {
+        tokenAddress,
+        tokenId,
+        enabled
+      }
+    })
+  });
+
   // Validate inputs with type guards
   const isValidAddress = tokenAddress ? isAddress(tokenAddress) : false;
   const isValidId = tokenId ? isValidTokenId(tokenId) : false;
@@ -65,15 +79,20 @@ export function useContentData({
     : '0';
 
 
+  // Handle errors through error handler
+  if (error) {
+    errorHandler.handleError(error);
+  }
+
   return {
     contentData,
     weeklyReward,
     price,
     nextPrice,
     isLoading,
-    isError,
-    isSuccess: !isLoading && !isError && !!data,
-    error: error || null
+    isError: isError || errorHandler.hasError,
+    isSuccess: !isLoading && !isError && !errorHandler.hasError && !!data,
+    error: errorHandler.error || (error ? errorHandler.handleError(error) : null)
   };
 }
 

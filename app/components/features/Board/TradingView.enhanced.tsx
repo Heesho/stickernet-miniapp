@@ -246,7 +246,9 @@ export function TradingViewEnhanced({
             
             {/* Trade button */}
             <Button 
-              onClick={() => console.log('Open trade modal')}
+              onClick={() => {
+                // Handle trade modal opening
+              }}
               className={`${themeBgClass} hover:opacity-90 text-white font-semibold py-2.5 px-8 rounded-xl`}
             >
               Trade

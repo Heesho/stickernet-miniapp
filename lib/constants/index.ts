@@ -78,7 +78,6 @@ export type {
  */
 export {
   NAV_ITEMS,
-  INITIAL_TODOS,
   MOCK_CURATES,
   SKELETON_HEIGHTS,
   APP_FEATURES,
@@ -86,5 +85,4 @@ export {
   TEST_TOKEN_ADDRESSES,
   generateMockCurates,
   getRandomMockCurates,
-  generateTodoId,
 } from '../data/mockData';

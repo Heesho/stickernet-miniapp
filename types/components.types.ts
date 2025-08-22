@@ -114,7 +114,7 @@ export interface UseContentDataReturn extends AsyncState {
 
 export interface UseTokenDataReturn extends AsyncState {
   readonly tokenData?: TokenData;
-  readonly refetch?: () => Promise<any>;
+  readonly refetch?: () => Promise<void>;
 }
 
 // Event handler types

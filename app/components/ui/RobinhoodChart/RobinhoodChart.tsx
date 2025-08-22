@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback, memo } from "react";
 import { type RobinhoodChartProps, type PriceDataPoint, type Timeframe } from "./RobinhoodChart.types";
 
-export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
+export const RobinhoodChart: React.FC<RobinhoodChartProps> = memo(({
   priceData,
   timeframe,
   currentPrice,
@@ -19,10 +19,16 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
 
   const timeframes: Timeframe[] = ['LIVE', '4H', '1D', '1W', '1M', 'MAX'];
 
-  // Determine color theme based on price change
-  const isPositive = priceChange24h >= 0;
-  const primaryColor = isPositive ? "#0052FF" : "#FF6B35";
-  const gradientId = `gradient-${isPositive ? 'up' : 'down'}`;
+  // Memoize color theme calculations
+  const themeColors = useMemo(() => {
+    // MAX timeframe should always be blue (positive)
+    const isPositive = timeframe === 'MAX' ? true : priceChange24h >= 0;
+    return {
+      isPositive,
+      primaryColor: isPositive ? "#0052FF" : "#FF6B35",
+      gradientId: `gradient-${isPositive ? 'up' : 'down'}`
+    };
+  }, [priceChange24h, timeframe]);
 
   // Update dimensions on mount and resize
   useEffect(() => {
@@ -66,17 +72,6 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
     const isFlat = priceData.length > 0 && uniquePrices.size <= 1;
     
     // Debug logging for LIVE chart
-    if (timeframe === 'LIVE') {
-      console.log('LIVE chart analysis:', {
-        dataLength: priceData.length,
-        uniquePrices: uniquePrices.size,
-        hasNoVolume,
-        isFlat,
-        samplePrices: Array.from(uniquePrices).slice(0, 5),
-        firstPoint: priceData[0],
-        lastPoint: priceData[priceData.length - 1]
-      });
-    }
     
     // For no data, show empty chart
     if (!priceData.length) {
@@ -209,14 +204,14 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
     }
   }, [isFlat, points.length, onPriceHover]);
 
-  // Format display values
-  const formatPrice = (price: number) => {
+  // Memoize format functions
+  const formatPrice = useCallback((price: number) => {
     if (price < 0.01) return price.toFixed(6);
     if (price < 1) return price.toFixed(4);
     return price.toFixed(2);
-  };
+  }, []);
 
-  const formatTimestamp = (timestamp: number) => {
+  const formatTimestamp = useCallback((timestamp: number) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -229,7 +224,7 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
     } else {
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
-  };
+  }, []);
 
   // Create area path for gradient fill
   const areaPath = useMemo(() => {
@@ -257,9 +252,9 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
         >
           {/* Gradient definition */}
           <defs>
-            <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor={primaryColor} stopOpacity="0.15" />
-              <stop offset="100%" stopColor={primaryColor} stopOpacity="0" />
+            <linearGradient id={themeColors.gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={themeColors.primaryColor} stopOpacity="0.15" />
+              <stop offset="100%" stopColor={themeColors.primaryColor} stopOpacity="0" />
             </linearGradient>
           </defs>
 
@@ -267,7 +262,7 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
           {areaPath && !isFlat && (
             <path
               d={areaPath}
-              fill={`url(#${gradientId})`}
+              fill={`url(#${themeColors.gradientId})`}
               className="pointer-events-none"
             />
           )}
@@ -277,7 +272,7 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
             <path
               d={floorPath}
               fill="none"
-              stroke={isPositive ? "rgba(0, 82, 255, 0.4)" : "rgba(255, 107, 53, 0.4)"}
+              stroke={themeColors.isPositive ? "rgba(0, 82, 255, 0.4)" : "rgba(255, 107, 53, 0.4)"}
               strokeWidth="1.5"
               className="pointer-events-none"
               opacity={isFlat ? 0.5 : 1}
@@ -290,7 +285,7 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
             <path
               d={marketPath}
               fill="none"
-              stroke={primaryColor}
+              stroke={themeColors.primaryColor}
               strokeWidth="2"
               className="pointer-events-none"
               opacity={isFlat ? 0.7 : 1}
@@ -343,22 +338,27 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = ({
 
       {/* Timeframe Selector - Below Chart */}
       <div className="flex justify-center space-x-2 mt-4 px-4">
-        {timeframes.map((tf) => (
-          <button
-            key={tf}
-            onClick={() => onTimeframeChange?.(tf)}
-            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
-              timeframe === tf
-                ? `${isPositive ? 'bg-[#0052FF]' : 'bg-[#FF6B35]'} text-black`
-                : `${isPositive ? 'text-[#0052FF]' : 'text-[#FF6B35]'} hover:opacity-80`
-            }`}
-          >
-            {tf}
-          </button>
-        ))}
+        {timeframes.map((tf) => {
+          // Memoize individual timeframe handlers
+          const handleTimeframeClick = () => onTimeframeChange?.(tf);
+          
+          return (
+            <button
+              key={tf}
+              onClick={handleTimeframeClick}
+              className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
+                timeframe === tf
+                  ? `${themeColors.isPositive ? 'bg-[#0052FF]' : 'bg-[#FF6B35]'} text-black`
+                  : `${themeColors.isPositive ? 'text-[#0052FF]' : 'text-[#FF6B35]'} hover:opacity-80`
+              }`}
+            >
+              {tf}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
-};
+});
 
 export default RobinhoodChart;

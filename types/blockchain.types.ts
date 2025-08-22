@@ -122,3 +122,76 @@ export type WriteContractResult = {
   readonly error: Web3Error | null;
   readonly isSuccess: boolean;
 };
+
+// Chart data types
+export interface PriceDataPoint {
+  readonly timestamp: number;
+  readonly price: number;
+  readonly floorPrice: number;
+  readonly volume?: number;
+}
+
+export interface SubgraphDataPoint {
+  readonly timestamp: string;
+  readonly priceUsd: string;
+  readonly floorPriceUsd: string;
+  readonly volume?: string;
+  readonly id: string;
+}
+
+export interface BoardData {
+  readonly tokenId: string;
+  readonly tokenAddress: Address;
+  readonly tokenData: TokenData | null;
+  readonly subgraphData?: SubgraphDataPoint[];
+  readonly isLoading: boolean;
+  readonly error?: Error | null;
+}
+
+export interface CurateData {
+  readonly id: string;
+  readonly tokenId: bigint;
+  readonly uri: string;
+  readonly timestamp: string;
+  readonly price: string;
+  readonly creator: {
+    readonly id: string;
+  };
+  readonly user?: {
+    readonly id: string;
+  };
+  readonly token: {
+    readonly id: string;
+    readonly name: string;
+    readonly symbol?: string;
+    readonly uri: string;
+  };
+}
+
+// Wallet capabilities and transaction types
+export interface WalletCapabilities {
+  readonly paymasterService?: {
+    readonly supported: boolean;
+  };
+  readonly atomicBatch?: {
+    readonly supported: boolean;
+  };
+}
+
+export interface WalletCallsRequest {
+  readonly version: string;
+  readonly chainId: string;
+  readonly from: Address;
+  readonly calls: readonly WalletCall[];
+  readonly capabilities?: WalletCapabilities;
+}
+
+export interface WalletCall {
+  readonly to: Address;
+  readonly value?: string;
+  readonly data?: string;
+}
+
+export interface TransactionReceipts {
+  readonly receipts?: TransactionReceipt[];
+}

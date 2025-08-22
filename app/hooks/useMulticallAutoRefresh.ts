@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTokenData, useContentData } from './useMulticall';
 import type { Address, TokenId } from '@/types';
@@ -43,8 +43,7 @@ export function useMulticallAutoRefresh({
   });
   
   // Force refresh function that invalidates all multicall queries
-  const forceRefresh = async () => {
-    console.log('Force refreshing multicall data...');
+  const forceRefresh = useCallback(async () => {
     
     // Invalidate all read contract queries (this will trigger refetch)
     await queryClient.invalidateQueries({ 
@@ -57,21 +56,19 @@ export function useMulticallAutoRefresh({
     if (tokenDataResult.refetch) {
       await tokenDataResult.refetch();
     }
-  };
+  }, [queryClient, tokenDataResult.refetch]);
   
   // Refresh after transaction
-  const refreshAfterTransaction = async () => {
-    console.log('Transaction completed, refreshing multicall data...');
+  const refreshAfterTransaction = useCallback(async () => {
     
     // Immediate refresh
     await forceRefresh();
     
     // Delayed refresh to catch blockchain confirmation
     setTimeout(async () => {
-      console.log('Secondary refresh after blockchain confirmation...');
       await forceRefresh();
     }, 3000);
-  };
+  }, [forceRefresh]);
   
   // Set up visibility-based polling
   useEffect(() => {
@@ -79,9 +76,7 @@ export function useMulticallAutoRefresh({
     
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        console.log('Page hidden, pausing multicall polling');
       } else {
-        console.log('Page visible, resuming multicall polling');
         // Force refresh when page becomes visible
         forceRefresh();
       }
@@ -89,7 +84,7 @@ export function useMulticallAutoRefresh({
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [enabled]);
+  }, [enabled, forceRefresh]);
   
   return {
     tokenData: tokenDataResult.tokenData,

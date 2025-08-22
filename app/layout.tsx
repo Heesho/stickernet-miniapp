@@ -2,8 +2,10 @@ import "./theme.css";
 import "@coinbase/onchainkit/styles.css";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./loading-animations.css";
 import { Providers } from "./providers";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { GlobalLoadingOverlay } from "./components/ui/Loading/LoadingOverlay";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -45,7 +47,10 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-background">
         <ErrorBoundary>
-          <Providers>{children}</Providers>
+          <Providers>
+            {children}
+            <GlobalLoadingOverlay />
+          </Providers>
         </ErrorBoundary>
       </body>
     </html>

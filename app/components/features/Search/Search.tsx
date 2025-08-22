@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, memo } from "react";
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button, Icon } from "../../ui";
@@ -37,7 +37,7 @@ function formatMarketCap(marketCap: string | undefined): string {
   return `$${num.toFixed(0)}`;
 }
 
-function TokenListItem({ 
+const TokenListItem = memo(function TokenListItem({ 
   token, 
   rank,
   onClick 
@@ -109,7 +109,7 @@ function TokenListItem({
       </div>
     </div>
   );
-}
+});
 
 export function Search({}: SearchProps) {
   const router = useRouter();
@@ -169,13 +169,16 @@ export function Search({}: SearchProps) {
     }
   }, []);
 
-  // Filter tokens based on search query
-  const filteredTokens = searchState.query.trim() 
-    ? searchState.tokens.filter(token => 
-        token.name?.toLowerCase().includes(searchState.query.toLowerCase()) ||
-        token.symbol?.toLowerCase().includes(searchState.query.toLowerCase())
-      )
-    : searchState.tokens;
+  // Memoize expensive filtering operation
+  const filteredTokens = useMemo(() => {
+    const query = searchState.query.trim().toLowerCase();
+    return query 
+      ? searchState.tokens.filter(token => 
+          token.name?.toLowerCase().includes(query) ||
+          token.symbol?.toLowerCase().includes(query)
+        )
+      : searchState.tokens;
+  }, [searchState.query, searchState.tokens]);
 
   // Handle search input change
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -307,14 +310,19 @@ export function Search({}: SearchProps) {
             </p>
           </div>
         ) : (
-          filteredTokens.map((token, index) => (
-            <TokenListItem
-              key={token.id}
-              token={token}
-              rank={index + 1}
-              onClick={() => handleTokenClick(token.id)}
-            />
-          ))
+          filteredTokens.map((token, index) => {
+            // Memoize individual token click handlers
+            const handleClick = () => handleTokenClick(token.id);
+            
+            return (
+              <TokenListItem
+                key={token.id}
+                token={token}
+                rank={index + 1}
+                onClick={handleClick}
+              />
+            );
+          })
         )}
       </div>
     </div>

@@ -7,7 +7,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { memo } from 'react';
 import type { LoadingSpinnerProps } from './LoadingSpinner.types';
 
 /**
@@ -16,7 +16,7 @@ import type { LoadingSpinnerProps } from './LoadingSpinner.types';
  * @param props Spinner configuration props
  * @returns Loading spinner element
  */
-export function LoadingSpinner({
+export const LoadingSpinner = memo(function LoadingSpinner({
   size = 'md',
   variant = 'primary',
   className = '',
@@ -53,4 +53,4 @@ export function LoadingSpinner({
       aria-label={ariaLabel}
     />
   );
-}
+});

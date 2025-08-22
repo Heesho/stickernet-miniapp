@@ -5,7 +5,6 @@
  * to maintain a clean separation between business logic and test data.
  */
 
-import type { Todo } from "@/app/components/features";
 
 // ===== NAVIGATION DATA =====
 
@@ -34,40 +33,10 @@ export interface NavItem {
   label: string;
 }
 
-// ===== TODO LIST DATA =====
-
-/**
- * Initial todo list items for demonstration
- */
-export const INITIAL_TODOS: Todo[] = [
-  { id: 1, text: "Learn about MiniKit", completed: false },
-  { id: 2, text: "Build a Mini App", completed: true },
-  { id: 3, text: "Deploy to Base and go viral", completed: false },
-];
 
 // ===== CURATE MOCK DATA =====
 
-/**
- * Curate entity interface for type safety
- */
-export interface Curate {
-  id: string;
-  tokenId: bigint;
-  uri: string;
-  timestamp: string;
-  price: string;
-  creator: {
-    id: string;
-  };
-  user?: {
-    id: string;
-  };
-  token: {
-    id: string;
-    name: string;
-    uri: string;
-  };
-}
+import type { Curate } from '@/types';
 
 /**
  * Mock curates data for testing when API is unavailable
@@ -279,9 +248,3 @@ export function getRandomMockCurates(count: number): Curate[] {
   return shuffled.slice(0, count);
 }
 
-/**
- * Generate todo with unique ID
- */
-export function generateTodoId(existingTodos: Todo[]): number {
-  return existingTodos.length > 0 ? Math.max(...existingTodos.map(t => t.id)) + 1 : 1;
-}

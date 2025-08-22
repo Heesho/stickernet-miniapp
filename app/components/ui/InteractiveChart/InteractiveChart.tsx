@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { type InteractiveChartProps, type PriceDataPoint, type Timeframe, type ChartDimensions, type ScaleInfo, type HoverInfo } from "./InteractiveChart.types";
 
-export const InteractiveChart: React.FC<InteractiveChartProps> = ({
+export const InteractiveChart: React.FC<InteractiveChartProps> = memo(({
   priceData,
   timeframe,
   currentPrice,
@@ -186,8 +186,8 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
     onPriceHover?.(null);
   }, [onPriceHover]);
 
-  // Format price for display
-  const formatPrice = (price: number): string => {
+  // Memoize format functions to prevent recreation on every render
+  const formatPrice = useCallback((price: number): string => {
     if (price >= 1000000) {
       return `$${(price / 1000000).toFixed(2)}M`;
     } else if (price >= 1000) {
@@ -197,10 +197,9 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
     } else {
       return `$${price.toFixed(6)}`;
     }
-  };
+  }, []);
 
-  // Format timestamp for display
-  const formatTimestamp = (timestamp: number): string => {
+  const formatTimestamp = useCallback((timestamp: number): string => {
     const date = new Date(timestamp);
     
     if (timeframe === 'LIVE' || timeframe === '4H') {
@@ -210,7 +209,7 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
     } else {
       return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: '2-digit' });
     }
-  };
+  }, [timeframe]);
 
   // Real-time updates for LIVE timeframe
   useEffect(() => {
@@ -224,10 +223,11 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
     return () => clearInterval(interval);
   }, [enableRealTime, timeframe]);
 
-  const marketPath = generatePath(priceData, 'marketPrice');
-  const marketAreaPath = generateAreaPath(priceData, 'marketPrice');
-  const floorPath = showFloorPrice ? generatePath(priceData, 'floorPrice') : '';
-  const floorAreaPath = showFloorPrice ? generateAreaPath(priceData, 'floorPrice') : '';
+  // Memoize expensive path calculations
+  const marketPath = useMemo(() => generatePath(priceData, 'marketPrice'), [generatePath, priceData]);
+  const marketAreaPath = useMemo(() => generateAreaPath(priceData, 'marketPrice'), [generateAreaPath, priceData]);
+  const floorPath = useMemo(() => showFloorPrice ? generatePath(priceData, 'floorPrice') : '', [generatePath, priceData, showFloorPrice]);
+  const floorAreaPath = useMemo(() => showFloorPrice ? generateAreaPath(priceData, 'floorPrice') : '', [generateAreaPath, priceData, showFloorPrice]);
 
   const displayPrice = isHovering && hoverInfo ? hoverInfo.dataPoint.marketPrice : currentPrice;
   const displayTimestamp = isHovering && hoverInfo ? hoverInfo.dataPoint.timestamp : Date.now();
@@ -446,6 +446,6 @@ export const InteractiveChart: React.FC<InteractiveChartProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default InteractiveChart;

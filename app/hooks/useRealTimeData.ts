@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMulticall } from './useMulticall';
 import { useTokenPosition } from './useTokenPosition';
@@ -27,14 +27,14 @@ export function useRealTimeData({
   // Use visibility-aware polling
   const [shouldPoll, setShouldPoll] = useState(true);
   
+  const handleVisibilityChange = useCallback(() => {
+    setShouldPoll(!document.hidden && enabled);
+  }, [enabled]);
+  
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      setShouldPoll(!document.hidden && enabled);
-    };
-    
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [enabled]);
+  }, [handleVisibilityChange]);
 
   // Enhanced multicall with polling
   const multicallData = useMulticall({
@@ -83,8 +83,7 @@ export function useRealTimeData({
   }, [multicallData.tokenData?.marketPrice, tokenAddress]);
 
   // Force refresh function for after user actions
-  const forceRefresh = async () => {
-    console.log('Force refreshing all data for token:', tokenAddress);
+  const forceRefresh = useCallback(async () => {
     
     // Invalidate all React Query caches
     await Promise.all([
@@ -98,27 +97,24 @@ export function useRealTimeData({
     if (multicallData.refetch) {
       await multicallData.refetch();
     }
-  };
+  }, [queryClient, multicallData.refetch]);
 
   // Auto-refresh after user transactions
-  const refreshAfterTransaction = async (txHash?: string) => {
-    console.log('Transaction completed, starting refresh sequence...', txHash);
+  const refreshAfterTransaction = useCallback(async (txHash?: string) => {
     
     // Immediate optimistic update
     await forceRefresh();
     
     // Delayed refresh to catch blockchain confirmation
     setTimeout(async () => {
-      console.log('Refreshing after blockchain confirmation...');
       await forceRefresh();
     }, 3000);
     
     // Final refresh to ensure consistency
     setTimeout(async () => {
-      console.log('Final refresh for consistency...');
       await forceRefresh();
     }, 10000);
-  };
+  }, [forceRefresh]);
 
   return {
     ...multicallData,

@@ -665,7 +665,6 @@ export async function executeGraphQLQuery<TData = unknown, TVariables = Record<s
   variables?: TVariables
 ): Promise<GraphQLResponse<TData>> {
   try {
-    console.log('Executing GraphQL query:', { query: query.trim().split('\n')[1], variables, url: SUBGRAPH_URL });
     
     const response = await fetch(SUBGRAPH_URL, {
       method: 'POST',
@@ -679,16 +678,12 @@ export async function executeGraphQLQuery<TData = unknown, TVariables = Record<s
       })
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers));
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('HTTP Error Response:', errorText);
       
       // Handle rate limiting more gracefully
       if (response.status === 429) {
-        console.warn('Rate limit exceeded. Please wait before making more requests.');
         throw new Error('Rate limit exceeded. Please try again in a few minutes.');
       }
       
@@ -696,10 +691,8 @@ export async function executeGraphQLQuery<TData = unknown, TVariables = Record<s
     }
 
     const result: GraphQLResponse<TData> = await response.json();
-    console.log('GraphQL Response:', result);
     
     if (result.errors) {
-      console.error('GraphQL Errors:', result.errors);
       
       // Check for specific subgraph allocation issues
       const hasAllocationError = result.errors.some(error => 
@@ -708,7 +701,6 @@ export async function executeGraphQLQuery<TData = unknown, TVariables = Record<s
       );
       
       if (hasAllocationError) {
-        console.warn('Subgraph allocation issue detected. The subgraph may be newly published and still indexing.');
         throw new Error('Subgraph is currently being indexed. Please try again in a few minutes.');
       }
       
@@ -717,15 +709,9 @@ export async function executeGraphQLQuery<TData = unknown, TVariables = Record<s
 
     return result;
   } catch (error) {
-    console.error('Error executing GraphQL query:', {
-      error: error instanceof Error ? error.message : error,
-      url: SUBGRAPH_URL,
-      query: query.substring(0, 200) + '...'
-    });
     
     // More helpful error message
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      console.error('Network error: The Graph API might be down or rate limiting. Check: https://status.thegraph.com/');
     }
     
     throw error;
@@ -752,27 +738,9 @@ export function transformCurateEntities(entities: CurateEntity[]): Curate[] {
 }
 
 /**
- * Curate type for components (matches Home.types.ts)
+ * Curate type for components (imported from centralized types)
  */
-export interface Curate {
-  id: string;
-  tokenId: bigint;
-  uri: string;
-  timestamp: string;
-  price: string;
-  creator: {
-    id: string;
-  };
-  user?: {
-    id: string;
-  };
-  token: {
-    id: string;
-    name: string;
-    symbol: string;
-    uri: string;
-  };
-}
+export type { Curate } from '@/types';
 
 /**
  * Fetch curates with pagination
@@ -784,8 +752,6 @@ export async function fetchCurates(first: number = 50, skip: number = 0): Promis
     { first, skip }
   );
   
-  console.log('Curates found:', result.data?.curates?.length || 0);
-  console.log('Sample curate data:', result.data?.curates?.[0]);
   
   const entities = result.data?.curates || [];
   return transformCurateEntities(entities);
@@ -849,7 +815,6 @@ export async function fetchTokens(
     { first, skip, orderBy, orderDirection }
   );
   
-  console.log('Tokens found:', result.data?.tokens?.length || 0);
   
   return result.data?.tokens || [];
 }
@@ -882,7 +847,6 @@ export async function fetchTrendingTokens(
     { first, skip, timestamp: timestamp24hAgo.toString() }
   );
   
-  console.log('Trending tokens found:', result.data?.tokenDayDatas?.length || 0);
   
   // Extract just the token entities from the response
   return result.data?.tokenDayDatas?.map(td => td.token) || [];

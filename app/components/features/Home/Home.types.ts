@@ -5,10 +5,8 @@
  * throughout the Home feature components.
  */
 
-import type { Curate } from "@/lib/constants";
-
 // Re-export for convenience
-export type { Curate };
+export type { Curate } from '@/types';
 
 /**
  * Props for the main Home component

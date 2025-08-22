@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useRouter } from "next/navigation";
@@ -41,13 +41,6 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
   const tokenId = isValidTokenId(rawTokenId) ? rawTokenId : undefined;
   
   // Debug logging
-  console.log('ImageDetail Debug:', {
-    curateId: curate.id,
-    tokenId: curate.tokenId.toString(),
-    tokenAddress,
-    curateUri: curate.uri,
-    historicalPrice: curate.price // This is the price at time of curation
-  });
   
   // Get real-time on-chain data for weekly rewards and current price
   const { weeklyReward, nextPrice, isLoading, isError } = useContentData({
@@ -83,18 +76,24 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
     fetchPriceChange();
   }, [tokenAddress]);
 
-  // Dynamic color theme based on price change (Robinhood-style)
-  const isDataLoaded = priceChange24h !== null;
-  const priceIsUp = isDataLoaded ? priceChange24h >= 0 : true; // Default doesn't matter when not loaded
+  // Memoize theme calculations - default to blue (MAX timeframe behavior)
+  const themeColors = useMemo(() => {
+    // Always default to blue theme to match MAX timeframe default
+    // This prevents orange flash for tokens with negative 24h performance
+    const priceIsUp = true; // Always blue for consistency with Board view
+    
+    return {
+      isDataLoaded: true,
+      priceIsUp,
+      themeColor: '#0052FF',
+      themeColorClass: 'text-[#0052FF]',
+      themeBgClass: 'bg-[#0052FF]',
+      themeBorderClass: 'border-[#0052FF]'
+    };
+  }, []);
   
-  // Use neutral gray while loading, then switch to theme colors
-  const themeColor = !isDataLoaded ? '#6b7280' : (priceIsUp ? '#0052FF' : '#FF6B35');
-  const themeColorClass = !isDataLoaded ? 'text-gray-500' : (priceIsUp ? 'text-[#0052FF]' : 'text-[#FF6B35]');
-  const themeBgClass = !isDataLoaded ? 'bg-gray-600' : (priceIsUp ? 'bg-[#0052FF]' : 'bg-[#FF6B35]');
-  const themeBorderClass = !isDataLoaded ? 'border-gray-600' : (priceIsUp ? 'border-[#0052FF]' : 'border-[#FF6B35]');
-  
-  // Handle curate button click - now opens confirmation
-  const handleCurate = () => {
+  // Memoize event handlers to prevent unnecessary re-renders
+  const handleCurate = useCallback(() => {
     if (!nextPrice || parseFloat(nextPrice) <= 0) {
       console.error('Invalid next price for curation');
       return;
@@ -102,26 +101,24 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
     
     // Show confirmation page
     setShowConfirmation(true);
-  };
+  }, [nextPrice]);
 
-  const handleBoardClick = () => {
+  const handleBoardClick = useCallback(() => {
     if (onNavigateToBoard) {
       onNavigateToBoard(curate.tokenId.toString(), curate.token.id);
       onClose();
     } else {
       router.push(`/${curate.token.id}`);
     }
-  };
+  }, [onNavigateToBoard, curate.tokenId, curate.token.id, onClose, router]);
 
-  // Handle clicking on the sticker image to go to dedicated sticker page
-  const handleStickerClick = () => {
+  const handleStickerClick = useCallback(() => {
     router.push(`/${curate.token.id}/${curate.tokenId}`);
-  };
+  }, [router, curate.token.id, curate.tokenId]);
 
-  // Handle clicking on user profiles
-  const handleUserClick = (userAddress: string) => {
+  const handleUserClick = useCallback((userAddress: string) => {
     router.push(`/account/${userAddress}`);
-  };
+  }, [router]);
   
   if (isError) {
     console.error('Error fetching content data from multicall');
@@ -152,7 +149,7 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
           className="fixed top-4 w-10 h-10 bg-black bg-opacity-80 rounded-lg flex items-center justify-center hover:bg-opacity-90 transition-all backdrop-blur-sm z-50"
           style={{ left: 'max(1rem, calc(50% - 13rem))' }} // Centers it within the max-w-md container with padding
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={themeColor} strokeWidth="2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={themeColors.themeColor} strokeWidth="2">
             <path d="m15 18-6-6 6-6"/>
           </svg>
         </button>
@@ -175,7 +172,7 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
                   alt={`Curate ${curate.id}`}
                   width={400}
                   height={600}
-                  className={`w-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'} max-h-screen hover:scale-[1.02] transition-transform duration-200`}
+                  className={`w-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'} max-h-screen`}
                   onLoad={() => setImageLoaded(true)}
                   onError={() => setImageError(true)}
                   style={{ height: 'auto', minHeight: '60vh' }}
@@ -289,10 +286,10 @@ export function ImageDetail({ curate, onClose, onCurate, onNavigateToBoard }: Im
               <button
                 onClick={handleCurate}
                 disabled={isLoading || !nextPrice}
-                className={`font-semibold py-2.5 px-8 rounded-xl border-2 ${themeBorderClass} min-w-[120px] transition-all duration-200 ${
+                className={`font-semibold py-2.5 px-8 rounded-xl border-2 ${themeColors.themeBorderClass} min-w-[120px] transition-all duration-200 ${
                   isLoading 
                     ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-                    : `${themeBgClass} hover:opacity-90 text-black`
+                    : `${themeColors.themeBgClass} hover:opacity-90 text-black`
                 }`}
               >
                 {isLoading ? (

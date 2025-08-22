@@ -150,7 +150,6 @@ export function useCurateData(): UseCurateDataReturn {
       );
       
       if (newCurates.length > 0) {
-        console.log(`Found ${newCurates.length} new curates`);
         addNewCurates(newCurates);
         
         // Update last timestamp

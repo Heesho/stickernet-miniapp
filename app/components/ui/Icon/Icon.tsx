@@ -1,7 +1,7 @@
-import React from "react";
+import React, { memo } from "react";
 import { type IconProps } from "./Icon.types";
 
-export const Icon: React.FC<IconProps> = ({ name, size = "md", className = "" }) => {
+export const Icon: React.FC<IconProps> = memo(({ name, size = "md", className = "" }) => {
   const sizeClasses = {
     sm: "w-4 h-4",
     md: "w-5 h-5",
@@ -199,6 +199,74 @@ export const Icon: React.FC<IconProps> = ({ name, size = "md", className = "" })
         <line x1="12" y1="17" x2="12.01" y2="17" />
       </svg>
     ),
+    close: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Close</title>
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    ),
+    alert: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Alert</title>
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    ),
+    wallet: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Wallet</title>
+        <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+        <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+        <path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z" />
+      </svg>
+    ),
+    deposit: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <title>Deposit</title>
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <polyline points="17 6 12 1 7 6" />
+        <path d="M4 12h16a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z" />
+        <path d="M7 17h10" />
+      </svg>
+    ),
   };
 
   return (
@@ -206,6 +274,6 @@ export const Icon: React.FC<IconProps> = ({ name, size = "md", className = "" })
       {icons[name]}
     </span>
   );
-};
+});
 
 export default Icon;

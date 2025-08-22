@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PriceDataPoint, Timeframe } from '@/app/components/ui/RobinhoodChart/RobinhoodChart.types';
+import { SubgraphDataPoint } from '@/types/blockchain.types';
 import { SUBGRAPH_URL, GRAPH_API_KEY } from '@/lib/api/subgraph';
+import { useAsyncErrorHandler, type StandardError } from './useErrorHandler';
 
 interface UseChartDataProps {
   tokenAddress: string;
@@ -11,7 +13,8 @@ interface UseChartDataProps {
 interface UseChartDataReturn {
   data: PriceDataPoint[];
   loading: boolean;
-  error: string | null;
+  error: StandardError | null;
+  hasError: boolean;
   refetch: () => void;
 }
 
@@ -29,7 +32,7 @@ const getTimeRangeForTimeframe = (timeframe: Timeframe): number => {
 };
 
 // Helper function to calculate data points needed for each timeframe
-const getDataPointsConfig = (timeframe: Timeframe) => {
+const getDataPointsConfig = (timeframe: Timeframe): { dataType: string; maxPoints: number; useRecent?: boolean } => {
   switch (timeframe) {
     case 'LIVE': // Get 60 most recent minute data points
       return {
@@ -218,7 +221,43 @@ const GET_TOKEN_INFO = `
 export function useChartData({ tokenAddress, timeframe, enabled = true }: UseChartDataProps): UseChartDataReturn {
   const [data, setData] = useState<PriceDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  
+  const errorHandler = useAsyncErrorHandler({
+    hookName: 'useChartData',
+    showToast: false, // Don't show toast for chart data errors
+    enableLogging: true,
+    customErrorMapper: (error: unknown) => {
+      // Map specific API errors
+      const errorObj = error as { message?: string };
+      if (errorObj?.message?.includes('GraphQL')) {
+        return {
+          category: 'api' as const,
+          severity: 'medium' as const,
+          userMessage: 'Chart data temporarily unavailable',
+          recoverySuggestion: 'Chart data will refresh automatically.',
+          retryable: true
+        };
+      }
+      
+      if (errorObj?.message?.includes('fetch') || errorObj?.message?.includes('network')) {
+        return {
+          category: 'network' as const,
+          severity: 'medium' as const,
+          userMessage: 'Unable to load chart data',
+          recoverySuggestion: 'Check your connection and try refreshing.',
+          retryable: true
+        };
+      }
+      
+      return {
+        context: {
+          tokenAddress,
+          timeframe,
+          enabled
+        }
+      };
+    }
+  });
 
   const fetchChartData = useCallback(async () => {
     if (!enabled || !tokenAddress) {
@@ -227,9 +266,9 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     }
 
     setLoading(true);
-    setError(null);
+    errorHandler.clearError();
 
-    try {
+    const result = await errorHandler.executeWithErrorHandling(async () => {
       const token = tokenAddress.toLowerCase(); // Token ID must be lowercase for subgraph
 
 
@@ -255,7 +294,6 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       const tokenInfo = tokenInfoResult.data?.token;
 
       if (!tokenInfo) {
-        console.warn(`Token ${token} not found in subgraph`);
         setData([]);
         setLoading(false);
         return;
@@ -281,7 +319,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
           minuteIds.push(`${token}-${minuteIndex}`);
         }
         
-        console.log(`Fetching ${timeframe} data:`, {
+        console.log('Minute data query details:', {
           now: new Date(now * 1000).toLocaleString(),
           currentMinuteIndex,
           numMinutes,
@@ -312,7 +350,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
         
         const minuteData = result.data?.tokenMinuteDatas || [];
         
-        console.log(`${timeframe} chart raw data:`, {
+        console.log('Minute data query results:', {
           idsRequested: minuteIds.length,
           dataPointsReceived: minuteData.length,
           currentPrice,
@@ -345,7 +383,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
           hourIds.push(`${token}-${i}`);
         }
         
-        console.log(`Fetching ${timeframe} data:`, {
+        console.log('Hour data query details:', {
           now: new Date(now * 1000).toLocaleString(),
           currentHourIndex,
           numHours,
@@ -378,7 +416,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
         
         const hourData = result.data?.tokenHourDatas || [];
         
-        console.log(`${timeframe} chart raw data:`, {
+        console.log('Hour data query results:', {
           idsRequested: hourIds.length,
           dataPointsReceived: hourData.length,
           currentPrice,
@@ -411,7 +449,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
           dayIds.push(`${token}-${i}`);
         }
         
-        console.log(`Fetching 1M data:`, {
+        console.log('Day data query details:', {
           now: new Date(now * 1000).toLocaleString(),
           currentDayIndex,
           tokenCreatedAt: new Date(tokenCreatedAt * 1000).toLocaleString(),
@@ -443,7 +481,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
         
         const dayData = result.data?.tokenDayDatas || [];
         
-        console.log(`1M chart raw data:`, {
+        console.log('Day data query results:', {
           idsRequested: dayIds.length,
           dataPointsReceived: dayData.length,
           currentPrice,
@@ -479,7 +517,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
             hourIds.push(`${token}-${i}`);
           }
           
-          console.log(`Fetching MAX data (using hours for young token):`, {
+          console.log('MAX chart hour data query details:', {
             tokenAge: tokenAge / 86400,
             hoursToFetch: hourIds.length,
             currentPrice
@@ -515,7 +553,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
             dayIds.push(`${token}-${i}`);
           }
           
-          console.log(`Fetching MAX data (using days):`, {
+          console.log('MAX chart day data query details:', {
             tokenAge: tokenAge / 86400,
             daysToFetch: dayIds.length,
             currentPrice
@@ -589,7 +627,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
           // Reverse the data since it comes in descending order
           rawData = rawData.reverse();
           
-          console.log(`Chart data for ${timeframe}:`, {
+          console.log('MAX chart data query results:', {
             dataType: config.dataType,
             requestedPoints: config.maxPoints,
             receivedPoints: rawData.length,
@@ -607,18 +645,24 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
         }
       }
       // Data processing is now handled in the query section above
-      
-    } catch (err) {
-      console.error('Error fetching chart data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch chart data');
-    } finally {
-      setLoading(false);
+      return true; // Return success
+    }, {
+      operation: 'fetch_chart_data',
+      tokenAddress,
+      timeframe
+    });
+
+    setLoading(false);
+    
+    if (!result) {
+      // Error was handled by errorHandler
+      setData([]);
     }
-  }, [tokenAddress, timeframe, enabled]);
+  }, [tokenAddress, timeframe, enabled, errorHandler]);
 
   // Process MAX chart data - intelligently samples to ~100 points
   const processMAXChartData = (
-    data: any[], 
+    data: SubgraphDataPoint[], 
     currentPrice: number,
     currentFloorPrice: number,
     tokenCreatedAt: number,
@@ -637,7 +681,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     const TARGET_POINTS = 100; // Aim for about 100 points
     
     // Create a map of existing data points
-    const dataMap = new Map<number, any>();
+    const dataMap = new Map<number, SubgraphDataPoint>();
     const divisor = dataType === 'hour' ? 3600 : 86400;
     
     data.forEach(point => {
@@ -653,8 +697,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     // Calculate sampling interval to get approximately TARGET_POINTS
     const sampleInterval = Math.max(1, Math.floor(totalPeriods / TARGET_POINTS));
     const actualPoints = Math.ceil(totalPeriods / sampleInterval);
-    
-    console.log(`MAX sampling:`, {
+    console.log('MAX chart sampling details:', {
       totalPeriods,
       sampleInterval,
       actualPoints
@@ -740,7 +783,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       }
     }
     
-    console.log(`MAX chart processed:`, {
+    console.log('MAX chart processing results:', {
       totalPoints: result.length,
       actualDataPoints: data.length,
       firstPoint: result[0],
@@ -753,7 +796,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
 
   // Process 1M chart data - fills in missing day points with baseline price for pre-creation period
   const process1MChartData = (
-    dayData: any[], 
+    dayData: SubgraphDataPoint[], 
     currentPrice: number,
     currentFloorPrice: number,
     startTimestamp: number, 
@@ -837,7 +880,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       result[result.length - 1].floorPrice = currentFloorPrice;
     }
     
-    console.log(`1M chart processed:`, {
+    console.log('1M chart processing results:', {
       totalPoints: result.length,
       actualDataPoints: dayData.length,
       totalDays,
@@ -851,7 +894,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
 
   // Process 1W chart data - fills in missing hour points with baseline price for pre-creation period
   const process1WChartData = (
-    hourData: any[], 
+    hourData: SubgraphDataPoint[], 
     currentPrice: number,
     currentFloorPrice: number,
     startTimestamp: number, 
@@ -949,7 +992,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       result[result.length - 1].floorPrice = currentFloorPrice;
     }
     
-    console.log(`1W chart processed:`, {
+    console.log('1W chart processing results:', {
       totalPoints: result.length,
       actualDataPoints: hourData.length,
       sampleInterval,
@@ -963,7 +1006,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
 
   // Process 1D chart data - fills in missing hour points with forward-filling
   const process1DChartData = (
-    hourData: any[], 
+    hourData: SubgraphDataPoint[], 
     currentPrice: number,
     currentFloorPrice: number,
     startTimestamp: number, 
@@ -1044,7 +1087,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       result[result.length - 1].floorPrice = currentFloorPrice;
     }
     
-    console.log(`1D chart processed:`, {
+    console.log('1D chart processing results:', {
       totalPoints: result.length,
       actualDataPoints: hourData.length,
       firstPoint: result[0],
@@ -1057,7 +1100,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
 
   // Process 4H chart data - fills in missing minute points with forward-filling
   const process4HChartData = (
-    minuteData: any[], 
+    minuteData: SubgraphDataPoint[], 
     currentPrice: number,
     currentFloorPrice: number,
     startTimestamp: number, 
@@ -1148,7 +1191,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       result[result.length - 1].floorPrice = currentFloorPrice;
     }
     
-    console.log(`4H chart processed:`, {
+    console.log('4H chart processing results:', {
       totalPoints: result.length,
       actualDataPoints: minuteData.length,
       firstPoint: result[0],
@@ -1161,7 +1204,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
 
   // Process LIVE chart data - fills in missing minute points with forward-filling
   const processLiveChartData = (
-    minuteData: any[], 
+    minuteData: SubgraphDataPoint[], 
     currentPrice: number,
     currentFloorPrice: number,
     startTimestamp: number, 
@@ -1250,7 +1293,7 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       result[result.length - 1].floorPrice = currentFloorPrice;
     }
     
-    console.log(`LIVE chart processed (forward-filled):`, {
+    console.log('LIVE chart processing results:', {
       totalPoints: result.length,
       actualDataPoints: minuteData.length,
       filledPoints: 60 - minuteData.length,
@@ -1268,9 +1311,8 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
   };
 
   // Process raw subgraph data into exactly 60 chart points
-  const processChartData = (rawData: any[], currentPrice: number, currentFloorPrice: number, timeframe: Timeframe): PriceDataPoint[] => {
+  const processChartData = (rawData: SubgraphDataPoint[], currentPrice: number, currentFloorPrice: number, timeframe: Timeframe): PriceDataPoint[] => {
     if (rawData.length === 0) {
-      console.log(`No data for ${timeframe}, creating minimal points at current price:`, currentPrice);
       // If no historical data, create just 2 points to show current state
       // This avoids misleading flat lines that look like stable price
       const now = Date.now();
@@ -1339,7 +1381,6 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
     
     // If we only have 1 point, create a flat line
     if (data.length === 1) {
-      console.log(`Only 1 point for ${timeframe}, creating flat line`);
       const singlePoint = data[0];
       const result: PriceDataPoint[] = [];
       const range = getTimeRangeForTimeframe(timeframe);
@@ -1357,7 +1398,6 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       return result;
     }
     
-    console.log(`Resampling ${data.length} points to 60 for ${timeframe}`);
     
     const result: PriceDataPoint[] = [];
     
@@ -1424,12 +1464,13 @@ export function useChartData({ tokenAddress, timeframe, enabled = true }: UseCha
       const interval = setInterval(fetchChartData, 10000); // Refresh every 10 seconds for LIVE
       return () => clearInterval(interval);
     }
-  }, [fetchChartData, timeframe, enabled]);
+  }, [tokenAddress, timeframe, enabled]);
 
   return {
     data,
     loading,
-    error,
+    error: errorHandler.error,
+    hasError: errorHandler.hasError,
     refetch: fetchChartData
   };
 }

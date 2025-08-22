@@ -115,7 +115,6 @@ export function Create({ setActiveTab }: CreateProps) {
       });
       
       // Execute bundled transaction
-      console.log('Executing bundled transaction with calls:', calls);
       
       // For Coinbase Smart Wallet, we can send multiple calls in one transaction
       const txHash = await walletClient.sendTransaction({
@@ -124,7 +123,6 @@ export function Create({ setActiveTab }: CreateProps) {
         chain: walletClient.chain,
       });
       
-      console.log('Transaction sent:', txHash);
       toast.info('Transaction submitted, waiting for confirmation...');
       
       // Wait for transaction confirmation
@@ -145,7 +143,6 @@ export function Create({ setActiveTab }: CreateProps) {
         
         if (tokenAddress && buyAmountNum > 0) {
           // Execute the initial buy as a separate transaction
-          console.log('Executing initial buy for token:', tokenAddress);
           
           const buyHash = await walletClient.writeContract({
             address: ROUTER_ADDRESS,
@@ -181,9 +178,9 @@ export function Create({ setActiveTab }: CreateProps) {
       } else {
         throw new Error('Transaction failed');
       }
-    } catch (err: any) {
-      console.error("Failed to create token:", err);
-      toast.error(err.message || 'Failed to create token');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create token';
+      toast.error(errorMessage);
     } finally {
       setIsCreating(false);
     }

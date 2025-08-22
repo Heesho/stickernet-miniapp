@@ -1,7 +1,5 @@
-import type { Curate } from "@/lib/constants";
-
 // Re-export for convenience
-export type { Curate };
+export type { Curate } from '@/types';
 
 export type SearchProps = {
   setActiveTab?: (tab: string) => void;

@@ -16,6 +16,7 @@ import {
   ROUTER_CONTRACT, 
   USDC_DECIMALS 
 } from '@/lib/constants';
+import { useAsyncErrorHandler, type StandardError } from './useErrorHandler';
 import type { 
   CurateContentParams, 
   BatchTransactionStatus, 
@@ -33,6 +34,37 @@ export function useCurateContent(): UseCurateContentReturn {
     curateStatus: 'idle',
   });
   const [isLoading, setIsLoading] = useState(false);
+  
+  const errorHandler = useAsyncErrorHandler({
+    hookName: 'useCurateContent',
+    showToast: false, // We'll handle toasts manually
+    enableLogging: true,
+    customErrorMapper: (error: unknown) => {
+      // Map specific batch transaction errors
+      const errorObj = error as { code?: number; message?: string };
+      if (errorObj.code === 4001) {
+        return {
+          category: 'wallet' as const,
+          severity: 'low' as const,
+          userMessage: 'Transaction cancelled by user',
+          recoverySuggestion: 'Please try again when ready.',
+          retryable: true
+        };
+      }
+      
+      if (errorObj.code === 5740) {
+        return {
+          category: 'wallet' as const,
+          severity: 'medium' as const,
+          userMessage: 'Batch transaction too large',
+          recoverySuggestion: 'Please try with a smaller transaction.',
+          retryable: false
+        };
+      }
+      
+      return {};
+    }
+  });
 
   /**
    * Check if wallet supports batch transactions
@@ -42,14 +74,14 @@ export function useCurateContent(): UseCurateContentReturn {
 
     try {
       const capabilities = await walletClient.request({
-        method: 'wallet_getCapabilities' as any,
+        method: 'wallet_getCapabilities' as 'wallet_getCapabilities',
         params: [userAddress]
       });
 
-      const chainCapabilities = (capabilities as any)?.[baseSepolia.id];
-      return chainCapabilities?.atomicBatch?.supported === true;
+      const chainCapabilities = (capabilities as Record<string, unknown>)?.[baseSepolia.id];
+      const atomicBatch = (chainCapabilities as { atomicBatch?: { supported?: boolean } })?.atomicBatch;
+      return atomicBatch?.supported === true;
     } catch (error) {
-      console.log('Batch capabilities check failed, assuming supported:', error);
       return true; // Assume supported if check fails (Smart Wallet should support it)
     }
   }, [walletClient, userAddress]);
@@ -61,29 +93,27 @@ export function useCurateContent(): UseCurateContentReturn {
     const { tokenAddress, tokenId, nextPrice } = params;
 
     if (!userAddress) {
-      setStatus(prev => ({
-        ...prev,
-        error: 'Please connect your wallet',
-      }));
+      errorHandler.handleError(new Error('Wallet not connected'), {
+        context: 'wallet_check'
+      });
       return;
     }
 
     if (!walletClient) {
-      setStatus(prev => ({
-        ...prev,
-        error: 'Wallet not connected',
-      }));
+      errorHandler.handleError(new Error('Wallet client not available'), {
+        context: 'wallet_client_check'
+      });
       return;
     }
 
-    try {
+    const result = await errorHandler.executeWithErrorHandling(async () => {
       setIsLoading(true);
       setStatus({
         approveStatus: 'pending',
         curateStatus: 'pending',
       });
 
-      console.log('Starting batch transaction:', {
+      console.log('Curate transaction details:', {
         tokenAddress,
         tokenId: tokenId.toString(),
         nextPrice: nextPrice.toString(),
@@ -92,7 +122,6 @@ export function useCurateContent(): UseCurateContentReturn {
 
       // Check if batch transactions are supported
       const batchSupported = await checkBatchSupport();
-      console.log('Batch transactions supported:', batchSupported);
 
       // Encode the USDC approve call
       const approveCallData = encodeFunctionData({
@@ -122,11 +151,10 @@ export function useCurateContent(): UseCurateContentReturn {
         }
       ];
 
-      console.log('Executing batch calls:', calls);
 
       // Send batch transaction using wallet_sendCalls
       const result = await walletClient.request({
-        method: 'wallet_sendCalls' as any,
+        method: 'wallet_sendCalls' as 'wallet_sendCalls',
         params: [{
           version: '2.0.0',
           from: userAddress,
@@ -136,40 +164,34 @@ export function useCurateContent(): UseCurateContentReturn {
         }]
       });
 
-      console.log('Batch transaction sent:', result);
 
       // Update status to success
       setStatus({
         approveStatus: 'success',
         curateStatus: 'success',
-        approveHash: (result as any)?.transactionHash || result,
-        curateHash: (result as any)?.transactionHash || result,
+        approveHash: (result as { transactionHash?: string })?.transactionHash || String(result),
+        curateHash: (result as { transactionHash?: string })?.transactionHash || String(result),
       });
 
-    } catch (error: any) {
-      console.error('Batch transaction failed:', error);
-      
-      let errorMessage = 'Batch transaction failed';
-      
-      if (error.code === 4001) {
-        errorMessage = 'User rejected the transaction';
-      } else if (error.code === 5740) {
-        errorMessage = 'Batch too large for wallet to process';
-      } else if (error.code === -32602) {
-        errorMessage = 'Invalid request format';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
+      return result;
+    }, {
+      operation: 'curate_content',
+      tokenAddress,
+      tokenId: tokenId.toString(),
+      nextPrice: nextPrice.toString()
+    });
 
+    setIsLoading(false);
+
+    if (!result) {
+      // Error was handled by errorHandler
       setStatus({
         approveStatus: 'error',
         curateStatus: 'error',
-        error: errorMessage,
+        error: errorHandler.error?.userMessage || 'Curation failed',
       });
-    } finally {
-      setIsLoading(false);
     }
-  }, [walletClient, userAddress, checkBatchSupport]);
+  }, [walletClient, userAddress, checkBatchSupport, errorHandler]);
 
   /**
    * Reset transaction state

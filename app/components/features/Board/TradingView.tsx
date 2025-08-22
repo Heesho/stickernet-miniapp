@@ -6,6 +6,7 @@ import { AnimatedNumber } from "../../ui/AnimatedNumber";
 import { RobinhoodChart } from "../../ui/RobinhoodChart/RobinhoodChart";
 import { useChartData } from "@/app/hooks/useChartData";
 import { Timeframe, PriceDataPoint } from "../../ui/RobinhoodChart/RobinhoodChart.types";
+import { TokenData } from "@/types";
 import { formatUnits } from "viem";
 import { BuyPage } from "./BuyPage";
 import { SellPage } from "./SellPage";
@@ -29,7 +30,7 @@ interface TradingViewProps {
   };
   todayVolume: string;
   onPriceHover?: (price: string | null, floorPrice: string | null) => void;
-  tokenData?: any;
+  tokenData?: TokenData | null;
   subgraphData?: {
     holders?: string;
     contents?: string;
@@ -59,7 +60,7 @@ export function TradingView({
   subgraphData,
   onTimeframeChange
 }: TradingViewProps) {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>('LIVE');
+  const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>('MAX');
   const [hoveredPrice, setHoveredPrice] = useState<number | null>(null);
   const [isTradeMenuExpanded, setIsTradeMenuExpanded] = useState(false);
   const [showBuyPage, setShowBuyPage] = useState(false);
@@ -104,9 +105,6 @@ export function TradingView({
   // Debug logging
   useEffect(() => {
     if (tokenPosition) {
-      console.log('TokenPosition data received:', tokenPosition);
-      console.log('Content owned:', tokenPosition.contentOwned);
-      console.log('Content balance:', tokenPosition.contentBalance);
     }
   }, [tokenPosition]);
   
@@ -114,14 +112,17 @@ export function TradingView({
   const [timeframePriceChange, setTimeframePriceChange] = useState<number | null>(null);
   
   // Dynamic theme colors based on selected timeframe price performance
-  // Use calculated timeframe change if available, otherwise fall back to props
+  // Default to blue (positive) for MAX timeframe since it's from token creation
   let isPricePositive = true;
-  if (timeframePriceChange !== null) {
+  if (selectedTimeframe === 'MAX') {
+    // MAX timeframe is always positive (from token creation to now)
+    isPricePositive = true;
+  } else if (timeframePriceChange !== null) {
+    // Use calculated change for the selected timeframe
     isPricePositive = timeframePriceChange >= 0;
-  } else if (selectedTimeframe === 'LIVE' && priceChange1h !== undefined) {
-    isPricePositive = priceChange1h >= 0;
-  } else if (priceChange24h !== undefined) {
-    isPricePositive = priceChange24h >= 0;
+  } else {
+    // Initial fallback before data loads - default to blue
+    isPricePositive = true;
   }
   
   const themeColor = isPricePositive ? '#0052FF' : '#FF6B35';
@@ -166,17 +167,14 @@ export function TradingView({
   
   // Enhanced refresh function that also refreshes chart data
   const refreshAfterTransaction = async (txHash?: string) => {
-    console.log('Transaction completed, refreshing all data including chart...');
     // Call base refresh
     await baseRefreshAfterTransaction(txHash);
     // Also refresh chart data
     setTimeout(() => {
-      console.log('Refreshing chart data...');
       refetchChart();
     }, 1000);
     // Additional delayed refresh for chart
     setTimeout(() => {
-      console.log('Second chart refresh...');
       refetchChart();
     }, 5000);
   };
@@ -604,6 +602,14 @@ export function TradingView({
           </div>
         </div>
       </div>
+
+      {/* Dark overlay when trade menu is expanded */}
+      {isTradeMenuExpanded && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-70 z-30 transition-opacity duration-200"
+          onClick={() => setIsTradeMenuExpanded(false)}
+        />
+      )}
 
       {/* Sticky action button and volume - positioned above navbar */}
       <div className="fixed bottom-16 left-0 right-0 z-40">

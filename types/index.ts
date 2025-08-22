@@ -17,6 +17,14 @@ export type {
   Web3Error,
   ContractCallResult,
   WriteContractResult,
+  PriceDataPoint,
+  SubgraphDataPoint,
+  BoardData,
+  CurateData,
+  WalletCapabilities,
+  WalletCallsRequest,
+  WalletCall,
+  TransactionReceipts,
 } from './blockchain.types';
 
 export {
@@ -115,6 +123,29 @@ export type {
 
 // Re-export common viem types for convenience
 export type { Address, Hash, Hex } from 'viem';
+
+// Common application types
+export type Timeframe = 'LIVE' | '4H' | '1D' | '1W' | '1M' | 'MAX';
+
+export interface Curate {
+  id: string;
+  tokenId: bigint;
+  uri: string;
+  timestamp: string;
+  price: string;
+  creator: {
+    id: string;
+  };
+  user?: {
+    id: string;
+  };
+  token: {
+    id: string;
+    name: string;
+    symbol?: string;
+    uri: string;
+  };
+}
 
 // Global type augmentations
 declare global {

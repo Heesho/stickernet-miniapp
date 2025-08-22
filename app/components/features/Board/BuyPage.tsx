@@ -8,7 +8,7 @@ import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
 import { useTokenData } from "@/app/hooks/useMulticall";
 import { useDebouncedBuyQuote } from "@/app/hooks/useBuyQuote";
-import { useSendCallsBuyToken } from "@/app/hooks/useSendCallsBuyToken";
+import { useTokenTransaction } from "@/app/hooks/useTokenTransaction";
 import { USDC_DECIMALS } from "@/lib/constants";
 import { formatNumber, formatCurrency, formatTokenAmount } from "@/lib/utils/formatters";
 
@@ -101,13 +101,13 @@ export function BuyPage({
 
   // Hook for executing the actual buy transaction
   const {
-    executeBuy,
+    executeTransaction,
     status: txStatus,
     isLoading: isTxLoading,
     isSuccess: isTxSuccess,
     error: txError,
     reset: resetTx
-  } = useSendCallsBuyToken();
+  } = useTokenTransaction();
 
   const handleClose = () => {
     // Don't allow closing during transaction
@@ -134,18 +134,26 @@ export function BuyPage({
       return;
     }
 
-    console.log('Executing buy with params:', {
+    console.log('Buy transaction details:', {
       tokenAddress,
       usdcAmount: inputValue,
       minTokenAmountOut: autoMinTokenAmtOut?.toString(), // Log the actual value
       minTokenAmountOutFormatted: autoMinTokenAmtOut ? formatUnits(autoMinTokenAmtOut, 18) : '0'
     });
     
-    // Execute the buy - following the exact pattern from CurateConfirmation
-    await executeBuy({
+    // Execute the buy using the unified hook
+    await executeTransaction({
+      operation: 'buy',
       tokenAddress,
       usdcAmount: inputValue,
       minTokenAmountOut: autoMinTokenAmtOut
+    }, {
+      method: 'sendCalls', // Use sendCalls for best Smart Wallet UX
+      onSuccess: (txHash) => {
+      },
+      onError: (error) => {
+        console.error('Buy transaction failed:', error);
+      }
     });
   };
 

@@ -7,7 +7,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { memo } from 'react';
 import { SKELETON_HEIGHTS } from '@/lib/constants';
 
 interface SkeletonGridProps {
@@ -21,7 +21,7 @@ interface SkeletonGridProps {
  * @param props Component props
  * @returns Skeleton grid element
  */
-export function SkeletonGrid({ className = '' }: SkeletonGridProps) {
+export const SkeletonGrid = memo(function SkeletonGrid({ className = '' }: SkeletonGridProps) {
   return (
     <div className={`animate-fade-in ${className}`}>
       <div className="columns-2 gap-4 space-y-4">
@@ -38,4 +38,4 @@ export function SkeletonGrid({ className = '' }: SkeletonGridProps) {
       </div>
     </div>
   );
-}
+});

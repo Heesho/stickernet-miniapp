@@ -125,32 +125,33 @@ function validateInputs(tokenAddress: string | undefined, usdcAmount: string): {
   }
 }
 
-function createUserFriendlyError(error: any): BuyQuoteError {
+function createUserFriendlyError(error: unknown): BuyQuoteError {
   // Network-related errors
-  if (error?.message?.includes('network') || error?.message?.includes('RPC')) {
+  const errorObj = error as { message?: string; code?: string | number };
+  if (errorObj?.message?.includes('network') || errorObj?.message?.includes('RPC')) {
     return {
       name: 'NetworkError',
-      message: error.message,
+      message: errorObj?.message || String(error),
       userFriendlyMessage: 'Network connection issue. Please check your connection and try again.',
       retryable: true
     };
   }
 
   // Contract-related errors
-  if (error?.message?.includes('contract') || error?.message?.includes('revert')) {
+  if (errorObj?.message?.includes('contract') || errorObj?.message?.includes('revert')) {
     return {
       name: 'ContractError',
-      message: error.message,
+      message: errorObj?.message || String(error),
       userFriendlyMessage: 'Transaction would fail. This may be due to insufficient liquidity or market conditions.',
       retryable: true
     };
   }
 
   // Rate limiting
-  if (error?.message?.includes('rate limit') || error?.message?.includes('429')) {
+  if (errorObj?.message?.includes('rate limit') || errorObj?.message?.includes('429')) {
     return {
       name: 'RateLimitError',
-      message: error.message,
+      message: errorObj?.message || String(error),
       userFriendlyMessage: 'Too many requests. Please wait a moment and try again.',
       retryable: true
     };
@@ -159,7 +160,7 @@ function createUserFriendlyError(error: any): BuyQuoteError {
   // Generic fallback
   return {
     name: 'UnknownError',
-    message: error?.message || 'Unknown error occurred',
+    message: errorObj?.message || 'Unknown error occurred',
     userFriendlyMessage: 'Something went wrong. Please try again.',
     retryable: true
   };
@@ -225,22 +226,12 @@ export function useBuyQuote({
         
         
         // Validation checks
-        if (tokenOut <= autoMinTokenOut) {
-          console.error('WARNING: tokenAmountOut is not greater than autoMinTokenAmountOut!', {
-            tokenOut: tokenOut.toString(),
-            autoMinTokenOut: autoMinTokenOut.toString()
-          });
-        }
         
         // Warn if price impact is high (more than 5%)
-        if (slippagePercent > 5) {
-          console.warn(`High price impact detected: ${slippagePercent.toFixed(2)}%`);
-        }
       }
       
       return formatUnits(data[0] as bigint, 18);
     } catch (error) {
-      console.warn('Failed to format token amount:', error);
       return '0';
     }
   }, [data, validation.parsedAmount]);

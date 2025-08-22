@@ -54,10 +54,14 @@ export function shouldSponsorTransaction(
   return false;
 }
 
+interface PaymasterActions {
+  paymasterUrl: string;
+}
+
 /**
  * Get paymaster actions for transactions
  */
-export function getPaymasterActions(): any {
+export function getPaymasterActions(): PaymasterActions | undefined {
   if (!paymasterConfig.paymasterUrl) {
     console.warn('Paymaster URL not configured - transactions will not be sponsored');
     return undefined;

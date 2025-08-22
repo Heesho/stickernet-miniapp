@@ -5,7 +5,7 @@ export interface PriceDataPoint {
   volume: number;
 }
 
-export type Timeframe = 'LIVE' | '4H' | '1D' | '1W' | '1M' | 'MAX';
+export type { Timeframe } from '@/types';
 
 export interface InteractiveChartProps {
   priceData: PriceDataPoint[];

@@ -3,6 +3,7 @@
 import { type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { useAccount, useReadContract, useChainId, useSwitchChain } from "wagmi";
 import dynamic from "next/dynamic";
+import { ProfileView } from "./ProfileView";
 import {
   Name,
   Identity,
@@ -89,13 +90,7 @@ export function Profile({ setActiveTab }: ProfileProps) {
 
   const handleSwitchNetwork = useCallback(async () => {
     try {
-      console.log('Attempting to switch to Base Sepolia...', {
-        targetChainId: baseSepolia.id,
-        currentChainId: chainId,
-        hasSwitch: !!switchChain
-      });
       await switchChain({ chainId: baseSepolia.id });
-      console.log('Network switch successful!');
     } catch (error) {
       console.error('Failed to switch network:', error);
       if (error instanceof Error) {
@@ -137,26 +132,31 @@ export function Profile({ setActiveTab }: ProfileProps) {
 
   return (
     <div className="animate-fade-in">
-      {/* Base Smart Wallet Warning */}
-      {shouldShowWarning && (
-        <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-          <div className="flex items-start space-x-3">
-            <Icon name="warning" size="sm" className="text-red-500 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-red-600 dark:text-red-400">
-                Base Smart Wallet Required
-              </p>
-              <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">
-                This app requires a Base Smart Wallet for the best experience with gasless transactions.
-                Current connector: {connector}
-              </p>
-              <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">
-                Please disconnect and connect with Base Wallet from the Coinbase app.
-              </p>
+      {/* Profile View with Tabs */}
+      <ProfileView />
+      
+      {/* Wallet Connection Section - Hidden for now, can be shown in settings */}
+      <div className="hidden">
+        {/* Base Smart Wallet Warning */}
+        {shouldShowWarning && (
+          <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <Icon name="warning" size="sm" className="text-red-500 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+                  Base Smart Wallet Required
+                </p>
+                <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">
+                  This app requires a Base Smart Wallet for the best experience with gasless transactions.
+                  Current connector: {connector}
+                </p>
+                <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">
+                  Please disconnect and connect with Base Wallet from the Coinbase app.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
 
       {/* User Identity or Connect Wallet - Top Left */}
@@ -239,7 +239,6 @@ export function Profile({ setActiveTab }: ProfileProps) {
                     paymasterService: getPaymasterActions(),
                   }}
                   onSuccess={(response) => {
-                    console.log('USDC mint successful (gasless):', response);
                     refetchBalance();
                     setTimeout(() => refetchBalance(), 2000);
                   }}
@@ -263,6 +262,7 @@ export function Profile({ setActiveTab }: ProfileProps) {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

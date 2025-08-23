@@ -323,9 +323,11 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
           <BaseIdentityProfile
             address={userAddress as `0x${string}`}
             isOwnProfile={
-              connectedAddress &&
-              userAddress &&
-              connectedAddress.toLowerCase() === userAddress.toLowerCase()
+              !!(
+                connectedAddress &&
+                userAddress &&
+                connectedAddress.toLowerCase() === userAddress.toLowerCase()
+              )
             }
           />
 

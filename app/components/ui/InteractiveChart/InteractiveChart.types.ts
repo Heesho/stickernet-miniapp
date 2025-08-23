@@ -5,7 +5,7 @@ export interface PriceDataPoint {
   volume: number;
 }
 
-export type { Timeframe } from '@/types';
+import type { Timeframe } from "@/types";
 
 export interface InteractiveChartProps {
   priceData: PriceDataPoint[];

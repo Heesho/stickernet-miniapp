@@ -256,7 +256,7 @@ export function HomeEnhanced({
         error
         errorMessage={loadingMessages.error || "Failed to load feed"}
         onRetry={handleRetry}
-        showRetryButton={componentLoading.canRetry}
+        showRetryButton
         className="min-h-96 m-4"
         variant="outlined"
         size="lg"

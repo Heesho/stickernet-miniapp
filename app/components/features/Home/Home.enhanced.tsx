@@ -369,6 +369,7 @@ export function HomeEnhanced({
               }}
               loading={false}
               prefetchImages={prefetchImages}
+              index={index}
             />
           )}
           loading={loadingStates.showSkeleton}
@@ -441,6 +442,7 @@ interface EnhancedCurateImageProps {
   style?: React.CSSProperties;
   loading?: boolean;
   prefetchImages?: boolean;
+  index: number;
 }
 
 function EnhancedCurateImage({
@@ -450,6 +452,7 @@ function EnhancedCurateImage({
   style,
   loading = false,
   prefetchImages = true,
+  index,
 }: EnhancedCurateImageProps) {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -469,18 +472,7 @@ function EnhancedCurateImage({
         interactive
         className="mb-4 break-inside-avoid cursor-pointer"
       >
-        <CurateImage
-          curate={curate}
-          onImageClick={onClick}
-          onImageLoad={() => setImageLoading(false)}
-          onImageError={() => {
-            setImageLoading(false);
-            setImageError(true);
-          }}
-          loading={imageLoading}
-          error={imageError}
-          prefetch={prefetchImages}
-        />
+        <CurateImage curate={curate} index={index} onImageClick={onClick} />
       </LoadingCard>
     </div>
   );

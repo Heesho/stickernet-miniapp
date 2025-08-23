@@ -35,7 +35,6 @@ export function ConnectedIdentity({ className = "" }: ConnectedIdentityProps) {
       <Wallet>
         <ConnectWallet 
           className="bg-transparent hover:bg-gray-900 transition-colors rounded-lg"
-          withWalletAggregator={false}
         >
           <Avatar className="h-10 w-10" address={address} chain={nameResolutionChain} />
           <Name className="text-white" address={address} chain={nameResolutionChain} />

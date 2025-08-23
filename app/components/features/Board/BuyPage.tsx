@@ -32,7 +32,7 @@ export function BuyPage({
   onTransactionSuccess
 }: BuyPageProps) {
   const [inputValue, setInputValue] = useState("");
-  const [displayValue, setDisplayValue] = useState("0");
+  const [displayValue, setDisplayValue] = useState("$0");
   const { address } = useAccount();
 
   // Get user's USDC balance from token data
@@ -66,7 +66,7 @@ export function BuyPage({
   // Don't use compact format on transaction pages
   const estimatedTokens = parseFloat(inputValue) > 0 && tokenAmtOut 
     ? formatTokenAmount(tokenAmtOut, undefined, undefined, false)
-    : formatTokenAmount(0, undefined, undefined, false);
+    : "0";
 
   const handleNumberPad = (value: string) => {
     let newValue = inputValue;
@@ -88,13 +88,13 @@ export function BuyPage({
     setInputValue(newValue);
     // Format display value
     if (newValue === "" || newValue === ".") {
-      setDisplayValue("0");
+      setDisplayValue("$0");
     } else {
       const num = parseFloat(newValue);
       if (!isNaN(num)) {
-        setDisplayValue(formatNumber(num, 2, true, false));  // No compact format on transaction pages
+        setDisplayValue("$" + formatNumber(num, 2, true, false));  // No compact format on transaction pages
       } else {
-        setDisplayValue(newValue);
+        setDisplayValue("$" + newValue);
       }
     }
   };

@@ -65,7 +65,7 @@ export function SellPage({
   // Don't use compact format on transaction pages
   const estimatedUSDC = parseFloat(inputValue) > 0 && usdcAmtOut 
     ? formatCurrency(usdcAmtOut, 2, false)
-    : formatCurrency(0, 2, false);
+    : "$0";
 
   const handleNumberPad = (value: string) => {
     let newValue = inputValue;
@@ -210,7 +210,7 @@ export function SellPage({
                 {displayValue}
               </div>
               <div className="text-gray-600 text-xs">
-                Available: {isLoadingBalance ? "Loading..." : formatTokenAmount(userTokenBalance, tokenSymbol.toUpperCase(), undefined, false)}
+                Available: {isLoadingBalance ? "Loading..." : `${formatNumber(parseFloat(userTokenBalance), 0, false, false)} ${tokenSymbol.toUpperCase()}`}
               </div>
             </div>
 

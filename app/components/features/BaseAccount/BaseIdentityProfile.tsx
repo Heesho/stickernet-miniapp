@@ -46,7 +46,6 @@ export function BaseIdentityProfile({
       <Wallet>
         <ConnectWallet 
           className={`inline-flex items-center gap-2 bg-[#1C1C1C] hover:bg-[#262626] transition-colors rounded-full px-3 py-1.5 ${className}`}
-          withWalletAggregator={false}
         >
           <Avatar className="h-6 w-6 rounded-full" address={address} chain={base} />
           <Name className="text-sm font-medium text-white" address={address} chain={base} />

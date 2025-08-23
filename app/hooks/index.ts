@@ -19,7 +19,7 @@ export { useMulticallAutoRefresh } from './useMulticallAutoRefresh';
 export { usePriceAnimation } from './usePriceAnimation';
 export { usePullToRefresh } from './usePullToRefresh';
 export { useRealTimeData } from './useRealTimeData';
-export { useSellQuote } from './useSellQuote';
+export { useDebouncedSellQuote } from './useSellQuote';
 export { useTokenPosition } from './useTokenPosition';
 export { useTokenTransaction } from './useTokenTransaction';
 export { useVisibilityPolling } from './useVisibilityPolling';

@@ -33,7 +33,6 @@ export function BaseAccountAuthSimple({ className = "" }: BaseAccountAuthSimpleP
         <ConnectWallet 
           className="w-full"
           text="Sign in with Base"
-          withWalletAggregator={false}
         >
           <Avatar className="h-6 w-6" />
           <Name className="text-white" />

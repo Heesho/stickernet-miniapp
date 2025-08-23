@@ -356,18 +356,6 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
                     paymasterService: getPaymasterActions(),
                   }}
                   chainId={baseSepolia.id}
-                  onStatus={(status) => {
-                    if (status === "pending") {
-                      setDepositState("loading");
-                    } else if (status === "success") {
-                      // Reset immediately on success status
-                      setDepositState("success");
-                      refetchBalance();
-                      setTimeout(() => {
-                        setDepositState("idle");
-                      }, 800);
-                    }
-                  }}
                   onSuccess={(response) => {
                     // This fires after transaction is confirmed
                     setTimeout(() => {

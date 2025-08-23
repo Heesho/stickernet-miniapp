@@ -537,7 +537,6 @@ export function CreateEnhanced({
               onUpload={handleImageUpload}
               accept="image/*"
               disabled={isSubmitting}
-              loading={formState.imageLoading}
               variant="outline"
               size="md"
             >

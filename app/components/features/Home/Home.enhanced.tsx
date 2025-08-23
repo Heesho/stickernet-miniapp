@@ -206,9 +206,6 @@ export function HomeEnhanced({
 
   // Error handling with retry
   const handleRetry = useCallback(async () => {
-    // Clear local component loading errors
-    componentLoading.clearError();
-
     const operationId = componentLoading.startLoading({
       type: "retry",
       message: "Retrying...",

@@ -329,7 +329,10 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
         // Calculate 1-hour price change for theme colors
         let priceChange1h = 0;
 
-        if (boardDataFromSubgraph.tokenHourData?.length >= 2) {
+        if (
+          Array.isArray(boardDataFromSubgraph.tokenHourData) &&
+          boardDataFromSubgraph.tokenHourData.length >= 2
+        ) {
           const currentPrice = parseFloat(
             boardDataFromSubgraph.marketPrice || "0",
           );
@@ -341,7 +344,10 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
             priceChange1h =
               ((currentPrice - hourAgoPrice) / hourAgoPrice) * 100;
           }
-        } else if (boardDataFromSubgraph.tokenHourData?.length === 1) {
+        } else if (
+          Array.isArray(boardDataFromSubgraph.tokenHourData) &&
+          boardDataFromSubgraph.tokenHourData.length === 1
+        ) {
           // If we only have current hour data, compare with opening price
           const currentPrice = parseFloat(
             boardDataFromSubgraph.marketPrice || "0",

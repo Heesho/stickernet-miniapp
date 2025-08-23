@@ -421,7 +421,6 @@ export function HomeEnhanced({
           curate={selectedCurate}
           onClose={() => setSelectedCurate(null)}
           onNavigateToBoard={handleNavigateToBoard}
-          loading={componentLoading.isLoading}
         />
       )}
     </div>

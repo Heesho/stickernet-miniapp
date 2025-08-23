@@ -358,17 +358,16 @@ export function HomeEnhanced({
         <DataList
           data={curates}
           renderItem={(item, index) => (
-            <CurateImage
-              key={`${(item as Curate).id}-${index}`}
+            <EnhancedCurateImage
               curate={item as Curate}
-              onImageClick={() => handleCurateClick(item as Curate)}
+              onClick={() => handleCurateClick(item as Curate)}
               onNavigateToBoard={handleNavigateToBoard}
               style={{
                 height: virtualScrolling
                   ? SKELETON_HEIGHTS[index % SKELETON_HEIGHTS.length]
                   : "auto",
               }}
-              loading={false} // Individual items handle their own loading
+              loading={false}
               prefetchImages={prefetchImages}
             />
           )}

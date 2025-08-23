@@ -179,7 +179,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         tokenAddress={tokenAddress || ""}
         tokenSymbol={boardData.token.symbol}
         tokenName={boardData.token.name}
-        boardData={boardData}
+        boardData={boardData as any}
       />
     </div>
   );

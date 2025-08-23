@@ -6,6 +6,7 @@ export interface PriceDataPoint {
 }
 
 import type { Timeframe } from "@/types";
+export type { Timeframe };
 
 export interface InteractiveChartProps {
   priceData: PriceDataPoint[];

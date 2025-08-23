@@ -9,8 +9,8 @@
 
 import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import type { BoardProps } from "./Board.types";
 import type { Curate } from "@/types";
+import type { BoardProps } from "./Board.types";
 
 // Import custom hooks and components
 import { useBoardData } from "./useBoardData";
@@ -116,11 +116,19 @@ export function BoardEnhanced({
       if (showGlobalLoading) {
         componentLoading.globalLoading.showPageTransition("Loading sticker...");
       }
-
       router.push(`/b/${tokenId}/${curate.tokenId}`);
     },
     [router, tokenId, showGlobalLoading, componentLoading],
   );
+
+  // Back to home (match Board.tsx behavior)
+  const handleBackToHome = useCallback(() => {
+    if (setActiveTab) {
+      setActiveTab("home");
+    } else {
+      router.push("/");
+    }
+  }, [setActiveTab, router]);
 
   // Memoized loading states
   const loadingStates = useMemo(
@@ -161,6 +169,11 @@ export function BoardEnhanced({
         size="lg"
       />
     );
+  }
+
+  // Strong guard for boardData null to satisfy type checker
+  if (!boardData) {
+    return null;
   }
 
   // Render main board content with loading overlays
@@ -224,17 +237,30 @@ export function BoardEnhanced({
           className="mb-4"
         >
           <BoardChart
-            tokenAddress={tokenAddress}
-            showTradingView={showTradingView}
-            setShowTradingView={setShowTradingView}
-            timeframePriceData={timeframePriceData}
-            handleTimeframeChange={handleTimeframeChange}
-            hoveredPrice={hoveredPrice}
-            setHoveredPrice={setHoveredPrice}
-            hoveredFloorPrice={hoveredFloorPrice}
-            setHoveredFloorPrice={setHoveredFloorPrice}
-            progressiveLoading={progressiveLoading}
-            realTimeUpdates={realTimeUpdates}
+            tokenAddress={tokenAddress || ""}
+            tokenSymbol={boardData.token.symbol}
+            tokenName={boardData.token.name}
+            tokenPrice={boardData.token.price}
+            priceChange24h={boardData.stats.priceChange24h}
+            priceChangeAmount={boardData.stats.priceChangeAmount}
+            priceChange1h={boardData.stats.priceChange1h}
+            userPosition={{
+              shares:
+                parseInt(tokenData?.accountTokenBalance?.toString() || "0") ||
+                0,
+              marketValue: (
+                (parseInt(tokenData?.accountTokenBalance?.toString() || "0") ||
+                  0) * parseFloat(boardData.token.price)
+              ).toFixed(2),
+            }}
+            todayVolume={boardData.stats.swapVolume}
+            onPriceHover={(price, floor) => {
+              setHoveredPrice(price);
+              setHoveredFloorPrice(floor);
+            }}
+            tokenData={tokenData}
+            subgraphData={boardData.subgraphData}
+            onTimeframeChange={handleTimeframeChange}
           />
         </LoadingCard>
 
@@ -247,6 +273,7 @@ export function BoardEnhanced({
         {/* Board Actions with enhanced buttons */}
         <div className="fixed bottom-4 right-4 z-10">
           <BoardActions
+            totalVolume={boardData.stats.totalVolume}
             onCreateSticker={() => setShowCreateSticker(true)}
             themeColor={themeColors.color}
           />
@@ -264,91 +291,6 @@ export function BoardEnhanced({
           loading={componentLoading.isLoading}
         />
       </ComponentLoadingOverlay>
-    </div>
-  );
-}
-
-/**
- * Enhanced Board Header with loading states
- */
-interface EnhancedBoardHeaderProps {
-  boardData: any;
-  tokenData: any;
-  onRefresh: () => void;
-  refreshing: boolean;
-  tokenAvatarError: boolean;
-  setTokenAvatarError: (error: boolean) => void;
-  hoveredPrice: string | null;
-  hoveredFloorPrice: string | null;
-  themeColors: any;
-}
-
-function EnhancedBoardHeader({
-  boardData,
-  tokenData,
-  onRefresh,
-  refreshing,
-  tokenAvatarError,
-  setTokenAvatarError,
-  hoveredPrice,
-  hoveredFloorPrice,
-  themeColors,
-}: EnhancedBoardHeaderProps) {
-  return (
-    <div className="flex items-center justify-between p-4 border-b border-[var(--app-border)]">
-      {/* Token info with loading skeleton */}
-      <LoadingCard
-        loading={!boardData?.token}
-        showSkeleton
-        skeletonConfig={{
-          showImage: true,
-          showTitle: true,
-          showDescription: false,
-        }}
-        className="flex-1"
-        variant="minimal"
-      >
-        <BoardHeader
-          boardData={boardData}
-          tokenData={tokenData}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
-          tokenAvatarError={tokenAvatarError}
-          setTokenAvatarError={setTokenAvatarError}
-          hoveredPrice={hoveredPrice}
-          hoveredFloorPrice={hoveredFloorPrice}
-          themeColors={themeColors}
-        />
-      </LoadingCard>
-
-      {/* Refresh button with loading state */}
-      <LoadingButton
-        loading={refreshing}
-        loadingText="Refreshing..."
-        onClick={onRefresh}
-        variant="outline"
-        size="sm"
-        startIcon={
-          !refreshing && (
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          )
-        }
-        aria-label="Refresh board data"
-      >
-        Refresh
-      </LoadingButton>
     </div>
   );
 }

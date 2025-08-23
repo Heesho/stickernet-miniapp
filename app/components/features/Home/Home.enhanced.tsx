@@ -1,6 +1,6 @@
 /**
  * Enhanced Home Component with Advanced Loading States
- * 
+ *
  * Extends the existing Home component with the new loading system,
  * better performance, and enhanced user experience patterns.
  */
@@ -14,29 +14,29 @@ import { useEnforceBaseWallet } from "../../../hooks/useBaseAccount";
 import { CurateImage } from "./CurateImage";
 import { ImageDetail } from "./ImageDetail";
 import { SkeletonGrid } from "./SkeletonGrid";
-import { 
+import {
   useCurateData,
   useInfiniteScroll,
   useIntersectionObserver,
   usePullToRefresh,
-  useVisibilityPolling
+  useVisibilityPolling,
 } from "@/app/hooks";
-import { 
+import {
   SKELETON_HEIGHTS,
   INFINITE_SCROLL_THRESHOLD,
-  type Curate
+  type Curate,
 } from "@/lib/constants";
 import type { HomeProps } from "./Home.types";
 
 // Enhanced loading components
-import { 
+import {
   useComponentLoading,
   DataList,
   LoadingCard,
   LoadingButton,
   LoadingPage,
   ComponentLoadingOverlay,
-  useGlobalLoading
+  useGlobalLoading,
 } from "@/app/components/ui/Loading";
 
 /**
@@ -65,15 +65,15 @@ export interface HomeEnhancedProps extends HomeProps {
 /**
  * Enhanced Home component with advanced loading states
  */
-export function HomeEnhanced({ 
-  setActiveTab, 
+export function HomeEnhanced({
+  setActiveTab,
   onNavigateToBoard,
   showGlobalLoading = false,
   progressiveLoading = true,
   virtualScrolling = false,
   loadingMessages = {},
   pageSize = 20,
-  prefetchImages = true
+  prefetchImages = true,
 }: HomeEnhancedProps) {
   const [selectedCurate, setSelectedCurate] = useState<Curate | null>(null);
   const { isConnected } = useAccount();
@@ -81,7 +81,7 @@ export function HomeEnhanced({
   const router = useRouter();
 
   // Component-level loading management
-  const componentLoading = useComponentLoading('Home');
+  const componentLoading = useComponentLoading("Home");
   const globalLoading = useGlobalLoading();
 
   // Custom hooks for state management
@@ -92,21 +92,16 @@ export function HomeEnhanced({
     refreshing,
     error,
     hasMore,
-    refetch,
-    fetchMore,
-    clearError
-  } = useCurateData({ 
-    enabled: isConnected && isValidConnection,
-    pageSize,
-    progressiveLoading
-  });
+    loadCurates,
+    loadMoreCurates,
+    checkForNewCurates,
+    reset,
+  } = useCurateData();
 
   // Enhanced infinite scroll with loading states
-  const { 
-    isIntersecting: nearBottom 
-  } = useIntersectionObserver({
+  const { isIntersecting: nearBottom } = useIntersectionObserver({
     threshold: INFINITE_SCROLL_THRESHOLD,
-    enabled: hasMore && !loadingMore
+    enabled: hasMore && !loadingMore,
   });
 
   // Enhanced pull to refresh with loading feedback
@@ -115,31 +110,31 @@ export function HomeEnhanced({
     pullDistance,
     handlePullStart,
     handlePullMove,
-    handlePullEnd
+    handlePullEnd,
   } = usePullToRefresh({
     onRefresh: async () => {
       const operationId = componentLoading.startLoading({
-        type: 'refresh',
-        message: loadingMessages.refreshing || 'Refreshing feed...',
-        priority: 'medium',
-        showGlobally: showGlobalLoading
+        type: "refresh",
+        message: loadingMessages.refreshing || "Refreshing feed...",
+        priority: "medium",
+        showGlobally: showGlobalLoading,
       });
 
       try {
-        await refetch();
+        await loadCurates(false, true);
         componentLoading.completeOperation(operationId);
       } catch (error) {
         componentLoading.failOperation(operationId, error);
       }
     },
-    enabled: !loading && !loadingMore
+    enabled: !loading && !loadingMore,
   });
 
   // Auto-refresh with visibility polling
   useVisibilityPolling({
-    callback: refetch,
+    callback: checkForNewCurates,
     interval: 30000, // 30 seconds
-    enabled: isConnected && isValidConnection && !loading
+    enabled: isConnected && isValidConnection && !loading,
   });
 
   // Enhanced load more with loading states
@@ -147,19 +142,25 @@ export function HomeEnhanced({
     if (loadingMore || !hasMore) return;
 
     const operationId = componentLoading.startLoading({
-      type: 'pagination',
-      message: loadingMessages.loadingMore || 'Loading more...',
-      priority: 'low',
-      showGlobally: false
+      type: "pagination",
+      message: loadingMessages.loadingMore || "Loading more...",
+      priority: "low",
+      showGlobally: false,
     });
 
     try {
-      await fetchMore();
+      await loadMoreCurates();
       componentLoading.completeOperation(operationId);
     } catch (error) {
       componentLoading.failOperation(operationId, error);
     }
-  }, [loadingMore, hasMore, fetchMore, componentLoading, loadingMessages]);
+  }, [
+    loadingMore,
+    hasMore,
+    loadMoreCurates,
+    componentLoading,
+    loadingMessages,
+  ]);
 
   // Auto-trigger load more when near bottom
   useEffect(() => {
@@ -169,51 +170,66 @@ export function HomeEnhanced({
   }, [nearBottom, hasMore, loadingMore, loading, handleLoadMore]);
 
   // Enhanced navigation with loading states
-  const handleCurateClick = useCallback((curate: Curate) => {
-    if (showGlobalLoading) {
-      globalLoading.showPageTransition('Loading sticker details...');
-    }
-    
-    setSelectedCurate(curate);
-  }, [showGlobalLoading, globalLoading]);
+  const handleCurateClick = useCallback(
+    (curate: Curate) => {
+      if (showGlobalLoading) {
+        globalLoading.showPageTransition("Loading sticker details...");
+      }
 
-  const handleNavigateToBoard = useCallback((tokenAddress: string) => {
-    if (showGlobalLoading) {
-      globalLoading.showPageTransition('Loading board...');
-    }
-    
-    onNavigateToBoard?.(tokenAddress);
-  }, [onNavigateToBoard, showGlobalLoading, globalLoading]);
+      setSelectedCurate(curate);
+    },
+    [showGlobalLoading, globalLoading],
+  );
+
+  const handleNavigateToBoard = useCallback(
+    (tokenAddress: string) => {
+      if (showGlobalLoading) {
+        globalLoading.showPageTransition("Loading board...");
+      }
+
+      onNavigateToBoard?.(tokenAddress);
+    },
+    [onNavigateToBoard, showGlobalLoading, globalLoading],
+  );
 
   // Memoized loading states
-  const loadingStates = useMemo(() => ({
-    isInitialLoading: loading && curates.length === 0,
-    isRefreshing: refreshing || (componentLoading.isLoading && curates.length > 0),
-    isLoadingMore: loadingMore || componentLoading.activeOperations.some(op => op.type === 'pagination'),
-    hasError: !!error,
-    isEmpty: !loading && !error && curates.length === 0,
-    showSkeleton: loading && curates.length === 0
-  }), [loading, refreshing, loadingMore, error, curates.length, componentLoading]);
+  const loadingStates = useMemo(
+    () => ({
+      isInitialLoading: loading && curates.length === 0,
+      isRefreshing:
+        refreshing || (componentLoading.isLoading && curates.length > 0),
+      isLoadingMore:
+        loadingMore ||
+        componentLoading.activeOperations.some(
+          (op) => op.type === "pagination",
+        ),
+      hasError: !!error,
+      isEmpty: !loading && !error && curates.length === 0,
+      showSkeleton: loading && curates.length === 0,
+    }),
+    [loading, refreshing, loadingMore, error, curates.length, componentLoading],
+  );
 
   // Error handling with retry
   const handleRetry = useCallback(async () => {
+    // Clear local component loading errors
     componentLoading.clearError();
-    clearError();
-    
+
     const operationId = componentLoading.startLoading({
-      type: 'retry',
-      message: 'Retrying...',
-      priority: 'high',
-      showGlobally: showGlobalLoading
+      type: "retry",
+      message: "Retrying...",
+      priority: "high",
+      showGlobally: showGlobalLoading,
     });
 
     try {
-      await refetch();
+      reset();
+      await loadCurates(true, false);
       componentLoading.completeOperation(operationId);
     } catch (error) {
       componentLoading.failOperation(operationId, error);
     }
-  }, [componentLoading, clearError, refetch, showGlobalLoading]);
+  }, [componentLoading, reset, loadCurates, showGlobalLoading]);
 
   // Connection state handling
   if (!isConnected || !isValidConnection) {
@@ -234,8 +250,8 @@ export function HomeEnhanced({
         layout="skeleton"
         message={loadingMessages.initial || "Loading your feed..."}
         skeletonConfig={{
-          type: 'grid',
-          count: 12
+          type: "grid",
+          count: 12,
         }}
         animation="fade"
       />
@@ -267,8 +283,18 @@ export function HomeEnhanced({
         variant="outlined"
         size="lg"
         emptyIcon={
-          <svg className="w-16 h-16 text-[var(--app-foreground-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          <svg
+            className="w-16 h-16 text-[var(--app-foreground-muted)]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            />
           </svg>
         }
       />
@@ -277,7 +303,7 @@ export function HomeEnhanced({
 
   // Main content with enhanced data list
   return (
-    <div 
+    <div
       className="relative"
       onTouchStart={handlePullStart}
       onTouchMove={handlePullMove}
@@ -285,27 +311,51 @@ export function HomeEnhanced({
     >
       {/* Pull to refresh indicator */}
       {isPulling && (
-        <div 
+        <div
           className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center bg-[var(--app-bg)] border-b border-[var(--app-border)] transition-transform duration-200"
-          style={{ 
+          style={{
             transform: `translateY(${Math.min(pullDistance, 60)}px)`,
-            height: '60px'
+            height: "60px",
           }}
         >
           <div className="flex items-center space-x-2">
             {pullDistance > 50 ? (
               <>
-                <svg className="w-5 h-5 text-[var(--app-accent)] animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <svg
+                  className="w-5 h-5 text-[var(--app-accent)] animate-spin"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
                 </svg>
-                <span className="text-sm text-[var(--app-accent)]">Release to refresh</span>
+                <span className="text-sm text-[var(--app-accent)]">
+                  Release to refresh
+                </span>
               </>
             ) : (
               <>
-                <svg className="w-5 h-5 text-[var(--app-foreground-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                <svg
+                  className="w-5 h-5 text-[var(--app-foreground-muted)]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                  />
                 </svg>
-                <span className="text-sm text-[var(--app-foreground-muted)]">Pull to refresh</span>
+                <span className="text-sm text-[var(--app-foreground-muted)]">
+                  Pull to refresh
+                </span>
               </>
             )}
           </div>
@@ -327,8 +377,10 @@ export function HomeEnhanced({
               curate={curate}
               onClick={() => handleCurateClick(curate)}
               onNavigateToBoard={handleNavigateToBoard}
-              style={{ 
-                height: virtualScrolling ? SKELETON_HEIGHTS[index % SKELETON_HEIGHTS.length] : 'auto'
+              style={{
+                height: virtualScrolling
+                  ? SKELETON_HEIGHTS[index % SKELETON_HEIGHTS.length]
+                  : "auto",
               }}
               loading={false} // Individual items handle their own loading
               prefetchImages={prefetchImages}
@@ -346,7 +398,9 @@ export function HomeEnhanced({
           itemHeight={virtualScrolling ? 250 : undefined}
           containerHeight={virtualScrolling ? 600 : undefined}
           skeletonItems={12}
-          loadingMoreMessage={loadingMessages.loadingMore || "Loading more content..."}
+          loadingMoreMessage={
+            loadingMessages.loadingMore || "Loading more content..."
+          }
           threshold={100}
         />
 
@@ -407,7 +461,7 @@ function EnhancedCurateImage({
   onNavigateToBoard,
   style,
   loading = false,
-  prefetchImages = true
+  prefetchImages = true,
 }: EnhancedCurateImageProps) {
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -419,7 +473,7 @@ function EnhancedCurateImage({
       skeletonConfig={{
         showImage: true,
         showTitle: true,
-        showDescription: false
+        showDescription: false,
       }}
       onClick={onClick}
       interactive

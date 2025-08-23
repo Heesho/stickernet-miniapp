@@ -18,7 +18,7 @@ export function useRealTimeData({
   aggressivePolling = false
 }: UseRealTimeDataProps) {
   const queryClient = useQueryClient();
-  const lastPriceRef = useRef<string>();
+  const lastPriceRef = useRef<bigint>();
   
   // Determine polling intervals based on user activity
   const pricePollingInterval = aggressivePolling ? 5000 : 15000; // 5s aggressive, 15s normal
@@ -47,20 +47,17 @@ export function useRealTimeData({
   });
 
   // Enhanced token position with polling
-  const positionData = useTokenPosition({
-    userAddress: userAddress || '',
+  const positionData = useTokenPosition(
     tokenAddress,
-    enabled: !!userAddress && enabled,
-    refetchInterval: shouldPoll ? positionPollingInterval : false,
-    refetchIntervalInBackground: false,
-  });
+    userAddress || undefined
+  );
 
   // Chart data already has polling for LIVE timeframe
-  const chartData = useChartData(
+  const chartData = useChartData({
     tokenAddress,
-    'LIVE',
+    timeframe: 'LIVE',
     enabled
-  );
+  });
 
   // Detect price changes for animations
   useEffect(() => {

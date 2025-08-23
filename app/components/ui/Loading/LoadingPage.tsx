@@ -454,5 +454,3 @@ export const PageTransitionLoading = memo(function PageTransitionLoading({
   );
 });
 
-// Export types
-export type { PageLoadingLayout };

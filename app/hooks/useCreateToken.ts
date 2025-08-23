@@ -112,6 +112,7 @@ export function useCreateToken(): UseCreateTokenReturn {
           params.symbol,
           params.uri,
           false, // isModerated - always false for now
+          0n, // amountQuoteIn - 0 for now since we're not buying on creation
         ],
         account: address,
         chain: walletClient.chain,

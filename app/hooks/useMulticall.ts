@@ -57,14 +57,14 @@ export function useContentData({
 
   // Transform raw multicall data to typed ContentData
   const contentData: ContentData | undefined = data ? {
-    tokenId: data.tokenId as TokenId,
-    price: data.price as Wei,
-    nextPrice: data.nextPrice as Wei,
-    rewardForDuration: data.rewardForDuration as Wei,
-    creator: data.creator,
-    owner: data.owner,
-    uri: data.uri,
-    isApproved: data.isApproved
+    tokenId: (data as any).tokenId,
+    price: (data as any).price,
+    nextPrice: (data as any).nextPrice,
+    rewardForDuration: (data as any).rewardForDuration,
+    creator: (data as any).creator,
+    owner: (data as any).owner,
+    uri: (data as any).uri,
+    isApproved: (data as any).isApproved
   } : undefined;
 
   // Safe formatting with proper decimal handling
@@ -92,7 +92,7 @@ export function useContentData({
     isLoading,
     isError: isError || errorHandler.hasError,
     isSuccess: !isLoading && !isError && !errorHandler.hasError && !!data,
-    error: errorHandler.error || (error ? errorHandler.handleError(error) : null)
+    error: error || null
   };
 }
 
@@ -129,7 +129,7 @@ export function useTokenData({
     query: {
       enabled: shouldFetch,
       staleTime,
-      cacheTime,
+      gcTime: cacheTime,
       refetchInterval,
       refetchIntervalInBackground,
       retry: (failureCount, error) => {
@@ -142,33 +142,33 @@ export function useTokenData({
 
   // Transform raw multicall data to typed TokenData
   const tokenData: TokenData | undefined = data ? {
-    index: data.index,
-    token: data.token,
-    quote: data.quote,
-    content: data.content,
-    rewarder: data.rewarder,
-    owner: data.owner,
-    name: data.name,
-    symbol: data.symbol,
-    uri: data.uri,
-    isModerated: data.isModerated,
-    marketCap: data.marketCap as Wei,
-    liquidity: data.liquidity as Wei,
-    floorPrice: data.floorPrice as Wei,
-    marketPrice: data.marketPrice as Wei,
-    circulatingSupply: data.circulatingSupply,
-    maxSupply: data.maxSupply,
-    contentApr: data.contentApr,
-    accountQuoteBalance: data.accountQuoteBalance as Wei,
-    accountTokenBalance: data.accountTokenBalance,
-    accountDebt: data.accountDebt as Wei,
-    accountCredit: data.accountCredit as Wei,
-    accountTransferrable: data.accountTransferrable,
-    accountContentOwned: data.accountContentOwned,
-    accountContentStaked: data.accountContentStaked,
-    accountQuoteEarned: data.accountQuoteEarned as Wei,
-    accountTokenEarned: data.accountTokenEarned,
-    accountIsModerator: data.accountIsModerator
+    index: (data as any).index,
+    token: (data as any).token,
+    quote: (data as any).quote,
+    content: (data as any).content,
+    rewarder: (data as any).rewarder,
+    owner: (data as any).owner,
+    name: (data as any).name,
+    symbol: (data as any).symbol,
+    uri: (data as any).uri,
+    isModerated: (data as any).isModerated,
+    marketCap: (data as any).marketCap,
+    liquidity: (data as any).liquidity,
+    floorPrice: (data as any).floorPrice,
+    marketPrice: (data as any).marketPrice,
+    circulatingSupply: (data as any).circulatingSupply,
+    maxSupply: (data as any).maxSupply,
+    contentApr: (data as any).contentApr,
+    accountQuoteBalance: (data as any).accountQuoteBalance,
+    accountTokenBalance: (data as any).accountTokenBalance,
+    accountDebt: (data as any).accountDebt,
+    accountCredit: (data as any).accountCredit,
+    accountTransferrable: (data as any).accountTransferrable,
+    accountContentOwned: (data as any).accountContentOwned,
+    accountContentStaked: (data as any).accountContentStaked,
+    accountQuoteEarned: (data as any).accountQuoteEarned,
+    accountTokenEarned: (data as any).accountTokenEarned,
+    accountIsModerator: (data as any).accountIsModerator
   } : undefined;
 
   return {
@@ -177,7 +177,9 @@ export function useTokenData({
     isError,
     isSuccess: !isLoading && !isError && !!data,
     error: error || null,
-    refetch
+    refetch: async () => {
+      await refetch();
+    }
   };
 }
 
@@ -200,8 +202,8 @@ export function useMulticall({
   cacheTime?: number;
 }) {
   const tokenDataResult = useTokenData({
-    tokenAddress,
-    account: userAddress,
+    tokenAddress: tokenAddress as Address,
+    account: userAddress as Address | undefined,
     enabled: !!userAddress,
     refetchInterval,
     refetchIntervalInBackground,

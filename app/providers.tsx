@@ -34,10 +34,6 @@ const wagmiConfig = createConfig({
       appLogoUrl: "/stickernet-logo.png",
       preference: "smartWalletOnly", // Force Smart Wallet only
       version: "4", // Use latest version for better Smart Wallet support
-      // Enable MiniApp mode for Coinbase integration
-      enableMobileWalletLink: true,
-      // Better error handling and connection reliability
-      qrcode: false, // Disable QR code for mobile app
       headlessMode: false, // Enable UI for better UX
     }),
   ],
@@ -75,7 +71,7 @@ function ClientOnlyProviders({ children }: { children: ReactNode }) {
                   wallet: {
                     termsUrl: "https://yourapp.com/terms",
                     privacyUrl: "https://yourapp.com/privacy",
-                    smartWalletOnly: true,
+                    preference: "smartWalletOnly",
                   },
                 }}
               >

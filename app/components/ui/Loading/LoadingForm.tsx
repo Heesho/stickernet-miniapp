@@ -438,5 +438,3 @@ export const LoadingInput = memo(function LoadingInput({
   );
 });
 
-// Export types
-export type { LoadingFormFieldProps, LoadingInputProps };

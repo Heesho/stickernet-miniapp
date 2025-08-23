@@ -397,5 +397,3 @@ export const ImageCard = memo(function ImageCard({
   );
 });
 
-// Export types
-export type { CardLoadingState, ImageCardProps };

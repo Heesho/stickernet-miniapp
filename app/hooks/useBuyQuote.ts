@@ -191,7 +191,7 @@ export function useBuyQuote({
     query: {
       enabled: shouldFetch,
       staleTime: 1000 * 10, // 10 seconds - longer for better caching
-      cacheTime: 1000 * 60 * 5, // 5 minutes cache
+      gcTime: 1000 * 60 * 5, // 5 minutes cache
       refetchInterval: false,
       retry: (failureCount, error) => {
         // Don't retry client-side validation errors
@@ -211,18 +211,19 @@ export function useBuyQuote({
 
   // Format token amount out (18 decimals) with error handling
   const tokenAmtOut = useMemo(() => {
-    if (!data || !data[0]) return '0';
+    const typedData = data as [bigint, bigint, bigint, bigint] | undefined;
+    if (!typedData || !typedData[0]) return '0';
     try {
       // Log quote details for debugging
       if (data && validation.parsedAmount) {
         // Slippage is returned as a bigint that needs to be divided by 10^18 to get the decimal value
-        const slippageRaw = data[1] as bigint;
+        const slippageRaw = typedData[1];
         const slippageDecimal = Number(formatUnits(slippageRaw, 18));
         const slippagePercent = slippageDecimal * 100;
         
-        const tokenOut = data[0] as bigint;
-        const minTokenOut = data[2] as bigint;
-        const autoMinTokenOut = data[3] as bigint;
+        const tokenOut = typedData[0];
+        const minTokenOut = typedData[2];
+        const autoMinTokenOut = typedData[3];
         
         
         // Validation checks
@@ -230,7 +231,7 @@ export function useBuyQuote({
         // Warn if price impact is high (more than 5%)
       }
       
-      return formatUnits(data[0] as bigint, 18);
+      return formatUnits(typedData[0], 18);
     } catch (error) {
       return '0';
     }
@@ -244,15 +245,15 @@ export function useBuyQuote({
   }, [validation.error, error]);
 
   // Determine if we have a valid quote
-  const hasValidQuote = !!(data && data[0] && data[0] > 0n);
+  const hasValidQuote = !!(data && (data as [bigint, bigint, bigint, bigint])[0] && (data as [bigint, bigint, bigint, bigint])[0] > 0n);
   const isEmpty = !validation.isValid && !validation.error; // Valid empty state (e.g., "0.00")
 
   return {
     tokenAmtOut,
-    rawTokenAmtOut: data ? (data[0] as bigint) : undefined,
-    slippage: data ? (data[1] as bigint) : undefined,
-    minTokenAmtOut: data ? (data[2] as bigint) : undefined,
-    autoMinTokenAmtOut: data ? (data[3] as bigint) : undefined,
+    rawTokenAmtOut: data ? (data as [bigint, bigint, bigint, bigint])[0] : undefined,
+    slippage: data ? (data as [bigint, bigint, bigint, bigint])[1] : undefined,
+    minTokenAmtOut: data ? (data as [bigint, bigint, bigint, bigint])[2] : undefined,
+    autoMinTokenAmtOut: data ? (data as [bigint, bigint, bigint, bigint])[3] : undefined,
     isLoading,
     isError: isError || !!validation.error,
     error: enhancedError,

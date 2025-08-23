@@ -449,7 +449,7 @@ export const ButtonLoadingSpinner = memo(function ButtonLoadingSpinner({
  * Form loading spinner
  */
 export const FormLoadingSpinner = memo(function FormLoadingSpinner({
-  message = 'Processing...',
+  text = 'Processing...',
   ...props
 }: Omit<EnhancedSpinnerProps, 'variant'>) {
   return (
@@ -458,7 +458,7 @@ export const FormLoadingSpinner = memo(function FormLoadingSpinner({
         variant="ring"
         size="md"
         showText
-        text={message}
+        text={text}
         {...props}
       />
     </div>
@@ -493,9 +493,3 @@ export const ProgressSpinner = memo(function ProgressSpinner({
   );
 });
 
-// Export types
-export type {
-  SpinnerVariant,
-  SpinnerAnimation,
-  EnhancedSpinnerProps
-};

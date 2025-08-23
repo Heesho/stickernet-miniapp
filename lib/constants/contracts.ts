@@ -828,7 +828,7 @@ export const ROUTER_ABI = [
 /**
  * Multicall contract ABI for batched contract queries
  */
-export const MULTICALL_ABI = MULTICALL_ABI_JSON as const;
+export const MULTICALL_ABI = MULTICALL_ABI_JSON;
 
 // ===== TYPE DEFINITIONS =====
 

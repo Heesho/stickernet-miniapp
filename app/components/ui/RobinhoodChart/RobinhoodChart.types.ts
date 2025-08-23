@@ -1,3 +1,5 @@
+import type { Timeframe } from '@/types';
+
 export interface PriceDataPoint {
   timestamp: number;
   marketPrice: number;
@@ -5,7 +7,7 @@ export interface PriceDataPoint {
   volume: number;
 }
 
-export type { Timeframe } from '@/types';
+export type { Timeframe };
 
 export interface RobinhoodChartProps {
   priceData: PriceDataPoint[];

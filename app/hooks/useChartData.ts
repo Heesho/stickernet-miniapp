@@ -3,9 +3,17 @@ import {
   PriceDataPoint,
   Timeframe,
 } from "@/app/components/ui/RobinhoodChart/RobinhoodChart.types";
-import { SubgraphDataPoint } from "@/types/blockchain.types";
 import { SUBGRAPH_URL, GRAPH_API_KEY } from "@/lib/api/subgraph";
 import { useAsyncErrorHandler, type StandardError } from "./useErrorHandler";
+
+// Type for the actual GraphQL response
+interface GraphQLDataPoint {
+  id: string;
+  timestamp: string;
+  marketPrice: string;
+  floorPrice: string;
+  volume?: string;
+}
 
 interface UseChartDataProps {
   tokenAddress: string;
@@ -81,7 +89,6 @@ const getDataPointsConfig = (
         dataType: "day",
         maxPoints: 365, // Up to 365 days
         useRecent: true,
-        isMax: true, // Flag to handle differently
       };
     default:
       return {
@@ -729,7 +736,7 @@ export function useChartData({
 
   // Process MAX chart data - intelligently samples to ~100 points
   const processMAXChartData = (
-    data: SubgraphDataPoint[],
+    data: GraphQLDataPoint[],
     currentPrice: number,
     currentFloorPrice: number,
     tokenCreatedAt: number,
@@ -748,7 +755,7 @@ export function useChartData({
     const TARGET_POINTS = 100; // Aim for about 100 points
 
     // Create a map of existing data points
-    const dataMap = new Map<number, SubgraphDataPoint>();
+    const dataMap = new Map<number, GraphQLDataPoint>();
     const divisor = dataType === "hour" ? 3600 : 86400;
 
     data.forEach((point) => {
@@ -782,10 +789,12 @@ export function useChartData({
     for (let i = startIndex; i <= endIndex; i++) {
       if (dataMap.has(i)) {
         const point = dataMap.get(i);
-        lastKnownPrice = parseFloat(point.marketPrice);
-        lastKnownFloorPrice = parseFloat(point.floorPrice);
-        hasSeenData = true;
-        break;
+        if (point) {
+          lastKnownPrice = parseFloat(point.marketPrice);
+          lastKnownFloorPrice = parseFloat(point.floorPrice);
+          hasSeenData = true;
+          break;
+        }
       }
     }
 
@@ -805,18 +814,20 @@ export function useChartData({
         const checkIndex = periodIndex + j;
         if (dataMap.has(checkIndex)) {
           const point = dataMap.get(checkIndex);
-          lastKnownPrice = parseFloat(point.marketPrice);
-          lastKnownFloorPrice = parseFloat(point.floorPrice);
-          hasSeenData = true;
+          if (point) {
+            lastKnownPrice = parseFloat(point.marketPrice);
+            lastKnownFloorPrice = parseFloat(point.floorPrice);
+            hasSeenData = true;
 
-          result.push({
-            timestamp,
-            marketPrice: lastKnownPrice,
-            floorPrice: lastKnownFloorPrice,
-            volume: parseFloat(point.volume || "0"),
-          });
-          foundData = true;
-          break;
+            result.push({
+              timestamp,
+              marketPrice: lastKnownPrice,
+              floorPrice: lastKnownFloorPrice,
+              volume: parseFloat(point.volume || "0"),
+            });
+            foundData = true;
+            break;
+          }
         }
       }
 
@@ -866,7 +877,7 @@ export function useChartData({
 
   // Process 1M chart data - fills in missing day points with baseline price for pre-creation period
   const process1MChartData = (
-    dayData: SubgraphDataPoint[],
+    dayData: GraphQLDataPoint[],
     currentPrice: number,
     currentFloorPrice: number,
     startTimestamp: number,
@@ -920,9 +931,11 @@ export function useChartData({
       } else if (dataMap.has(dayIndex)) {
         // Use actual data if available
         const point = dataMap.get(dayIndex);
-        lastKnownPrice = parseFloat(point.marketPrice);
-        lastKnownFloorPrice = parseFloat(point.floorPrice);
-        hasSeenRealData = true;
+        if (point) {
+          lastKnownPrice = parseFloat(point.marketPrice);
+          lastKnownFloorPrice = parseFloat(point.floorPrice);
+          hasSeenRealData = true;
+        }
 
         result.push({
           timestamp: dayTimestamp * 1000,
@@ -966,7 +979,7 @@ export function useChartData({
 
   // Process 1W chart data - fills in missing hour points with baseline price for pre-creation period
   const process1WChartData = (
-    hourData: SubgraphDataPoint[],
+    hourData: GraphQLDataPoint[],
     currentPrice: number,
     currentFloorPrice: number,
     startTimestamp: number,
@@ -1080,7 +1093,7 @@ export function useChartData({
 
   // Process 1D chart data - fills in missing hour points with forward-filling
   const process1DChartData = (
-    hourData: SubgraphDataPoint[],
+    hourData: GraphQLDataPoint[],
     currentPrice: number,
     currentFloorPrice: number,
     startTimestamp: number,
@@ -1174,7 +1187,7 @@ export function useChartData({
 
   // Process 4H chart data - fills in missing minute points with forward-filling
   const process4HChartData = (
-    minuteData: SubgraphDataPoint[],
+    minuteData: GraphQLDataPoint[],
     currentPrice: number,
     currentFloorPrice: number,
     startTimestamp: number,
@@ -1278,7 +1291,7 @@ export function useChartData({
 
   // Process LIVE chart data - fills in missing minute points with forward-filling
   const processLiveChartData = (
-    minuteData: SubgraphDataPoint[],
+    minuteData: GraphQLDataPoint[],
     currentPrice: number,
     currentFloorPrice: number,
     startTimestamp: number,
@@ -1388,7 +1401,7 @@ export function useChartData({
 
   // Process raw subgraph data into exactly 60 chart points
   const processChartData = (
-    rawData: SubgraphDataPoint[],
+    rawData: GraphQLDataPoint[],
     currentPrice: number,
     currentFloorPrice: number,
     timeframe: Timeframe,

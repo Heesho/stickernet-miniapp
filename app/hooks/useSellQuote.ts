@@ -273,7 +273,7 @@ export function useDebouncedSellQuote({
   }, [validation.error, error, errorHandler, tokenAddress, debouncedAmount]);
 
   // Determine if we have a valid quote
-  const hasValidQuote = !!(data && data[0] && data[0] > 0n);
+  const hasValidQuote = !!(data && (data as [bigint, bigint, bigint, bigint])[0] && (data as [bigint, bigint, bigint, bigint])[0] > 0n);
   const isEmpty = !validation.isValid && !validation.error; // Valid empty state
   const isLoadingWithDebounce = isLoading || (isDebouncing && tokenAmount !== debouncedAmount);
 

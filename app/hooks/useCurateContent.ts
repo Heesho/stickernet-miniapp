@@ -141,12 +141,12 @@ export function useCurateContent(): UseCurateContentReturn {
       const calls = [
         {
           to: USDC_CONTRACT.address,
-          value: '0x0',
+          value: '0x0' as `0x${string}`,
           data: approveCallData,
         },
         {
           to: ROUTER_CONTRACT.address,
-          value: '0x0', 
+          value: '0x0' as `0x${string}`, 
           data: curateCallData,
         }
       ];

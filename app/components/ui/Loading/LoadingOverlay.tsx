@@ -418,8 +418,3 @@ export const GlobalLoadingOverlay = memo(function GlobalLoadingOverlay() {
   );
 });
 
-// Export types
-export type {
-  OverlaySize,
-  OverlayPosition
-};

@@ -111,27 +111,28 @@ const ButtonProgressBar = memo(function ButtonProgressBar({
  * Loading button component
  */
 export const LoadingButton = memo(forwardRef<HTMLButtonElement, LoadingButtonProps>(
-  function LoadingButton({
-    loading = false,
-    loadingText,
-    showSpinner = true,
-    progress,
-    showProgress = false,
-    variant = 'primary',
-    size = 'md',
-    fullWidth = false,
-    success = false,
-    successText = 'Success!',
-    error = false,
-    errorText = 'Error',
-    stateDuration = 2000,
-    startIcon,
-    endIcon,
-    children,
-    className = '',
-    disabled,
-    ...props
-  }, ref) => {
+  function LoadingButton(props, ref) {
+    const {
+      loading = false,
+      loadingText,
+      showSpinner = true,
+      progress,
+      showProgress = false,
+      variant = 'primary',
+      size = 'md',
+      fullWidth = false,
+      success = false,
+      successText = 'Success!',
+      error = false,
+      errorText = 'Error',
+      stateDuration = 2000,
+      startIcon,
+      endIcon,
+      children,
+      className = '',
+      disabled,
+      ...restProps
+    } = props;
     
     // Determine current state
     const isDisabled = disabled || loading;
@@ -170,7 +171,7 @@ export const LoadingButton = memo(forwardRef<HTMLButtonElement, LoadingButtonPro
         disabled={isDisabled}
         aria-busy={loading}
         aria-live="polite"
-        {...props}
+        {...restProps}
       >
         {/* Progress bar */}
         {typeof progress === 'number' && (
@@ -377,5 +378,3 @@ export const UploadButton = memo(forwardRef<HTMLButtonElement, UploadButtonProps
   }
 ));
 
-// Export types
-export type { AsyncButtonProps, UploadButtonProps };

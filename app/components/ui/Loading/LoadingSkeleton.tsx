@@ -500,9 +500,3 @@ export const FormSkeleton = memo(function FormSkeleton({
   );
 });
 
-// Export all components
-export {
-  type SkeletonVariant,
-  type SkeletonAnimation,
-  type SkeletonSize
-};

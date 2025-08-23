@@ -488,5 +488,3 @@ export const ListItem = memo(function ListItem({
   );
 });
 
-// Export types
-export type { DataListProps, LoadingListItemProps, ListItemProps };

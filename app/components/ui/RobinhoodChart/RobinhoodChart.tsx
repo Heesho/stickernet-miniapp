@@ -63,7 +63,7 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = memo(({
     const chartHeight = dimensions.height - padding.top - padding.bottom;
     
     // Always use current price if available, fallback to data or default
-    const fallbackPrice = parseFloat(currentPrice || '0.0001');
+    const fallbackPrice = currentPrice || 0.0001;
     
     // Check if all data points have the same price (flat line from no trading activity)
     const uniquePrices = new Set(priceData.map(d => Math.round(d.marketPrice * 100000000) / 100000000));
@@ -75,7 +75,7 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = memo(({
     
     // For no data, show empty chart
     if (!priceData.length) {
-      const price = currentPrice ? parseFloat(currentPrice) : fallbackPrice;
+      const price = currentPrice || fallbackPrice;
       const floorPrice = price * 0.95;
       
       // Create two points for a horizontal line

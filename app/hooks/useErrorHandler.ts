@@ -337,14 +337,15 @@ export function useErrorHandler(config: ErrorHandlerConfig): ErrorHandlerReturn 
     const categorized = categorizeError(rawError);
     
     // Build the standardized error
+    const errorAsAny = rawError as any;
     const standardError: StandardError = {
       id: generateErrorId(),
       category: customMapping.category || categorized.category || 'unknown',
       severity: customMapping.severity || categorized.severity || 'medium',
-      code: customMapping.code || rawError?.code || rawError?.name,
-      message: rawError?.message || String(rawError),
+      code: customMapping.code || errorAsAny?.code || errorAsAny?.name,
+      message: errorAsAny?.message || String(rawError),
       userMessage: customMapping.userMessage || categorized.userMessage || generateUserMessage(categorized.category || 'unknown'),
-      details: customMapping.details || rawError?.details,
+      details: customMapping.details || errorAsAny?.details,
       retryable: customMapping.retryable ?? categorized.retryable ?? true,
       recoveryAction: customMapping.recoveryAction || categorized.recoveryAction || defaultRecoveryAction,
       recoverySuggestion: customMapping.recoverySuggestion || categorized.recoverySuggestion || generateRecoverySuggestion(defaultRecoveryAction),
@@ -406,7 +407,7 @@ export function useErrorHandler(config: ErrorHandlerConfig): ErrorHandlerReturn 
   const derived = useMemo(() => ({
     hasError: !!error,
     severity: error?.severity || null,
-    canRetry: error?.retryable && !!retryFunction,
+    canRetry: !!(error?.retryable && retryFunction),
     getErrorMessage: () => error?.userMessage || '',
     getRecoverySuggestion: () => error?.recoverySuggestion || ''
   }), [error, retryFunction]);

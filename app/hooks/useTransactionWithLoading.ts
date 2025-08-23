@@ -303,7 +303,7 @@ export function useTransactionWithLoading(): UseTransactionReturn {
         address: config.address,
         abi: config.abi,
         functionName: config.functionName,
-        args: config.args,
+        args: config.args || [],
         value: config.value,
         gas: config.gas,
         gasPrice: config.gasPrice

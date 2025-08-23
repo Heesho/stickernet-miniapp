@@ -153,6 +153,7 @@ export function useTokenTransaction(): UseTokenTransactionReturn {
   // Standard method hooks
   const {
     writeContract: writeStandard,
+    writeContractAsync: writeStandardAsync,
     data: standardHash,
     isPending: isStandardPending,
     error: standardError
@@ -181,9 +182,7 @@ export function useTokenTransaction(): UseTokenTransactionReturn {
     id: state.batchId as `0x${string}`,
     query: {
       enabled: !!state.batchId && currentMethod === 'batched',
-      refetchInterval: (data) => {
-        return data?.status === 'CONFIRMED' ? false : 1000;
-      }
+      refetchInterval: 1000
     }
   });
 
@@ -373,11 +372,11 @@ export function useTokenTransaction(): UseTokenTransactionReturn {
       if (needsApprove) {
         
         // Execute approval
-        const approveHash = await writeStandard({
+        const approveHash = await writeStandardAsync({
           address: approveCall.address,
           abi: approveCall.abi,
           functionName: approveCall.functionName,
-          args: approveCall.args,
+          args: approveCall.args as any,
           chainId: baseSepolia.id,
         });
 
@@ -400,11 +399,11 @@ export function useTokenTransaction(): UseTokenTransactionReturn {
 
 
       // Execute main transaction
-      const txHash = await writeStandard({
+      const txHash = await writeStandardAsync({
         address: transactionCall.address,
         abi: transactionCall.abi,
         functionName: transactionCall.functionName,
-        args: transactionCall.args,
+        args: transactionCall.args as any,
         chainId: baseSepolia.id,
       });
 
@@ -426,7 +425,7 @@ export function useTokenTransaction(): UseTokenTransactionReturn {
       }));
       options?.onError?.(error instanceof Error ? error : new Error(errorMessage));
     }
-  }, [address, buildTransactionCalls, needsApproval, writeStandard, publicClient]);
+  }, [address, buildTransactionCalls, needsApproval, writeStandardAsync, publicClient]);
 
   /**
    * Execute transaction using batched method (writeContracts)
@@ -450,7 +449,7 @@ export function useTokenTransaction(): UseTokenTransactionReturn {
       
 
       // Execute batch transaction with proper chain config
-      const result = await writeContracts({
+      await writeContracts({
         contracts: calls.map(call => ({
           address: call.address,
           abi: call.abi,
@@ -469,15 +468,11 @@ export function useTokenTransaction(): UseTokenTransactionReturn {
         }
       });
 
-      if (result) {
-        setState(prev => ({
-          ...prev,
-          batchId: result,
-          approveStatus: 'success',
-          transactionStatus: 'success'
-        }));
-        options?.onSuccess?.(result);
-      }
+      setState(prev => ({
+        ...prev,
+        approveStatus: 'success',
+        transactionStatus: 'pending'
+      }));
     } catch (error) {
       console.error('Batched transaction failed:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -554,14 +549,14 @@ export function useTokenTransaction(): UseTokenTransactionReturn {
       
       let errorMessage = 'Batch transaction failed';
       
-      if (error.code === 4001) {
+      if ((error as any).code === 4001) {
         errorMessage = 'User rejected the transaction';
-      } else if (error.code === 5740) {
+      } else if ((error as any).code === 5740) {
         errorMessage = 'Batch too large for wallet to process';
-      } else if (error.code === -32602) {
+      } else if ((error as any).code === -32602) {
         errorMessage = 'Invalid request format';
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else if ((error as any).message) {
+        errorMessage = (error as any).message;
       }
 
       setState(prev => ({
@@ -694,8 +689,8 @@ export function useTokenTransaction(): UseTokenTransactionReturn {
     isSuccess,
     error,
     txHash: state.txHash || standardHash,
-    batchId: state.batchId || batchId,
-    receipts: callsStatus?.receipts,
+    batchId: state.batchId || (typeof batchId === 'object' ? batchId?.id : batchId),
+    receipts: callsStatus?.receipts as TransactionReceipts | undefined,
     needsApproval,
     reset
   };

@@ -25,7 +25,7 @@ export function useBaseAccount(): BaseAccountInfo {
     enableLogging: true
   });
 
-  const isBaseSmartWallet = useMemo(() => {
+  const isBaseSmartWallet: boolean = useMemo(() => {
     try {
       if (!isConnected || !connector) return false;
       
@@ -50,11 +50,11 @@ export function useBaseAccount(): BaseAccountInfo {
         connector.id === 'coinbaseWallet' ||
         connector.id === 'smartWallet' ||
         // Check for MiniKit context which indicates Smart Wallet
-        (typeof window !== 'undefined' && (window as { MiniKit?: unknown }).MiniKit)
+        (typeof window !== 'undefined' && !!(window as { MiniKit?: unknown }).MiniKit)
       );
       
       // If we're in a MiniKit context, we should assume Smart Wallet
-      const inMiniKit = typeof window !== 'undefined' && (window as { MiniKit?: unknown }).MiniKit;
+      const inMiniKit = typeof window !== 'undefined' && !!(window as { MiniKit?: unknown }).MiniKit;
       
       return isCoinbaseWallet && (hasSmartWalletFeatures || inMiniKit);
     } catch (error) {

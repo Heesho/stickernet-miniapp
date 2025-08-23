@@ -5,6 +5,9 @@
  * to maintain a clean separation between business logic and API layer.
  */
 
+import type { Curate } from "@/types";
+export type { Curate };
+
 // ===== API ENDPOINTS =====
 
 /**
@@ -741,10 +744,6 @@ export function transformCurateEntities(entities: CurateEntity[]): Curate[] {
   return entities.map(transformCurateEntity);
 }
 
-/**
- * Curate type for components (imported from centralized types)
- */
-export type { Curate } from "@/types";
 
 /**
  * Fetch curates with pagination

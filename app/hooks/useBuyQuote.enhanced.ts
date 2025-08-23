@@ -269,7 +269,7 @@ export function useBuyQuoteEnhanced({
     query: {
       enabled: shouldFetch,
       staleTime: 1000 * 10, // 10 seconds
-      cacheTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 5, // 5 minutes
       refetchInterval: false,
       retry: (failureCount, error) => {
         if (!validation.isValid) return false;
@@ -316,7 +316,7 @@ export function useBuyQuoteEnhanced({
 
   // Process quote data with enhanced calculations
   const processedData = useMemo(() => {
-    if (!data || !data[0] || !validation.parsedAmount) {
+    if (!data || !(data as [bigint, bigint, bigint, bigint])[0] || !validation.parsedAmount) {
       return {
         tokenAmtOut: '0',
         rawTokenAmtOut: undefined,
@@ -328,10 +328,11 @@ export function useBuyQuoteEnhanced({
       };
     }
 
-    const tokenOut = data[0] as bigint;
-    const slippageRaw = data[1] as bigint;
-    const minTokenOut = data[2] as bigint;
-    const autoMinTokenOut = data[3] as bigint;
+    const typedData = data as [bigint, bigint, bigint, bigint];
+    const tokenOut = typedData[0];
+    const slippageRaw = typedData[1];
+    const minTokenOut = typedData[2];
+    const autoMinTokenOut = typedData[3];
 
     // Calculate price impact
     const marketPrice = parseUnits('1', 18); // Simplified - would need actual market price
@@ -368,7 +369,7 @@ export function useBuyQuoteEnhanced({
   const isOverallLoading = isLoading || isDebouncing;
   const isValidating = isFetching && !isLoading;
   const isEmpty = !validation.isValid && !validation.error;
-  const hasValidQuote = !!(data && data[0] && data[0] > 0n);
+  const hasValidQuote = !!(data && (data as [bigint, bigint, bigint, bigint])[0] && (data as [bigint, bigint, bigint, bigint])[0] > 0n);
 
   return {
     // Quote data

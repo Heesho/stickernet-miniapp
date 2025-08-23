@@ -414,5 +414,3 @@ export const TableCell = memo(function TableCell({
   );
 });
 
-// Export types
-export type { DataTableProps };

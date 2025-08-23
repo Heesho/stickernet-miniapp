@@ -1,13 +1,31 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
-import { 
-  fetchTokenBoardData, 
+import {
+  fetchTokenBoardData,
   type Curate,
-  type ContentPositionEntity 
+  type ContentPositionEntity,
 } from "@/lib/constants";
 import { useMulticallAutoRefresh } from "@/app/hooks/useMulticallAutoRefresh";
 import { TokenData, SubgraphDataPoint } from "@/types";
+
+type SubgraphBoardData = {
+  id: string;
+  marketPrice?: string;
+  floorPrice?: string;
+  holders?: string;
+  contents?: string;
+  contentBalance?: string;
+  creatorRewardsQuote?: string;
+  curatorRewardsQuote?: string;
+  holderRewardsQuote?: string;
+  contentRevenueQuote?: string;
+  contentRevenueToken?: string;
+  contentPositions: ContentPositionEntity[];
+  tokenDayData?: { marketPrice?: string; volume?: string }[];
+  contentDayData?: { volume?: string }[];
+  tokenHourData?: { marketPrice?: string }[];
+};
 
 export interface BoardData {
   token: {
@@ -20,8 +38,8 @@ export interface BoardData {
   };
   curates: Curate[];
   stats: {
-    totalVolume: string;  // Steal volume
-    swapVolume: string;   // Trading volume
+    totalVolume: string; // Steal volume
+    swapVolume: string; // Trading volume
     priceChange24h: number;
     priceChangeAmount: string;
     priceChange1h?: number;
@@ -57,168 +75,31 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
   const [error, setError] = useState<string | null>(null);
 
   // Use simplified multicall auto-refresh hook
-  const { 
-    tokenData, 
+  const {
+    tokenData,
     isLoading: multicallLoading,
-    refreshAfterTransaction
+    refreshAfterTransaction,
   } = useMulticallAutoRefresh({
     tokenAddress: tokenAddress as `0x${string}`,
-    account: account || '0x0000000000000000000000000000000000000000' as `0x${string}`,
+    account:
+      account ||
+      ("0x0000000000000000000000000000000000000000" as `0x${string}`),
     enabled: !!tokenAddress,
-    refetchInterval: 15000 // Refresh every 15 seconds
+    refetchInterval: 15000, // Refresh every 15 seconds
   });
 
   // Helper function to update board data from subgraph
-  const updateBoardDataFromSubgraph = useCallback(async (boardDataFromSubgraph: { contentPositions: ContentPositionEntity[] }) => {
-    if (!tokenData) return;
-    
-    // Transform subgraph content positions to app's curate format
-    const curates: Curate[] = boardDataFromSubgraph.contentPositions.map((content: ContentPositionEntity) => ({
-      id: content.id,
-      tokenId: BigInt(content.tokenId),
-      uri: content.uri,
-      timestamp: Date.now().toString(),
-      price: content.price,
-      creator: content.creator,
-      user: content.owner,
-      token: {
-        id: boardDataFromSubgraph.id,
-        name: tokenData.name,
-        symbol: tokenData.symbol,
-        uri: tokenData.uri
-      }
-    }));
-    
-    // Calculate metrics
-    // Use tokenDayData for swap volume (trading volume)
-    const todaySwapVolume = boardDataFromSubgraph.tokenDayData?.[0]?.volume || "0";
-    // Use contentDayData for steal volume (content curation volume)
-    const todayStealVolume = boardDataFromSubgraph.contentDayData?.[0]?.volume || "0";
-    
-    let priceChange24h = 0;
-    let priceChangeAmount = "0";
-    
-    if (boardDataFromSubgraph.tokenDayData?.length >= 2) {
-      const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
-      const yesterdayPrice = parseFloat(boardDataFromSubgraph.tokenDayData[1].marketPrice || "0");
-      
-      if (yesterdayPrice > 0) {
-        priceChangeAmount = (currentPrice - yesterdayPrice).toFixed(6);
-        priceChange24h = ((currentPrice - yesterdayPrice) / yesterdayPrice) * 100;
-      }
-    }
-    
-    let priceChange1h = 0;
-    
-    if (boardDataFromSubgraph.tokenHourData?.length >= 2) {
-      const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
-      const hourAgoPrice = parseFloat(boardDataFromSubgraph.tokenHourData[1].marketPrice || "0");
-      
-      if (hourAgoPrice > 0) {
-        priceChange1h = ((currentPrice - hourAgoPrice) / hourAgoPrice) * 100;
-      }
-    } else if (boardDataFromSubgraph.tokenHourData?.length === 1) {
-      // If we only have current hour data, compare with opening price
-      const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
-      const openPrice = parseFloat(boardDataFromSubgraph.tokenHourData[0].marketPrice || "0");
-      
-      if (openPrice > 0) {
-        priceChange1h = ((currentPrice - openPrice) / openPrice) * 100;
-      }
-    }
-    
-    // Only update if data has actually changed to prevent unnecessary re-renders
-    setBoardData(prevData => {
-      const newPrice = parseFloat(formatUnits(tokenData.marketPrice || BigInt(0), 18)).toFixed(6);
-      
-      // Check if price actually changed
-      if (prevData && prevData.token.price === newPrice && 
-          prevData.curates.length === curates.length) {
-        // No significant changes, keep the same reference to prevent re-render
-        return prevData;
-      }
-      
-      return {
-        token: {
-          id: tokenAddress || '',
-          name: tokenData.name,
-          uri: tokenData.uri,
-          price: newPrice,
-          symbol: tokenData.symbol,
-          owner: tokenData.owner
-        },
-        curates: curates,
-        stats: {
-          totalVolume: todayStealVolume,  // Steal volume for board view
-          swapVolume: todaySwapVolume,    // Swap volume for trading view
-          priceChange24h: priceChange24h,
-          priceChangeAmount: priceChangeAmount,
-          priceChange1h: priceChange1h
-        },
-        subgraphData: {
-          holders: boardDataFromSubgraph.holders,
-          contents: boardDataFromSubgraph.contents,
-          contentBalance: boardDataFromSubgraph.contentBalance,
-          creatorRewardsQuote: boardDataFromSubgraph.creatorRewardsQuote,
-          curatorRewardsQuote: boardDataFromSubgraph.curatorRewardsQuote,
-          holderRewardsQuote: boardDataFromSubgraph.holderRewardsQuote,
-          contentRevenueQuote: boardDataFromSubgraph.contentRevenueQuote,
-          contentRevenueToken: boardDataFromSubgraph.contentRevenueToken,
-          marketPrice: boardDataFromSubgraph.marketPrice,
-          floorPrice: boardDataFromSubgraph.floorPrice
-        }
-      };
-    });
-  }, [tokenAddress, tokenData]);
+  const updateBoardDataFromSubgraph = useCallback(
+    async (boardDataFromSubgraph: SubgraphBoardData) => {
+      if (!tokenData) return;
 
-  // Simplified refresh function that only refreshes board data from subgraph
-  const refreshBoardData = useCallback(async () => {
-    if (!tokenAddress || !tokenData) return;
-    
-    try {
-      
-      // Fetch fresh subgraph data
-      const boardDataFromSubgraph = await fetchTokenBoardData(tokenAddress.toLowerCase());
-      
-      if (boardDataFromSubgraph) {
-        await updateBoardDataFromSubgraph(boardDataFromSubgraph);
-      }
-      
-    } catch (err) {
-      console.error('Error refreshing board data:', err);
-      setError('Failed to refresh board data');
-    }
-  }, [tokenAddress, tokenData, updateBoardDataFromSubgraph]);
-
-  // Load board data from subgraph and multicall with polling
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadBoardData = async () => {
-      if (!tokenAddress || !tokenData) return;
-      
-      try {
-        if (isMounted) {
-          setLoading(true);
-          setError(null);
-        }
-        
-        // Fetch board data from subgraph
-        const boardDataFromSubgraph = await fetchTokenBoardData(tokenAddress.toLowerCase());
-        
-        if (!isMounted) return; // Component unmounted, don't update state
-        
-        if (!boardDataFromSubgraph) {
-          setError('Token not found');
-          return;
-        }
-        
-        // Transform content positions to curates format
-        const curates: Curate[] = boardDataFromSubgraph.contentPositions.map((content: ContentPositionEntity) => ({
+      // Transform subgraph content positions to app's curate format
+      const curates: Curate[] = boardDataFromSubgraph.contentPositions.map(
+        (content: ContentPositionEntity) => ({
           id: content.id,
           tokenId: BigInt(content.tokenId),
           uri: content.uri,
-          timestamp: Date.now().toString(), // No timestamp in ContentPosition, using current time
+          timestamp: Date.now().toString(),
           price: content.price,
           creator: content.creator,
           user: content.owner,
@@ -226,57 +107,245 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
             id: boardDataFromSubgraph.id,
             name: tokenData.name,
             symbol: tokenData.symbol,
-            uri: tokenData.uri
-          }
-        }));
-        
+            uri: tokenData.uri,
+          },
+        }),
+      );
+
+      // Calculate metrics
+      // Use tokenDayData for swap volume (trading volume)
+      const todaySwapVolume =
+        boardDataFromSubgraph.tokenDayData?.[0]?.volume || "0";
+      // Use contentDayData for steal volume (content curation volume)
+      const todayStealVolume =
+        boardDataFromSubgraph.contentDayData?.[0]?.volume || "0";
+
+      let priceChange24h = 0;
+      let priceChangeAmount = "0";
+
+      if (boardDataFromSubgraph.tokenDayData?.length >= 2) {
+        const currentPrice = parseFloat(
+          boardDataFromSubgraph.marketPrice || "0",
+        );
+        const yesterdayPrice = parseFloat(
+          boardDataFromSubgraph.tokenDayData[1].marketPrice || "0",
+        );
+
+        if (yesterdayPrice > 0) {
+          priceChangeAmount = (currentPrice - yesterdayPrice).toFixed(6);
+          priceChange24h =
+            ((currentPrice - yesterdayPrice) / yesterdayPrice) * 100;
+        }
+      }
+
+      let priceChange1h = 0;
+
+      if (boardDataFromSubgraph.tokenHourData?.length >= 2) {
+        const currentPrice = parseFloat(
+          boardDataFromSubgraph.marketPrice || "0",
+        );
+        const hourAgoPrice = parseFloat(
+          boardDataFromSubgraph.tokenHourData[1].marketPrice || "0",
+        );
+
+        if (hourAgoPrice > 0) {
+          priceChange1h = ((currentPrice - hourAgoPrice) / hourAgoPrice) * 100;
+        }
+      } else if (boardDataFromSubgraph.tokenHourData?.length === 1) {
+        // If we only have current hour data, compare with opening price
+        const currentPrice = parseFloat(
+          boardDataFromSubgraph.marketPrice || "0",
+        );
+        const openPrice = parseFloat(
+          boardDataFromSubgraph.tokenHourData[0].marketPrice || "0",
+        );
+
+        if (openPrice > 0) {
+          priceChange1h = ((currentPrice - openPrice) / openPrice) * 100;
+        }
+      }
+
+      // Only update if data has actually changed to prevent unnecessary re-renders
+      setBoardData((prevData) => {
+        const newPrice = parseFloat(
+          formatUnits(tokenData.marketPrice || BigInt(0), 18),
+        ).toFixed(6);
+
+        // Check if price actually changed
+        if (
+          prevData &&
+          prevData.token.price === newPrice &&
+          prevData.curates.length === curates.length
+        ) {
+          // No significant changes, keep the same reference to prevent re-render
+          return prevData;
+        }
+
+        return {
+          token: {
+            id: tokenAddress || "",
+            name: tokenData.name,
+            uri: tokenData.uri,
+            price: newPrice,
+            symbol: tokenData.symbol,
+            owner: tokenData.owner,
+          },
+          curates: curates,
+          stats: {
+            totalVolume: todayStealVolume, // Steal volume for board view
+            swapVolume: todaySwapVolume, // Swap volume for trading view
+            priceChange24h: priceChange24h,
+            priceChangeAmount: priceChangeAmount,
+            priceChange1h: priceChange1h,
+          },
+          subgraphData: {
+            holders: boardDataFromSubgraph.holders,
+            contents: boardDataFromSubgraph.contents,
+            contentBalance: boardDataFromSubgraph.contentBalance,
+            creatorRewardsQuote: boardDataFromSubgraph.creatorRewardsQuote,
+            curatorRewardsQuote: boardDataFromSubgraph.curatorRewardsQuote,
+            holderRewardsQuote: boardDataFromSubgraph.holderRewardsQuote,
+            contentRevenueQuote: boardDataFromSubgraph.contentRevenueQuote,
+            contentRevenueToken: boardDataFromSubgraph.contentRevenueToken,
+            marketPrice: boardDataFromSubgraph.marketPrice,
+            floorPrice: boardDataFromSubgraph.floorPrice,
+          },
+        };
+      });
+    },
+    [tokenAddress, tokenData],
+  );
+
+  // Simplified refresh function that only refreshes board data from subgraph
+  const refreshBoardData = useCallback(async () => {
+    if (!tokenAddress || !tokenData) return;
+
+    try {
+      // Fetch fresh subgraph data
+      const boardDataFromSubgraph = await fetchTokenBoardData(
+        tokenAddress.toLowerCase(),
+      );
+
+      if (boardDataFromSubgraph) {
+        await updateBoardDataFromSubgraph(boardDataFromSubgraph);
+      }
+    } catch (err) {
+      console.error("Error refreshing board data:", err);
+      setError("Failed to refresh board data");
+    }
+  }, [tokenAddress, tokenData, updateBoardDataFromSubgraph]);
+
+  // Load board data from subgraph and multicall with polling
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadBoardData = async () => {
+      if (!tokenAddress || !tokenData) return;
+
+      try {
+        if (isMounted) {
+          setLoading(true);
+          setError(null);
+        }
+
+        // Fetch board data from subgraph
+        const boardDataFromSubgraph = await fetchTokenBoardData(
+          tokenAddress.toLowerCase(),
+        );
+
+        if (!isMounted) return; // Component unmounted, don't update state
+
+        if (!boardDataFromSubgraph) {
+          setError("Token not found");
+          return;
+        }
+
+        // Transform content positions to curates format
+        const curates: Curate[] = boardDataFromSubgraph.contentPositions.map(
+          (content: ContentPositionEntity) => ({
+            id: content.id,
+            tokenId: BigInt(content.tokenId),
+            uri: content.uri,
+            timestamp: Date.now().toString(), // No timestamp in ContentPosition, using current time
+            price: content.price,
+            creator: content.creator,
+            user: content.owner,
+            token: {
+              id: boardDataFromSubgraph.id,
+              name: tokenData.name,
+              symbol: tokenData.symbol,
+              uri: tokenData.uri,
+            },
+          }),
+        );
+
         // Calculate today's volumes
-        const todaySwapVolume = boardDataFromSubgraph.tokenDayData?.[0]?.volume || "0";
-        const todayStealVolume = boardDataFromSubgraph.contentDayData?.[0]?.volume || "0";
-        
+        const todaySwapVolume =
+          boardDataFromSubgraph.tokenDayData?.[0]?.volume || "0";
+        const todayStealVolume =
+          boardDataFromSubgraph.contentDayData?.[0]?.volume || "0";
+
         // Calculate price change from tokenDayData
         let priceChange24h = 0;
         let priceChangeAmount = "0";
-        
+
         if (boardDataFromSubgraph.tokenDayData?.length >= 2) {
-          const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
-          const yesterdayPrice = parseFloat(boardDataFromSubgraph.tokenDayData[1].marketPrice || "0");
-          
+          const currentPrice = parseFloat(
+            boardDataFromSubgraph.marketPrice || "0",
+          );
+          const yesterdayPrice = parseFloat(
+            boardDataFromSubgraph.tokenDayData[1].marketPrice || "0",
+          );
+
           if (yesterdayPrice > 0) {
             priceChangeAmount = (currentPrice - yesterdayPrice).toFixed(6);
-            priceChange24h = ((currentPrice - yesterdayPrice) / yesterdayPrice) * 100;
+            priceChange24h =
+              ((currentPrice - yesterdayPrice) / yesterdayPrice) * 100;
           }
         } else if (boardDataFromSubgraph.tokenDayData?.length === 1) {
           // If we only have today's data, compare with opening price
-          const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
-          const openPrice = parseFloat(boardDataFromSubgraph.tokenDayData[0].marketPrice || "0");
-          
+          const currentPrice = parseFloat(
+            boardDataFromSubgraph.marketPrice || "0",
+          );
+          const openPrice = parseFloat(
+            boardDataFromSubgraph.tokenDayData[0].marketPrice || "0",
+          );
+
           if (openPrice > 0) {
             priceChangeAmount = (currentPrice - openPrice).toFixed(6);
             priceChange24h = ((currentPrice - openPrice) / openPrice) * 100;
           }
         }
-        
+
         // Calculate 1-hour price change for theme colors
         let priceChange1h = 0;
-        
+
         if (boardDataFromSubgraph.tokenHourData?.length >= 2) {
-          const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
-          const hourAgoPrice = parseFloat(boardDataFromSubgraph.tokenHourData[1].marketPrice || "0");
-          
+          const currentPrice = parseFloat(
+            boardDataFromSubgraph.marketPrice || "0",
+          );
+          const hourAgoPrice = parseFloat(
+            boardDataFromSubgraph.tokenHourData[1].marketPrice || "0",
+          );
+
           if (hourAgoPrice > 0) {
-            priceChange1h = ((currentPrice - hourAgoPrice) / hourAgoPrice) * 100;
+            priceChange1h =
+              ((currentPrice - hourAgoPrice) / hourAgoPrice) * 100;
           }
         } else if (boardDataFromSubgraph.tokenHourData?.length === 1) {
           // If we only have current hour data, compare with opening price
-          const currentPrice = parseFloat(boardDataFromSubgraph.marketPrice || "0");
-          const openPrice = parseFloat(boardDataFromSubgraph.tokenHourData[0].marketPrice || "0");
-          
+          const currentPrice = parseFloat(
+            boardDataFromSubgraph.marketPrice || "0",
+          );
+          const openPrice = parseFloat(
+            boardDataFromSubgraph.tokenHourData[0].marketPrice || "0",
+          );
+
           if (openPrice > 0) {
             priceChange1h = ((currentPrice - openPrice) / openPrice) * 100;
           }
         }
-        
+
         if (isMounted) {
           // Use multicall data for token info
           setBoardData({
@@ -284,17 +353,19 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
               id: tokenAddress,
               name: tokenData.name,
               uri: tokenData.uri,
-              price: parseFloat(formatUnits(tokenData.marketPrice || BigInt(0), 18)).toFixed(6), // Show 6 decimal places
+              price: parseFloat(
+                formatUnits(tokenData.marketPrice || BigInt(0), 18),
+              ).toFixed(6), // Show 6 decimal places
               symbol: tokenData.symbol,
-              owner: tokenData.owner
+              owner: tokenData.owner,
             },
             curates: curates,
             stats: {
-              totalVolume: todayStealVolume,  // Steal volume for board view
-              swapVolume: todaySwapVolume,    // Swap volume for trading view
+              totalVolume: todayStealVolume, // Steal volume for board view
+              swapVolume: todaySwapVolume, // Swap volume for trading view
               priceChange24h: priceChange24h,
               priceChangeAmount: priceChangeAmount,
-              priceChange1h: priceChange1h
+              priceChange1h: priceChange1h,
             },
             subgraphData: {
               holders: boardDataFromSubgraph.holders,
@@ -306,17 +377,20 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
               contentRevenueQuote: boardDataFromSubgraph.contentRevenueQuote,
               contentRevenueToken: boardDataFromSubgraph.contentRevenueToken,
               marketPrice: boardDataFromSubgraph.marketPrice,
-              floorPrice: boardDataFromSubgraph.floorPrice
-            }
+              floorPrice: boardDataFromSubgraph.floorPrice,
+            },
           });
         }
       } catch (err) {
         if (isMounted) {
-          const isRateLimit = err instanceof Error && err.message.includes('Rate limit exceeded');
+          const isRateLimit =
+            err instanceof Error && err.message.includes("Rate limit exceeded");
           if (isRateLimit) {
-            setError('API rate limit exceeded. Please wait a few minutes and try again.');
+            setError(
+              "API rate limit exceeded. Please wait a few minutes and try again.",
+            );
           } else {
-            setError('Failed to load board data');
+            setError("Failed to load board data");
           }
         }
       } finally {
@@ -334,7 +408,15 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
     return () => {
       isMounted = false;
     };
-  }, [tokenAddress, multicallLoading, tokenData?.name, tokenData?.symbol, tokenData?.uri, tokenData?.owner, tokenData?.marketPrice]);
+  }, [
+    tokenAddress,
+    multicallLoading,
+    tokenData?.name,
+    tokenData?.symbol,
+    tokenData?.uri,
+    tokenData?.owner,
+    tokenData?.marketPrice,
+  ]);
 
   return {
     boardData,
@@ -343,6 +425,6 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
     refreshBoardData,
     tokenData,
     multicallLoading,
-    refreshAfterTransaction
+    refreshAfterTransaction,
   };
 }

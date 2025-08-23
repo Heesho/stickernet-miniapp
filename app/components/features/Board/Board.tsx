@@ -27,7 +27,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
     error,
     refreshBoardData,
     tokenData,
-    refreshAfterTransaction
+    refreshAfterTransaction,
   } = useBoardData(tokenAddress);
 
   const {
@@ -46,9 +46,9 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
     setHoveredFloorPrice,
     timeframePriceData,
     handleTimeframeChange,
-    themeColors
-  } = useBoardState(boardData);
-  
+    themeColors,
+  } = useBoardState(boardData as any);
+
   // Memoize handler functions to prevent unnecessary re-renders
   const handleBackToHome = useCallback(() => {
     if (setActiveTab) {
@@ -58,9 +58,12 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
     }
   }, [setActiveTab, router]);
 
-  const handleImageClick = useCallback((curate: Curate) => {
-    router.push(`/b/${tokenAddress}/${curate.tokenId}`);
-  }, [router, tokenAddress]);
+  const handleImageClick = useCallback(
+    (curate: Curate) => {
+      router.push(`/b/${tokenAddress}/${curate.tokenId}`);
+    },
+    [router, tokenAddress],
+  );
 
   // Memoize modal handlers
   const handleCloseCurate = useCallback(() => {
@@ -85,10 +88,13 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
     }, 3000);
   }, [refreshBoardData]);
 
-  const handlePriceHover = useCallback((price: string | null, floorPrice: string | null) => {
-    setHoveredPrice(price);
-    setHoveredFloorPrice(floorPrice);
-  }, [setHoveredPrice, setHoveredFloorPrice]);
+  const handlePriceHover = useCallback(
+    (price: string | null, floorPrice: string | null) => {
+      setHoveredPrice(price);
+      setHoveredFloorPrice(floorPrice);
+    },
+    [setHoveredPrice, setHoveredFloorPrice],
+  );
 
   if (loading) {
     return <BoardLoadingState />;
@@ -131,7 +137,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         />
       ) : (
         <BoardChart
-          tokenAddress={tokenAddress || ''}
+          tokenAddress={tokenAddress || ""}
           tokenSymbol={boardData.token.symbol}
           tokenName={boardData.token.name}
           tokenPrice={boardData.token.price}
@@ -139,8 +145,12 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
           priceChangeAmount={boardData.stats.priceChangeAmount}
           priceChange1h={boardData.stats.priceChange1h}
           userPosition={{
-            shares: parseInt(tokenData?.accountTokenBalance?.toString() || '0') || 0,
-            marketValue: ((parseInt(tokenData?.accountTokenBalance?.toString() || '0') || 0) * parseFloat(boardData.token.price)).toFixed(2)
+            shares:
+              parseInt(tokenData?.accountTokenBalance?.toString() || "0") || 0,
+            marketValue: (
+              (parseInt(tokenData?.accountTokenBalance?.toString() || "0") ||
+                0) * parseFloat(boardData.token.price)
+            ).toFixed(2),
           }}
           todayVolume={boardData.stats.swapVolume}
           onPriceHover={handlePriceHover}
@@ -166,7 +176,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         showCreateSticker={showCreateSticker}
         onCloseCreateSticker={handleCloseCreateSticker}
         onCreateStickerSuccess={handleCreateStickerSuccess}
-        tokenAddress={tokenAddress || ''}
+        tokenAddress={tokenAddress || ""}
         tokenSymbol={boardData.token.symbol}
         tokenName={boardData.token.name}
         boardData={boardData}

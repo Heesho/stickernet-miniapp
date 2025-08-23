@@ -130,6 +130,29 @@ export function BoardEnhanced({
     }
   }, [setActiveTab, router]);
 
+  // Modal handlers (match Board.tsx)
+  const handleCloseCurate = useCallback(() => {
+    setSelectedCurate(null);
+  }, [setSelectedCurate]);
+
+  const handleCurate = useCallback(async () => {
+    await refreshAfterTransaction();
+    setTimeout(() => {
+      refreshBoardData();
+    }, 3000);
+  }, [refreshAfterTransaction, refreshBoardData]);
+
+  const handleCloseCreateSticker = useCallback(() => {
+    setShowCreateSticker(false);
+  }, [setShowCreateSticker]);
+
+  const handleCreateStickerSuccess = useCallback(() => {
+    setShowCreateSticker(false);
+    setTimeout(() => {
+      refreshBoardData();
+    }, 3000);
+  }, [refreshBoardData, setShowCreateSticker]);
+
   // Memoized loading states
   const loadingStates = useMemo(
     () => ({
@@ -281,14 +304,16 @@ export function BoardEnhanced({
 
         {/* Board Modals */}
         <BoardModals
-          showCreateSticker={showCreateSticker}
-          setShowCreateSticker={setShowCreateSticker}
           selectedCurate={selectedCurate}
-          setSelectedCurate={setSelectedCurate}
+          onCloseCurate={handleCloseCurate}
+          onCurate={handleCurate}
+          showCreateSticker={showCreateSticker}
+          onCloseCreateSticker={handleCloseCreateSticker}
+          onCreateStickerSuccess={handleCreateStickerSuccess}
+          tokenAddress={tokenAddress || ""}
+          tokenSymbol={boardData.token.symbol}
+          tokenName={boardData.token.name}
           boardData={boardData as any}
-          tokenData={tokenData}
-          refreshAfterTransaction={refreshAfterTransaction}
-          loading={componentLoading.isLoading}
         />
       </ComponentLoadingOverlay>
     </div>

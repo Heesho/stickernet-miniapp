@@ -361,7 +361,7 @@ export function HomeEnhanced({
             <CurateImage
               key={`${(item as Curate).id}-${index}`}
               curate={item as Curate}
-              onClick={() => handleCurateClick(item as Curate)}
+              onImageClick={() => handleCurateClick(item as Curate)}
               onNavigateToBoard={handleNavigateToBoard}
               style={{
                 height: virtualScrolling

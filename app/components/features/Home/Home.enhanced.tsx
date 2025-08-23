@@ -455,33 +455,35 @@ function EnhancedCurateImage({
   const [imageError, setImageError] = useState(false);
 
   return (
-    <LoadingCard
-      loading={loading}
-      showSkeleton
-      skeletonConfig={{
-        showImage: true,
-        showTitle: true,
-        showDescription: false,
-      }}
-      onClick={onClick}
-      interactive
-      className="mb-4 break-inside-avoid cursor-pointer"
-      style={style}
-    >
-      <CurateImage
-        curate={curate}
-        onClick={onClick}
-        onNavigateToBoard={onNavigateToBoard}
-        onImageLoad={() => setImageLoading(false)}
-        onImageError={() => {
-          setImageLoading(false);
-          setImageError(true);
+    <div style={style}>
+      <LoadingCard
+        loading={loading}
+        showSkeleton
+        skeletonConfig={{
+          showImage: true,
+          showTitle: true,
+          showDescription: false,
         }}
-        loading={imageLoading}
-        error={imageError}
-        prefetch={prefetchImages}
-      />
-    </LoadingCard>
+        onRetry={onClick}
+        onClick={onClick}
+        interactive
+        className="mb-4 break-inside-avoid cursor-pointer"
+      >
+        <CurateImage
+          curate={curate}
+          onImageClick={onClick}
+          onNavigateToBoard={onNavigateToBoard}
+          onImageLoad={() => setImageLoading(false)}
+          onImageError={() => {
+            setImageLoading(false);
+            setImageError(true);
+          }}
+          loading={imageLoading}
+          error={imageError}
+          prefetch={prefetchImages}
+        />
+      </LoadingCard>
+    </div>
   );
 }
 

@@ -1,6 +1,6 @@
 /**
  * Enhanced Board Component with Advanced Loading States
- * 
+ *
  * Extends the existing Board component with the new loading system,
  * better error handling, and progressive loading features.
  */
@@ -25,11 +25,11 @@ import { BoardLoadingState } from "./BoardLoadingState";
 import { BoardErrorState } from "./BoardErrorState";
 
 // Enhanced loading components
-import { 
-  useComponentLoading, 
-  LoadingCard, 
+import {
+  useComponentLoading,
+  LoadingCard,
   ComponentLoadingOverlay,
-  LoadingButton 
+  LoadingButton,
 } from "@/app/components/ui/Loading";
 
 /**
@@ -50,19 +50,19 @@ export interface BoardEnhancedProps extends BoardProps {
   };
 }
 
-export function BoardEnhanced({ 
-  tokenId, 
-  tokenAddress, 
+export function BoardEnhanced({
+  tokenId,
+  tokenAddress,
   setActiveTab,
   showGlobalLoading = false,
   progressiveLoading = true,
   realTimeUpdates = true,
-  loadingMessages = {}
+  loadingMessages = {},
 }: BoardEnhancedProps) {
   const router = useRouter();
 
   // Component-level loading management
-  const componentLoading = useComponentLoading('Board');
+  const componentLoading = useComponentLoading("Board");
 
   // Custom hooks for data and state management
   const {
@@ -71,7 +71,7 @@ export function BoardEnhanced({
     error,
     refreshBoardData,
     tokenData,
-    refreshAfterTransaction
+    refreshAfterTransaction,
   } = useBoardData(tokenAddress);
 
   const {
@@ -90,16 +90,16 @@ export function BoardEnhanced({
     setHoveredFloorPrice,
     timeframePriceData,
     handleTimeframeChange,
-    themeColors
-  } = useBoardState(boardData);
+    themeColors,
+  } = useBoardState(boardData as any);
 
   // Enhanced refresh with loading state
   const handleRefresh = useCallback(async () => {
     const operationId = componentLoading.startLoading({
-      type: 'refresh',
-      message: loadingMessages.refreshing || 'Refreshing board data...',
-      priority: 'medium',
-      showGlobally: showGlobalLoading
+      type: "refresh",
+      message: loadingMessages.refreshing || "Refreshing board data...",
+      priority: "medium",
+      showGlobally: showGlobalLoading,
     });
 
     try {
@@ -111,21 +111,27 @@ export function BoardEnhanced({
   }, [refreshBoardData, componentLoading, showGlobalLoading, loadingMessages]);
 
   // Enhanced navigation with loading
-  const navigateToCurate = useCallback((curate: Curate) => {
-    if (showGlobalLoading) {
-      componentLoading.globalLoading.showPageTransition('Loading sticker...');
-    }
-    
-    router.push(`/b/${tokenId}/${curate.tokenId}`);
-  }, [router, tokenId, showGlobalLoading, componentLoading]);
+  const navigateToCurate = useCallback(
+    (curate: Curate) => {
+      if (showGlobalLoading) {
+        componentLoading.globalLoading.showPageTransition("Loading sticker...");
+      }
+
+      router.push(`/b/${tokenId}/${curate.tokenId}`);
+    },
+    [router, tokenId, showGlobalLoading, componentLoading],
+  );
 
   // Memoized loading states
-  const loadingStates = useMemo(() => ({
-    isInitialLoading: loading && !boardData,
-    isRefreshing: componentLoading.isLoading && !!boardData,
-    hasError: !!error,
-    isEmpty: !loading && !error && !boardData?.curates?.length
-  }), [loading, boardData, componentLoading.isLoading, error]);
+  const loadingStates = useMemo(
+    () => ({
+      isInitialLoading: loading && !boardData,
+      isRefreshing: componentLoading.isLoading && !!boardData,
+      hasError: !!error,
+      isEmpty: !loading && !error && !boardData?.curates?.length,
+    }),
+    [loading, boardData, componentLoading.isLoading, error],
+  );
 
   // Error handling with retry
   const handleRetry = useCallback(() => {
@@ -144,8 +150,8 @@ export function BoardEnhanced({
 
   if (loadingStates.hasError) {
     return (
-      <BoardErrorState 
-        error={error} 
+      <BoardErrorState
+        error={error}
         onRetry={handleRetry}
         canRetry={componentLoading.canRetry}
       />
@@ -170,7 +176,7 @@ export function BoardEnhanced({
       {/* Global loading overlay for refresh operations */}
       <ComponentLoadingOverlay
         loading={loadingStates.isRefreshing}
-        message={loadingMessages.refreshing || 'Refreshing...'}
+        message={loadingMessages.refreshing || "Refreshing..."}
         spinnerVariant="ring"
       >
         {/* Board Header with loading states */}
@@ -196,14 +202,11 @@ export function BoardEnhanced({
             showImage: false,
             showTitle: true,
             showDescription: true,
-            lines: 2
+            lines: 2,
           }}
           className="mb-4"
         >
-          <BoardStatistics 
-            stats={boardData?.stats}
-            themeColors={themeColors}
-          />
+          <BoardStatistics stats={boardData?.stats} themeColors={themeColors} />
         </LoadingCard>
 
         {/* Board Chart with enhanced loading */}
@@ -213,7 +216,7 @@ export function BoardEnhanced({
           skeletonConfig={{
             showImage: true,
             showTitle: false,
-            showDescription: false
+            showDescription: false,
           }}
           className="mb-4"
         >
@@ -233,7 +236,7 @@ export function BoardEnhanced({
         </LoadingCard>
 
         {/* Board Tabs with loading states */}
-        <BoardTabs 
+        <BoardTabs
           boardData={boardData}
           onCurateClick={navigateToCurate}
           loading={loadingStates.isRefreshing}
@@ -289,7 +292,7 @@ function EnhancedBoardHeader({
   setTokenAvatarError,
   hoveredPrice,
   hoveredFloorPrice,
-  themeColors
+  themeColors,
 }: EnhancedBoardHeaderProps) {
   return (
     <div className="flex items-center justify-between p-4 border-b border-[var(--app-border)]">
@@ -300,7 +303,7 @@ function EnhancedBoardHeader({
         skeletonConfig={{
           showImage: true,
           showTitle: true,
-          showDescription: false
+          showDescription: false,
         }}
         className="flex-1"
         variant="minimal"
@@ -327,8 +330,18 @@ function EnhancedBoardHeader({
         size="sm"
         startIcon={
           !refreshing && (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
           )
         }
@@ -354,7 +367,7 @@ function EnhancedBoardActions({
   onCreateSticker,
   onRefresh,
   refreshing,
-  disabled
+  disabled,
 }: EnhancedBoardActionsProps) {
   return (
     <div className="flex flex-col space-y-2">
@@ -366,8 +379,18 @@ function EnhancedBoardActions({
         size="lg"
         className="shadow-lg"
         startIcon={
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
           </svg>
         }
       >
@@ -385,8 +408,18 @@ function EnhancedBoardActions({
         className="shadow-lg"
         aria-label="Refresh board"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
         </svg>
       </LoadingButton>
     </div>

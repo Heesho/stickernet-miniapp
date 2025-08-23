@@ -104,13 +104,7 @@ export function HomeEnhanced({
   });
 
   // Enhanced pull to refresh with loading feedback
-  const {
-    isPulling,
-    pullDistance,
-    handlePullStart,
-    handlePullMove,
-    handlePullEnd,
-  } = usePullToRefresh({
+  const { isPulling, pullDistance } = usePullToRefresh({
     onRefresh: async () => {
       const operationId = componentLoading.startLoading({
         type: "refresh",
@@ -126,7 +120,7 @@ export function HomeEnhanced({
         componentLoading.failOperation(operationId, error);
       }
     },
-    enabled: !loading && !loadingMore,
+    isRefreshing: loading || loadingMore,
   });
 
   // Auto-refresh with visibility polling
@@ -302,12 +296,7 @@ export function HomeEnhanced({
 
   // Main content with enhanced data list
   return (
-    <div
-      className="relative"
-      onTouchStart={handlePullStart}
-      onTouchMove={handlePullMove}
-      onTouchEnd={handlePullEnd}
-    >
+    <div className="relative">
       {/* Pull to refresh indicator */}
       {isPulling && (
         <div

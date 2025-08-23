@@ -153,6 +153,8 @@ declare global {
     interface ProcessEnv {
       readonly NEXT_PUBLIC_URL: string;
       readonly NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME: string;
+      readonly NEXT_PUBLIC_SUBGRAPH_URL?: string;
+      readonly NEXT_PUBLIC_GRAPH_API_KEY?: string;
       readonly UPSTASH_REDIS_REST_URL?: string;
       readonly UPSTASH_REDIS_REST_TOKEN?: string;
     }

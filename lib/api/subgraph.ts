@@ -1,6 +1,6 @@
 /**
  * GraphQL subgraph configuration and queries for the Stickernet miniapp
- * 
+ *
  * This file contains all GraphQL queries, endpoints, and API configurations
  * to maintain a clean separation between business logic and API layer.
  */
@@ -10,12 +10,13 @@
 /**
  * The Graph subgraph URL for Wavefront data
  */
-export const SUBGRAPH_URL = 'https://gateway.thegraph.com/api/subgraphs/id/6wxyMZKxnNByx3WDzeBkWFF3D5YoVzE3DkvyCvuojHrZ';
+export const SUBGRAPH_URL =
+  "https://gateway.thegraph.com/api/subgraphs/id/6wxyMZKxnNByx3WDzeBkWFF3D5YoVzE3DkvyCvuojHrZ";
 
 /**
  * The Graph API Key for authenticated requests
  */
-export const GRAPH_API_KEY = '7302378dbbe0ef268c60a5cee4251713';
+export const GRAPH_API_KEY = process.env.GRAPH_API_KEY;
 
 // ===== GRAPHQL QUERIES =====
 
@@ -660,60 +661,63 @@ export interface GetTokenBoardDataResponse {
 /**
  * Generic function to execute GraphQL queries
  */
-export async function executeGraphQLQuery<TData = unknown, TVariables = Record<string, unknown>>(
-  query: string,
-  variables?: TVariables
-): Promise<GraphQLResponse<TData>> {
+export async function executeGraphQLQuery<
+  TData = unknown,
+  TVariables = Record<string, unknown>,
+>(query: string, variables?: TVariables): Promise<GraphQLResponse<TData>> {
   try {
-    
-    const response = await fetch(SUBGRAPH_URL, {
-      method: 'POST',
+    // Always route through our Next.js API to avoid exposing API keys in the client bundle
+    const response = await fetch("/api/subgraph", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GRAPH_API_KEY}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         query,
-        variables
-      })
+        variables,
+      }),
     });
-
 
     if (!response.ok) {
       const errorText = await response.text();
-      
+
       // Handle rate limiting more gracefully
       if (response.status === 429) {
-        throw new Error('Rate limit exceeded. Please try again in a few minutes.');
+        throw new Error(
+          "Rate limit exceeded. Please try again in a few minutes.",
+        );
       }
-      
+
       throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
 
     const result: GraphQLResponse<TData> = await response.json();
-    
+
     if (result.errors) {
-      
       // Check for specific subgraph allocation issues
-      const hasAllocationError = result.errors.some(error => 
-        error.message.includes('subgraph not found') || 
-        error.message.includes('no allocations')
+      const hasAllocationError = result.errors.some(
+        (error) =>
+          error.message.includes("subgraph not found") ||
+          error.message.includes("no allocations"),
       );
-      
+
       if (hasAllocationError) {
-        throw new Error('Subgraph is currently being indexed. Please try again in a few minutes.');
+        throw new Error(
+          "Subgraph is currently being indexed. Please try again in a few minutes.",
+        );
       }
-      
-      throw new Error(`GraphQL errors: ${result.errors.map(e => e.message).join(', ')}`);
+
+      throw new Error(
+        `GraphQL errors: ${result.errors.map((e) => e.message).join(", ")}`,
+      );
     }
 
     return result;
   } catch (error) {
-    
     // More helpful error message
-    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
     }
-    
+
     throw error;
   }
 }
@@ -726,7 +730,7 @@ export async function executeGraphQLQuery<TData = unknown, TVariables = Record<s
 export function transformCurateEntity(entity: CurateEntity): Curate {
   return {
     ...entity,
-    tokenId: BigInt(entity.tokenId)
+    tokenId: BigInt(entity.tokenId),
   };
 }
 
@@ -740,19 +744,21 @@ export function transformCurateEntities(entities: CurateEntity[]): Curate[] {
 /**
  * Curate type for components (imported from centralized types)
  */
-export type { Curate } from '@/types';
+export type { Curate } from "@/types";
 
 /**
  * Fetch curates with pagination
  * Returns transformed curates ready for component use
  */
-export async function fetchCurates(first: number = 50, skip: number = 0): Promise<Curate[]> {
-  const result = await executeGraphQLQuery<GetCuratesResponse, GetCuratesVariables>(
-    GET_CURATES_QUERY,
-    { first, skip }
-  );
-  
-  
+export async function fetchCurates(
+  first: number = 50,
+  skip: number = 0,
+): Promise<Curate[]> {
+  const result = await executeGraphQLQuery<
+    GetCuratesResponse,
+    GetCuratesVariables
+  >(GET_CURATES_QUERY, { first, skip });
+
   const entities = result.data?.curates || [];
   return transformCurateEntities(entities);
 }
@@ -762,11 +768,11 @@ export async function fetchCurates(first: number = 50, skip: number = 0): Promis
  * Returns transformed curate ready for component use
  */
 export async function fetchCurateById(id: string): Promise<Curate | null> {
-  const result = await executeGraphQLQuery<GetCurateByIdResponse, GetCurateByIdVariables>(
-    GET_CURATE_BY_ID_QUERY,
-    { id }
-  );
-  
+  const result = await executeGraphQLQuery<
+    GetCurateByIdResponse,
+    GetCurateByIdVariables
+  >(GET_CURATE_BY_ID_QUERY, { id });
+
   const entity = result.data?.curate;
   return entity ? transformCurateEntity(entity) : null;
 }
@@ -776,15 +782,15 @@ export async function fetchCurateById(id: string): Promise<Curate | null> {
  * Returns transformed curates ready for component use
  */
 export async function fetchCuratesByCreator(
-  creator: string, 
-  first: number = 50, 
-  skip: number = 0
+  creator: string,
+  first: number = 50,
+  skip: number = 0,
 ): Promise<Curate[]> {
-  const result = await executeGraphQLQuery<GetCuratesByCreatorResponse, GetCuratesByCreatorVariables>(
-    GET_CURATES_BY_CREATOR_QUERY,
-    { creator, first, skip }
-  );
-  
+  const result = await executeGraphQLQuery<
+    GetCuratesByCreatorResponse,
+    GetCuratesByCreatorVariables
+  >(GET_CURATES_BY_CREATOR_QUERY, { creator, first, skip });
+
   const entities = result.data?.curates || [];
   return transformCurateEntities(entities);
 }
@@ -795,9 +801,9 @@ export async function fetchCuratesByCreator(
 export async function fetchToken(id: string): Promise<TokenEntity | null> {
   const result = await executeGraphQLQuery<GetTokenResponse, GetTokenVariables>(
     GET_TOKEN_QUERY,
-    { id }
+    { id },
   );
-  
+
   return result.data?.token || null;
 }
 
@@ -807,15 +813,14 @@ export async function fetchToken(id: string): Promise<TokenEntity | null> {
 export async function fetchTokens(
   first: number = 50,
   skip: number = 0,
-  orderBy: string = 'marketCap',
-  orderDirection: string = 'desc'
+  orderBy: string = "marketCap",
+  orderDirection: string = "desc",
 ): Promise<TokenEntity[]> {
-  const result = await executeGraphQLQuery<GetTokensResponse, GetTokensVariables>(
-    GET_TOKENS_QUERY,
-    { first, skip, orderBy, orderDirection }
-  );
-  
-  
+  const result = await executeGraphQLQuery<
+    GetTokensResponse,
+    GetTokensVariables
+  >(GET_TOKENS_QUERY, { first, skip, orderBy, orderDirection });
+
   return result.data?.tokens || [];
 }
 
@@ -824,43 +829,44 @@ export async function fetchTokens(
  */
 export async function fetchTrendingTokens(
   first: number = 50,
-  skip: number = 0
+  skip: number = 0,
 ): Promise<TokenEntity[]> {
   // Get timestamp for 24 hours ago
-  const timestamp24hAgo = Math.floor(Date.now() / 1000) - (24 * 60 * 60);
-  
+  const timestamp24hAgo = Math.floor(Date.now() / 1000) - 24 * 60 * 60;
+
   interface TrendingResponse {
     tokenDayDatas: Array<{
       token: TokenEntity;
       volume: string;
     }>;
   }
-  
+
   interface TrendingVariables {
     first: number;
     skip: number;
     timestamp: string;
   }
-  
+
   const result = await executeGraphQLQuery<TrendingResponse, TrendingVariables>(
     GET_TRENDING_TOKENS_QUERY,
-    { first, skip, timestamp: timestamp24hAgo.toString() }
+    { first, skip, timestamp: timestamp24hAgo.toString() },
   );
-  
-  
+
   // Extract just the token entities from the response
-  return result.data?.tokenDayDatas?.map(td => td.token) || [];
+  return result.data?.tokenDayDatas?.map((td) => td.token) || [];
 }
 
 /**
  * Fetch token board data including content positions and daily stats
  */
-export async function fetchTokenBoardData(id: string): Promise<TokenBoardDataEntity | null> {
-  const result = await executeGraphQLQuery<GetTokenBoardDataResponse, GetTokenVariables>(
-    GET_TOKEN_BOARD_DATA_QUERY,
-    { id }
-  );
-  
+export async function fetchTokenBoardData(
+  id: string,
+): Promise<TokenBoardDataEntity | null> {
+  const result = await executeGraphQLQuery<
+    GetTokenBoardDataResponse,
+    GetTokenVariables
+  >(GET_TOKEN_BOARD_DATA_QUERY, { id });
+
   return result.data?.token || null;
 }
 

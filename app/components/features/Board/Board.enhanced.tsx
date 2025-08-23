@@ -148,13 +148,7 @@ export function BoardEnhanced({
   }
 
   if (loadingStates.hasError) {
-    return (
-      <BoardErrorState
-        error={error}
-        onRetry={handleRetry}
-        canRetry={componentLoading.canRetry}
-      />
-    );
+    return <BoardErrorState error={error} onBackToHome={handleRetry} />;
   }
 
   if (loadingStates.isEmpty) {
@@ -181,14 +175,11 @@ export function BoardEnhanced({
         {/* Board Header with loading states */}
         <div className="relative">
           <BoardHeader
-            boardData={boardData}
-            tokenData={tokenData}
-            onRefresh={handleRefresh}
-            refreshing={loadingStates.isRefreshing}
-            tokenAvatarError={tokenAvatarError}
-            setTokenAvatarError={setTokenAvatarError}
-            hoveredPrice={hoveredPrice}
-            hoveredFloorPrice={hoveredFloorPrice}
+            tokenSymbol={boardData.token.symbol}
+            onBackToHome={handleBackToHome}
+            showTradingView={showTradingView}
+            onToggleView={() => setShowTradingView(!showTradingView)}
+            scrollY={scrollY}
             themeColors={themeColors}
           />
         </div>
@@ -205,7 +196,20 @@ export function BoardEnhanced({
           }}
           className="mb-4"
         >
-          <BoardStatistics stats={boardData?.stats} themeColors={themeColors} />
+          <BoardStatistics
+            token={boardData.token}
+            hoveredPrice={hoveredPrice}
+            hoveredFloorPrice={hoveredFloorPrice}
+            timeframePriceData={{
+              priceChange: boardData.stats.priceChange24h,
+              priceChangeAmount: boardData.stats.priceChangeAmount,
+              label: "24h",
+            }}
+            tokenAvatarError={tokenAvatarError}
+            onTokenAvatarError={() => setTokenAvatarError(true)}
+            showTradingView={showTradingView}
+            subgraphData={{ floorPrice: boardData.subgraphData?.floorPrice }}
+          />
         </LoadingCard>
 
         {/* Board Chart with enhanced loading */}
@@ -236,18 +240,15 @@ export function BoardEnhanced({
 
         {/* Board Tabs with loading states */}
         <BoardTabs
-          boardData={boardData}
-          onCurateClick={navigateToCurate}
-          loading={loadingStates.isRefreshing}
+          curates={boardData.curates}
+          onImageClick={navigateToCurate}
         />
 
         {/* Board Actions with enhanced buttons */}
         <div className="fixed bottom-4 right-4 z-10">
           <BoardActions
             onCreateSticker={() => setShowCreateSticker(true)}
-            onRefresh={handleRefresh}
-            refreshing={loadingStates.isRefreshing}
-            disabled={componentLoading.isLoading}
+            themeColor={themeColors.color}
           />
         </div>
 

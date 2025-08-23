@@ -135,9 +135,8 @@ export function BoardEnhanced({
 
   // Error handling with retry
   const handleRetry = useCallback(() => {
-    componentLoading.clearError();
     handleRefresh();
-  }, [componentLoading, handleRefresh]);
+  }, [handleRefresh]);
 
   // Early returns for loading and error states
   if (loadingStates.isInitialLoading) {

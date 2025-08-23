@@ -355,9 +355,9 @@ export function HomeEnhanced({
         spinnerVariant="dots"
       >
         {/* Enhanced data list with virtual scrolling support */}
-        <DataList
+        <DataList<Curate>
           data={curates}
-          renderItem={(curate, index) => (
+          renderItem={(curate: Curate, index: number) => (
             <CurateImage
               key={`${curate.id}-${index}`}
               curate={curate}

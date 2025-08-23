@@ -18,5 +18,6 @@ export type IconName =
   | "message"
   | "warning"
   | "wallet"
-  | "deposit";
+  | "deposit"
+  | "close";
 export type IconSize = "sm" | "md" | "lg";

@@ -180,7 +180,8 @@ export function HomeEnhanced({
         globalLoading.showPageTransition("Loading board...");
       }
 
-      onNavigateToBoard?.(tokenAddress);
+      // This component only has tokenAddress; pass a placeholder tokenId
+      onNavigateToBoard?.("", tokenAddress);
     },
     [onNavigateToBoard, showGlobalLoading, globalLoading],
   );

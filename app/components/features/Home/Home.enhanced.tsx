@@ -357,11 +357,11 @@ export function HomeEnhanced({
         {/* Enhanced data list with virtual scrolling support */}
         <DataList
           data={curates}
-          renderItem={(curate: Curate, index: number) => (
+          renderItem={(item, index) => (
             <CurateImage
-              key={`${curate.id}-${index}`}
-              curate={curate}
-              onClick={() => handleCurateClick(curate)}
+              key={`${(item as Curate).id}-${index}`}
+              curate={item as Curate}
+              onClick={() => handleCurateClick(item as Curate)}
               onNavigateToBoard={handleNavigateToBoard}
               style={{
                 height: virtualScrolling
@@ -379,7 +379,7 @@ export function HomeEnhanced({
           variant="cards"
           spacing="md"
           className="columns-2 gap-4 p-4"
-          keyExtractor={(curate) => curate.id}
+          keyExtractor={(_, index) => index}
           virtual={virtualScrolling}
           itemHeight={virtualScrolling ? 250 : undefined}
           containerHeight={virtualScrolling ? 600 : undefined}

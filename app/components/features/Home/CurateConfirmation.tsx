@@ -235,7 +235,7 @@ export function CurateConfirmation({
       </div>
 
       {/* Steal Button - Fixed at same position as previous page */}
-      <div className="fixed bottom-16 left-0 right-0">
+      <div className="fixed bottom-20 left-0 right-0 z-40">
         <div className="w-full max-w-md mx-auto px-4">
           <button
             onClick={handleCurate}

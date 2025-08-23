@@ -233,7 +233,7 @@ export function TradingViewEnhanced({
       </div>
 
       {/* Sticky Trade button and Today's Swap Volume - positioned above navbar */}
-      <div className="fixed bottom-16 left-0 right-0">
+      <div className="fixed bottom-20 left-0 right-0 z-40">
         <div className="w-full max-w-md mx-auto bg-black px-4 py-3">
           <div className="flex items-center justify-between">
             {/* Today's Swap Volume */}

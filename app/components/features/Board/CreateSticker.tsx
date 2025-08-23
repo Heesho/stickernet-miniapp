@@ -204,7 +204,7 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
         </div>
 
         {/* Create Button - Fixed above navbar */}
-        <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-black p-3">
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-black p-3 z-40">
           <div className="flex items-center">
             <button
               onClick={handleCreate}

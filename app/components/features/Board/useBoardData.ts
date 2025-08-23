@@ -438,7 +438,7 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
     loading,
     error,
     refreshBoardData,
-    tokenData,
+    tokenData: tokenData ?? null,
     multicallLoading,
     refreshAfterTransaction,
   };

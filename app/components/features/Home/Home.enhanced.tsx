@@ -207,7 +207,7 @@ export function HomeEnhanced({
   // Error handling with retry
   const handleRetry = useCallback(async () => {
     const operationId = componentLoading.startLoading({
-      type: "retry",
+      type: "refresh",
       message: "Retrying...",
       priority: "high",
       showGlobally: showGlobalLoading,

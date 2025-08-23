@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import type { Curate, Timeframe, BoardData, PriceDataPoint } from "@/types";
+import type { Curate, Timeframe, BoardData } from "@/types";
 
 export interface TimeframePriceData {
   priceChange: number;
@@ -21,11 +21,20 @@ export interface UseBoardStateReturn {
   setHoveredPrice: (price: string | null) => void;
   hoveredFloorPrice: string | null;
   setHoveredFloorPrice: (price: string | null) => void;
-  selectedTimeframe: 'LIVE' | '4H' | '1D' | '1W' | '1M' | 'MAX';
-  setSelectedTimeframe: (timeframe: 'LIVE' | '4H' | '1D' | '1W' | '1M' | 'MAX') => void;
+  selectedTimeframe: "LIVE" | "4H" | "1D" | "1W" | "1M" | "MAX";
+  setSelectedTimeframe: (
+    timeframe: "LIVE" | "4H" | "1D" | "1W" | "1M" | "MAX",
+  ) => void;
   timeframePriceData: TimeframePriceData;
   setTimeframePriceData: (data: TimeframePriceData) => void;
-  handleTimeframeChange: (timeframe: string, priceData: PriceDataPoint[]) => void;
+  handleTimeframeChange: (
+    timeframe: Timeframe,
+    priceData: {
+      priceChange: number;
+      priceChangeAmount: string;
+      label: string;
+    },
+  ) => void;
   themeColors: {
     color: string;
     colorClass: string;
@@ -36,20 +45,25 @@ export interface UseBoardStateReturn {
   };
 }
 
-export function useBoardState(boardData: BoardData | null): UseBoardStateReturn {
+export function useBoardState(
+  boardData: BoardData | null,
+): UseBoardStateReturn {
   const [selectedCurate, setSelectedCurate] = useState<Curate | null>(null);
   const [showCreateSticker, setShowCreateSticker] = useState(false);
   const [tokenAvatarError, setTokenAvatarError] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [showTradingView, setShowTradingView] = useState(false);
   const [hoveredPrice, setHoveredPrice] = useState<string | null>(null);
-  const [hoveredFloorPrice, setHoveredFloorPrice] = useState<string | null>(null);
-  const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>('MAX');
-  const [timeframePriceData, setTimeframePriceData] = useState<TimeframePriceData>({
-    priceChange: 0,
-    priceChangeAmount: '0',
-    label: 'all time'
-  });
+  const [hoveredFloorPrice, setHoveredFloorPrice] = useState<string | null>(
+    null,
+  );
+  const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("MAX");
+  const [timeframePriceData, setTimeframePriceData] =
+    useState<TimeframePriceData>({
+      priceChange: 0,
+      priceChangeAmount: "0",
+      label: "all time",
+    });
 
   // Handle scroll for sticky header effect
   useEffect(() => {
@@ -57,8 +71,8 @@ export function useBoardState(boardData: BoardData | null): UseBoardStateReturn 
       setScrollY(window.scrollY);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Don't initialize with LIVE data - let it default to positive (blue) theme
@@ -66,20 +80,33 @@ export function useBoardState(boardData: BoardData | null): UseBoardStateReturn 
   // The theme will only change when user actually interacts with timeframes in Trading View
 
   // Create the callback for timeframe changes
-  const handleTimeframeChange = useCallback((timeframe: string, priceData: PriceDataPoint[]) => {
-    setSelectedTimeframe(timeframe);
-    if (priceData) {
-      setTimeframePriceData(priceData);
-    }
-  }, []);
+  const handleTimeframeChange = useCallback(
+    (
+      timeframe: Timeframe,
+      priceData: {
+        priceChange: number;
+        priceChangeAmount: string;
+        label: string;
+      },
+    ) => {
+      setSelectedTimeframe(timeframe);
+      if (priceData) {
+        setTimeframePriceData(priceData);
+      }
+    },
+    [],
+  );
 
   // Dynamic color theme based on price performance
   const getThemeColors = () => {
     let isPricePositive = true; // Default to positive (blue)
     let isDataLoaded = false;
-    
+
     // Use timeframePriceData for the currently selected timeframe
-    if (timeframePriceData.priceChange !== undefined && timeframePriceData.priceChangeAmount !== '0') {
+    if (
+      timeframePriceData.priceChange !== undefined &&
+      timeframePriceData.priceChangeAmount !== "0"
+    ) {
       isPricePositive = timeframePriceData.priceChange >= 0;
       isDataLoaded = true;
     } else {
@@ -88,12 +115,14 @@ export function useBoardState(boardData: BoardData | null): UseBoardStateReturn 
       isPricePositive = true;
       isDataLoaded = true; // Treat as loaded to show blue instead of gray
     }
-    
+
     // Always use blue for initial load and only change based on actual timeframe data
-    const color = isPricePositive ? '#0052FF' : '#FF6B35';
-    const colorClass = isPricePositive ? 'text-[#0052FF]' : 'text-[#FF6B35]';
-    const bgClass = isPricePositive ? 'bg-[#0052FF]' : 'bg-[#FF6B35]';
-    const borderClass = isPricePositive ? 'border-[#0052FF]' : 'border-[#FF6B35]';
+    const color = isPricePositive ? "#0052FF" : "#FF6B35";
+    const colorClass = isPricePositive ? "text-[#0052FF]" : "text-[#FF6B35]";
+    const bgClass = isPricePositive ? "bg-[#0052FF]" : "bg-[#FF6B35]";
+    const borderClass = isPricePositive
+      ? "border-[#0052FF]"
+      : "border-[#FF6B35]";
 
     return {
       color,
@@ -101,7 +130,7 @@ export function useBoardState(boardData: BoardData | null): UseBoardStateReturn 
       bgClass,
       borderClass,
       isPricePositive,
-      isDataLoaded
+      isDataLoaded,
     };
   };
 
@@ -126,6 +155,6 @@ export function useBoardState(boardData: BoardData | null): UseBoardStateReturn 
     timeframePriceData,
     setTimeframePriceData,
     handleTimeframeChange,
-    themeColors
+    themeColors,
   };
 }

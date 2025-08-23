@@ -382,6 +382,16 @@ export function CreateEnhanced({
     return Object.keys(errors).length === 0;
   }, [validateForm]);
 
+  // Map typed validation errors to generic record expected by LoadingForm
+  const validationErrorsMap = useMemo((): Record<string, string> => {
+    const map: Record<string, string> = {};
+    if (validationErrors.name) map.name = validationErrors.name;
+    if (validationErrors.symbol) map.symbol = validationErrors.symbol;
+    if (validationErrors.imageUrl) map.imageUrl = validationErrors.imageUrl;
+    if (validationErrors.buyAmount) map.buyAmount = validationErrors.buyAmount;
+    return map;
+  }, [validationErrors]);
+
   // Loading states
   const isSubmitting = transaction.isLoading;
   const hasFormErrors = Object.keys(validationErrors).length > 0;
@@ -433,7 +443,7 @@ export function CreateEnhanced({
         successMessage="Token created successfully!"
         submitText="Create Token"
         submittingText={transaction.getProgressMessage()}
-        validationErrors={validationErrors}
+        validationErrors={validationErrorsMap}
         onSubmit={handleSubmit}
         disabled={!isFormValid || isSubmitting}
         className="space-y-6"

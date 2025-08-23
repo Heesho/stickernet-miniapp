@@ -125,7 +125,7 @@ export function HomeEnhanced({
 
   // Auto-refresh with visibility polling
   useVisibilityPolling({
-    callback: checkForNewCurates,
+    onPoll: checkForNewCurates,
     interval: 30000, // 30 seconds
     enabled: isConnected && isValidConnection && !loading,
   });

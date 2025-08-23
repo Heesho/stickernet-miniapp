@@ -123,7 +123,10 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
       let priceChange24h = 0;
       let priceChangeAmount = "0";
 
-      if (boardDataFromSubgraph.tokenDayData?.length >= 2) {
+      if (
+        Array.isArray(boardDataFromSubgraph.tokenDayData) &&
+        boardDataFromSubgraph.tokenDayData.length >= 2
+      ) {
         const currentPrice = parseFloat(
           boardDataFromSubgraph.marketPrice || "0",
         );
@@ -140,7 +143,10 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
 
       let priceChange1h = 0;
 
-      if (boardDataFromSubgraph.tokenHourData?.length >= 2) {
+      if (
+        Array.isArray(boardDataFromSubgraph.tokenHourData) &&
+        boardDataFromSubgraph.tokenHourData.length >= 2
+      ) {
         const currentPrice = parseFloat(
           boardDataFromSubgraph.marketPrice || "0",
         );
@@ -151,7 +157,10 @@ export function useBoardData(tokenAddress?: string): UseBoardDataReturn {
         if (hourAgoPrice > 0) {
           priceChange1h = ((currentPrice - hourAgoPrice) / hourAgoPrice) * 100;
         }
-      } else if (boardDataFromSubgraph.tokenHourData?.length === 1) {
+      } else if (
+        Array.isArray(boardDataFromSubgraph.tokenHourData) &&
+        boardDataFromSubgraph.tokenHourData.length === 1
+      ) {
         // If we only have current hour data, compare with opening price
         const currentPrice = parseFloat(
           boardDataFromSubgraph.marketPrice || "0",

@@ -1,12 +1,12 @@
 /**
  * Type definitions for Home feature components
- * 
+ *
  * @description Contains all TypeScript interfaces and types used
  * throughout the Home feature components.
  */
 
-// Re-export for convenience
-export type { Curate } from '@/types';
+// Import Curate type for local use
+import type { Curate } from "@/types";
 
 /**
  * Props for the main Home component

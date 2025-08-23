@@ -101,7 +101,6 @@ export function HomeEnhanced({
   // Enhanced infinite scroll with loading states
   const { isIntersecting: nearBottom } = useIntersectionObserver({
     threshold: INFINITE_SCROLL_THRESHOLD,
-    enabled: hasMore && !loadingMore,
   });
 
   // Enhanced pull to refresh with loading feedback

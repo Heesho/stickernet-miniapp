@@ -259,7 +259,7 @@ export function BoardEnhanced({
               setHoveredFloorPrice(floor);
             }}
             tokenData={tokenData}
-            subgraphData={boardData.subgraphData}
+            subgraphData={undefined}
             onTimeframeChange={handleTimeframeChange}
           />
         </LoadingCard>
@@ -285,7 +285,7 @@ export function BoardEnhanced({
           setShowCreateSticker={setShowCreateSticker}
           selectedCurate={selectedCurate}
           setSelectedCurate={setSelectedCurate}
-          boardData={boardData}
+          boardData={boardData as any}
           tokenData={tokenData}
           refreshAfterTransaction={refreshAfterTransaction}
           loading={componentLoading.isLoading}

@@ -1,5 +1,6 @@
-// Re-export for convenience
-export type { Curate } from '@/types';
+// Import Curate type for local use and re-export if needed
+import type { Curate } from "@/types";
+export type { Curate };
 
 export type SearchProps = {
   setActiveTab?: (tab: string) => void;

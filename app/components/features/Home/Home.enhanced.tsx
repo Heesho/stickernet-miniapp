@@ -472,7 +472,6 @@ function EnhancedCurateImage({
         <CurateImage
           curate={curate}
           onImageClick={onClick}
-          onNavigateToBoard={onNavigateToBoard}
           onImageLoad={() => setImageLoading(false)}
           onImageError={() => {
             setImageLoading(false);

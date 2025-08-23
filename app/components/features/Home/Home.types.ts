@@ -7,6 +7,7 @@
 
 // Import Curate type for local use
 import type { Curate } from "@/types";
+export type { Curate };
 
 /**
  * Props for the main Home component

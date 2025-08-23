@@ -59,7 +59,18 @@ export interface BoardChartProps {
   todayVolume: string;
   onPriceHover: (price: string | null, floorPrice: string | null) => void;
   tokenData: TokenData | null;
-  subgraphData?: SubgraphDataPoint[];
+  subgraphData?: {
+    holders?: string;
+    contents?: string;
+    contentBalance?: string;
+    creatorRewardsQuote?: string;
+    curatorRewardsQuote?: string;
+    holderRewardsQuote?: string;
+    contentRevenueQuote?: string;
+    contentRevenueToken?: string;
+    marketPrice?: string;
+    floorPrice?: string;
+  };
   onTimeframeChange: (timeframe: string, priceData: PriceDataPoint[]) => void;
 }
 

@@ -1,5 +1,10 @@
 import type { Curate } from "@/lib/constants";
-import type { TokenData, SubgraphDataPoint, PriceDataPoint } from "@/types";
+import type {
+  TokenData,
+  SubgraphDataPoint,
+  PriceDataPoint,
+  Timeframe,
+} from "@/types";
 
 export interface BoardProps {
   tokenId?: string;
@@ -71,7 +76,14 @@ export interface BoardChartProps {
     marketPrice?: string;
     floorPrice?: string;
   };
-  onTimeframeChange: (timeframe: string, priceData: PriceDataPoint[]) => void;
+  onTimeframeChange: (
+    timeframe: Timeframe,
+    priceData: {
+      priceChange: number;
+      priceChangeAmount: string;
+      label: string;
+    },
+  ) => void;
 }
 
 export interface BoardTabsProps {

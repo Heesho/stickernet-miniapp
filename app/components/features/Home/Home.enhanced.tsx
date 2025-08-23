@@ -421,6 +421,10 @@ export function HomeEnhanced({
           curate={selectedCurate}
           onClose={() => setSelectedCurate(null)}
           onNavigateToBoard={handleNavigateToBoard}
+          onCurate={() => {
+            reset();
+            loadCurates(true, false);
+          }}
         />
       )}
     </div>

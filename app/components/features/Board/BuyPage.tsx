@@ -10,7 +10,11 @@ import { useTokenData } from "@/app/hooks/useMulticall";
 import { useDebouncedBuyQuote } from "@/app/hooks/useBuyQuote";
 import { useTokenTransaction } from "@/app/hooks/useTokenTransaction";
 import { USDC_DECIMALS } from "@/lib/constants";
-import { formatNumber, formatCurrency, formatTokenAmount } from "@/lib/utils/formatters";
+import {
+  formatNumber,
+  formatCurrency,
+  formatTokenAmount,
+} from "@/lib/utils/formatters";
 
 interface BuyPageProps {
   tokenAddress: string;
@@ -28,8 +32,8 @@ export function BuyPage({
   tokenName,
   tokenPrice,
   onClose,
-  themeColor = '#0052FF',
-  onTransactionSuccess
+  themeColor = "#0052FF",
+  onTransactionSuccess,
 }: BuyPageProps) {
   const [inputValue, setInputValue] = useState("");
   const [displayValue, setDisplayValue] = useState("$0");
@@ -37,40 +41,41 @@ export function BuyPage({
 
   // Get user's USDC balance from token data
   const { tokenData, isLoading: isLoadingBalance } = useTokenData({
-    tokenAddress,
+    tokenAddress: tokenAddress as `0x${string}`,
     account: address,
-    enabled: !!tokenAddress && !!address
+    enabled: !!tokenAddress && !!address,
   });
 
   // Get the user's USDC balance
-  const userBalance = tokenData?.accountQuoteBalance 
-    ? formatUnits(tokenData.accountQuoteBalance, USDC_DECIMALS) 
+  const userBalance = tokenData?.accountQuoteBalance
+    ? formatUnits(tokenData.accountQuoteBalance, USDC_DECIMALS)
     : "0";
 
   // Get buy quote with debouncing
-  const { 
-    tokenAmtOut, 
+  const {
+    tokenAmtOut,
     rawTokenAmtOut,
     minTokenAmtOut,
     autoMinTokenAmtOut,
     slippage,
-    isLoading: isLoadingQuote 
+    isLoading: isLoadingQuote,
   } = useDebouncedBuyQuote({
     tokenAddress,
     usdcAmount: inputValue,
     enabled: !!tokenAddress && parseFloat(inputValue) > 0,
-    delay: 300
+    delay: 300,
   });
 
   // Format the estimated tokens - use quote if available, otherwise show 0
   // Don't use compact format on transaction pages
-  const estimatedTokens = parseFloat(inputValue) > 0 && tokenAmtOut 
-    ? formatTokenAmount(tokenAmtOut, undefined, undefined, false)
-    : "0";
+  const estimatedTokens =
+    parseFloat(inputValue) > 0 && tokenAmtOut
+      ? formatTokenAmount(tokenAmtOut, undefined, undefined, false)
+      : "0";
 
   const handleNumberPad = (value: string) => {
     let newValue = inputValue;
-    
+
     if (value === "<") {
       newValue = inputValue.slice(0, -1) || "";
     } else if (value === ".") {
@@ -84,7 +89,7 @@ export function BuyPage({
         newValue = inputValue + value;
       }
     }
-    
+
     setInputValue(newValue);
     // Format display value
     if (newValue === "" || newValue === ".") {
@@ -92,7 +97,7 @@ export function BuyPage({
     } else {
       const num = parseFloat(newValue);
       if (!isNaN(num)) {
-        setDisplayValue("$" + formatNumber(num, 2, true, false));  // No compact format on transaction pages
+        setDisplayValue("$" + formatNumber(num, 2, true, false)); // No compact format on transaction pages
       } else {
         setDisplayValue("$" + newValue);
       }
@@ -106,7 +111,7 @@ export function BuyPage({
     isLoading: isTxLoading,
     isSuccess: isTxSuccess,
     error: txError,
-    reset: resetTx
+    reset: resetTx,
   } = useTokenTransaction();
 
   const handleClose = () => {
@@ -125,44 +130,48 @@ export function BuyPage({
     // Check if user has enough balance
     const inputAmount = parseFloat(inputValue);
     const availableBalance = parseFloat(userBalance);
-    
+
     if (inputAmount > availableBalance) {
-      console.error('Insufficient USDC balance:', {
+      console.error("Insufficient USDC balance:", {
         requested: inputAmount,
-        available: availableBalance
+        available: availableBalance,
       });
       return;
     }
 
-    console.log('Buy transaction details:', {
+    console.log("Buy transaction details:", {
       tokenAddress,
       usdcAmount: inputValue,
       minTokenAmountOut: autoMinTokenAmtOut?.toString(), // Log the actual value
-      minTokenAmountOutFormatted: autoMinTokenAmtOut ? formatUnits(autoMinTokenAmtOut, 18) : '0'
+      minTokenAmountOutFormatted: autoMinTokenAmtOut
+        ? formatUnits(autoMinTokenAmtOut, 18)
+        : "0",
     });
-    
+
     // Execute the buy using the unified hook
-    await executeTransaction({
-      operation: 'buy',
-      tokenAddress,
-      usdcAmount: inputValue,
-      minTokenAmountOut: autoMinTokenAmtOut
-    }, {
-      method: 'sendCalls', // Use sendCalls for best Smart Wallet UX
-      onSuccess: (txHash) => {
+    await executeTransaction(
+      {
+        operation: "buy",
+        tokenAddress,
+        usdcAmount: inputValue,
+        minTokenAmountOut: autoMinTokenAmtOut,
       },
-      onError: (error) => {
-        console.error('Buy transaction failed:', error);
-      }
-    });
+      {
+        method: "sendCalls", // Use sendCalls for best Smart Wallet UX
+        onSuccess: (txHash) => {},
+        onError: (error) => {
+          console.error("Buy transaction failed:", error);
+        },
+      },
+    );
   };
 
   // Handle successful transaction - EXACTLY like steal page (CurateConfirmation)
   useEffect(() => {
-    if (txStatus === 'success') {
+    if (txStatus === "success") {
       // Trigger refresh of data
       onTransactionSuccess?.();
-      
+
       // Wait a moment to show success state, then close
       const timer = setTimeout(() => {
         onClose();
@@ -173,7 +182,7 @@ export function BuyPage({
 
   // Use portal to render outside of parent component hierarchy
   const [mounted, setMounted] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
@@ -183,7 +192,8 @@ export function BuyPage({
 
   return createPortal(
     <div className="fixed inset-0 bg-black z-[9999]">
-      <div className="absolute inset-0 bg-black" /> {/* Full background overlay */}
+      <div className="absolute inset-0 bg-black" />{" "}
+      {/* Full background overlay */}
       <div className="relative w-full max-w-md mx-auto h-full flex flex-col">
         <div className="px-4 pt-4">
           <div className="flex items-center justify-between mb-4">
@@ -204,19 +214,27 @@ export function BuyPage({
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm mb-2 block" style={{ color: themeColor }}>
+              <label
+                className="text-sm mb-2 block"
+                style={{ color: themeColor }}
+              >
                 Pay
               </label>
               <div className="text-white text-3xl font-medium mb-1 tracking-wide">
                 {displayValue}
               </div>
               <div className="text-gray-600 text-xs">
-                {isLoadingBalance ? "Loading..." : `${formatCurrency(userBalance, 2, false)} available`}
+                {isLoadingBalance
+                  ? "Loading..."
+                  : `${formatCurrency(userBalance, 2, false)} available`}
               </div>
             </div>
 
             <div>
-              <label className="text-sm mb-2 block" style={{ color: themeColor }}>
+              <label
+                className="text-sm mb-2 block"
+                style={{ color: themeColor }}
+              >
                 Get
               </label>
               <div className="text-white text-3xl font-medium tracking-wide">
@@ -235,30 +253,26 @@ export function BuyPage({
             <button
               onClick={handleBuy}
               disabled={
-                parseFloat(inputValue) <= 0 || 
+                parseFloat(inputValue) <= 0 ||
                 parseFloat(inputValue) > parseFloat(userBalance) ||
                 isTxLoading ||
                 !autoMinTokenAmtOut
               }
               className={`w-full ${
-                txStatus === 'success'
-                  ? '' 
-                  : txError 
-                  ? ''
-                  : ''
+                txStatus === "success" ? "" : txError ? "" : ""
               } disabled:bg-gray-700 disabled:text-gray-500 text-black font-semibold py-2.5 rounded-xl transition-colors mb-3 flex items-center justify-center gap-2 focus:outline-none hover:opacity-90`}
               style={{
-                backgroundColor: 
-                  (parseFloat(inputValue) <= 0 || 
-                   parseFloat(inputValue) > parseFloat(userBalance) ||
-                   isTxLoading ||
-                   !autoMinTokenAmtOut) 
-                    ? '#374151' // gray when disabled
-                    : txStatus === 'success'
-                    ? '#10b981' // green on success
-                    : txError
-                    ? '#ef4444' // red on error
-                    : themeColor // theme color when normal
+                backgroundColor:
+                  parseFloat(inputValue) <= 0 ||
+                  parseFloat(inputValue) > parseFloat(userBalance) ||
+                  isTxLoading ||
+                  !autoMinTokenAmtOut
+                    ? "#374151" // gray when disabled
+                    : txStatus === "success"
+                      ? "#10b981" // green on success
+                      : txError
+                        ? "#ef4444" // red on error
+                        : themeColor, // theme color when normal
               }}
             >
               {isTxLoading ? (
@@ -266,7 +280,7 @@ export function BuyPage({
                   <Loader2 className="animate-spin" size={20} />
                   <span>Processing...</span>
                 </>
-              ) : txStatus === 'success' ? (
+              ) : txStatus === "success" ? (
                 <>
                   <CheckCircle2 size={20} />
                   <span>Success!</span>
@@ -277,56 +291,67 @@ export function BuyPage({
                   <span>Try Again</span>
                 </>
               ) : (
-                'Buy'
+                "Buy"
               )}
             </button>
-            
-            {/* Balance warning */}
-            {parseFloat(inputValue) > parseFloat(userBalance) && parseFloat(inputValue) > 0 && (
-              <div className="text-yellow-500 text-xs text-center mb-2">
-                Insufficient balance. You have {formatCurrency(userBalance)}
-              </div>
-            )}
 
-          <div className="grid grid-cols-3 gap-1">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+            {/* Balance warning */}
+            {parseFloat(inputValue) > parseFloat(userBalance) &&
+              parseFloat(inputValue) > 0 && (
+                <div className="text-yellow-500 text-xs text-center mb-2">
+                  Insufficient balance. You have {formatCurrency(userBalance)}
+                </div>
+              )}
+
+            <div className="grid grid-cols-3 gap-1">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                <button
+                  key={num}
+                  onClick={() => handleNumberPad(num.toString())}
+                  className="h-10 text-2xl font-medium hover:bg-gray-900 active:bg-gray-800 rounded-xl transition-all"
+                  style={{ color: themeColor }}
+                >
+                  {num}
+                </button>
+              ))}
               <button
-                key={num}
-                onClick={() => handleNumberPad(num.toString())}
+                onClick={() => handleNumberPad(".")}
                 className="h-10 text-2xl font-medium hover:bg-gray-900 active:bg-gray-800 rounded-xl transition-all"
                 style={{ color: themeColor }}
               >
-                {num}
+                .
               </button>
-            ))}
-            <button
-              onClick={() => handleNumberPad(".")}
-              className="h-10 text-2xl font-medium hover:bg-gray-900 active:bg-gray-800 rounded-xl transition-all"
-              style={{ color: themeColor }}
-            >
-              .
-            </button>
-            <button
-              onClick={() => handleNumberPad("0")}
-              className="h-10 text-2xl font-medium hover:bg-gray-900 active:bg-gray-800 rounded-xl transition-all"
-              style={{ color: themeColor }}
-            >
-              0
-            </button>
-            <button
-              onClick={() => handleNumberPad("<")}
-              className="h-10 text-2xl font-medium hover:bg-gray-900 active:bg-gray-800 rounded-xl transition-all flex items-center justify-center"
-              style={{ color: themeColor }}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
-              </svg>
-            </button>
-          </div>
+              <button
+                onClick={() => handleNumberPad("0")}
+                className="h-10 text-2xl font-medium hover:bg-gray-900 active:bg-gray-800 rounded-xl transition-all"
+                style={{ color: themeColor }}
+              >
+                0
+              </button>
+              <button
+                onClick={() => handleNumberPad("<")}
+                className="h-10 text-2xl font-medium hover:bg-gray-900 active:bg-gray-800 rounded-xl transition-all flex items-center justify-center"
+                style={{ color: themeColor }}
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

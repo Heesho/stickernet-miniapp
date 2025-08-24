@@ -130,13 +130,8 @@ export function ImageDetail({
   }, [nextPrice, onStealConfirmationChange]);
 
   const handleBoardClick = useCallback(() => {
-    if (onNavigateToBoard) {
-      onNavigateToBoard(curate.tokenId.toString(), curate.token.id);
-      onClose();
-    } else {
-      router.push(`/b/${curate.token.id}`);
-    }
-  }, [onNavigateToBoard, curate.tokenId, curate.token.id, onClose, router]);
+    router.push(`/b/${curate.token.id}`);
+  }, [router, curate.token.id]);
 
   const handleStickerClick = useCallback(() => {
     router.push(`/b/${curate.token.id}/${curate.tokenId}`);

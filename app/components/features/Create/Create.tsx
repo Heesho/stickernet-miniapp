@@ -279,7 +279,7 @@ export function Create({ setActiveTab }: CreateProps) {
   }, []);
 
   return (
-    <div className="fixed inset-0 bottom-20 bg-black text-white flex flex-col max-w-md mx-auto w-full">
+    <div className="fixed inset-0 bottom-20 bg-black text-white flex flex-col max-w-md mx-auto w-full overflow-y-auto">
       {/* Success Modal (portal to escape bottom nav stacking) */}
       {showSuccessModal &&
         isMounted &&
@@ -354,7 +354,7 @@ export function Create({ setActiveTab }: CreateProps) {
           document.body,
         )}
       {/* Top section - no scroll */}
-      <div className="flex-1 flex flex-col px-4 pt-6 overflow-hidden">
+      <div className="flex-1 flex flex-col px-4 pt-6 overflow-y-auto">
         {/* Name, Symbol and Preview row */}
         <div className="flex items-start gap-4">
           <div className="flex-1">
@@ -451,7 +451,7 @@ export function Create({ setActiveTab }: CreateProps) {
         </div>
 
         {/* Number Pad - compact to fit screen */}
-        <div className="px-4 pb-0">
+        <div className="px-4 pb-8 mb-4">
           <div className="grid grid-cols-3 gap-1">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <button

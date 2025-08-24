@@ -39,9 +39,31 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "cdn.discordapp.com",
+      },
+      {
+        protocol: "https",
+        hostname: "media.discordapp.net",
+      },
+      {
+        protocol: "https",
+        hostname: "*.discord.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.discordapp.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.discordapp.net",
+      },
+      {
+        protocol: "https",
         hostname: "*",
       },
     ],
+    // Disable image optimization for external images to avoid CORS issues
+    unoptimized: true,
   },
   // Allow builds to pass even if ESLint config/plugins differ in CI
   eslint: {

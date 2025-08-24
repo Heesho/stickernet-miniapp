@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  useMiniKit,
-  useOpenUrl,
-} from "@coinbase/onchainkit/minikit";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Home, Board, Features, Profile, Notifications, Search, Create } from "./components/features";
 
 interface AppContentProps {
@@ -15,14 +11,8 @@ interface AppContentProps {
 }
 
 export default function AppContent({ activeTab, setActiveTab, boardData, onNavigateToBoard }: AppContentProps) {
-  const { setFrameReady, isFrameReady } = useMiniKit();
-  const openUrl = useOpenUrl();
-
-  useEffect(() => {
-    if (!isFrameReady) {
-      setFrameReady();
-    }
-  }, [setFrameReady, isFrameReady]);
+  // Remove the loading state completely - just render the content
+  // MiniKit is handled by the provider and doesn't need to block rendering
 
   return (
     <div className="w-full max-w-md mx-auto px-4 py-3 pb-20 bg-black min-h-screen">

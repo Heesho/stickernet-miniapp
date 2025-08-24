@@ -42,13 +42,6 @@ const wagmiConfig = createConfig({
 
 // Client-side only wrapper to prevent hydration mismatches
 function ClientOnlyProviders({ children }: { children: ReactNode }) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  // Always provide the providers, but use a fallback loading state when not mounted
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
@@ -75,15 +68,7 @@ function ClientOnlyProviders({ children }: { children: ReactNode }) {
                   },
                 }}
               >
-                {!isMounted ? (
-                  <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] bg-black">
-                    <div className="flex items-center justify-center h-screen">
-                      <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  </div>
-                ) : (
-                  children
-                )}
+                {children}
               </MiniKitProvider>
             </OnchainKitProvider>
           </LoadingProvider>

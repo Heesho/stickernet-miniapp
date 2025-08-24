@@ -316,8 +316,10 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
 
   return (
     <div className="animate-fade-in">
-      {/* Profile Header */}
-      <div className="mb-6 pb-6 -mx-4 px-4">
+      {/* Sticky Container for Header and Tabs */}
+      <div className="sticky top-0 bg-black z-10 -mx-4 px-4 pt-4 pb-2">
+        {/* Profile Header */}
+        <div className="pb-4">
         <div className="flex items-start justify-between gap-2 w-full">
           {/* User Identity - Show compact for own profile, expanded for others */}
           <BaseIdentityProfile
@@ -425,10 +427,10 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
             {`${formatCurrency(cashValue)} cash`}
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* Tab Navigation */}
-      <div className="flex space-x-2 mb-6 overflow-x-auto">
+        {/* Tab Navigation */}
+        <div className="flex space-x-2 overflow-x-auto pb-2">
         {(["shares", "collection", "boards", "stickers"] as const).map(
           (tab) => (
             <button
@@ -444,10 +446,11 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
             </button>
           ),
         )}
+        </div>
       </div>
 
       {/* Tab Content */}
-      <div className="space-y-4">
+      <div className="space-y-4 pb-20 mt-4">
         {/* Shares Tab */}
         {activeTab === "shares" && (
           <div className="space-y-3">

@@ -77,15 +77,19 @@ function ImageContent({ curate, imageLoaded, onLoad, onError }: ImageContentProp
           />
         </div>
       )}
-      <img
+      <Image
         src={curate.uri}
         alt={`Curate ${curate.id}`}
-        className={`w-full h-auto object-contain rounded-2xl transition-opacity duration-300 ${
+        width={400}
+        height={400}
+        className={`w-full h-auto object-cover rounded-2xl transition-opacity duration-300 ${
           imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'
         }`}
         onLoad={onLoad}
         onError={onError}
         loading="lazy"
+        priority={false}
+        style={{ width: '100%', height: 'auto' }}
       />
     </div>
   );

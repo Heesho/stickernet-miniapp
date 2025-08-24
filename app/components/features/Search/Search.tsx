@@ -207,11 +207,13 @@ export function Search({}: SearchProps) {
   }, [router]);
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      {/* Search Input */}
-      <div className="relative">
-        <div className="flex items-center space-x-2">
-          <div className="relative flex-1">
+    <div className="animate-fade-in">
+      {/* Sticky header with search and tabs */}
+      <div className="sticky top-0 bg-black z-10 pb-4">
+        {/* Search Input */}
+        <div className="relative mb-4">
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-1">
             <Icon 
               name="search" 
               size="sm" 
@@ -232,12 +234,12 @@ export function Search({}: SearchProps) {
                 <Icon name="close" size="sm" />
               </button>
             )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex space-x-2">
+        {/* Tabs */}
+        <div className="flex space-x-2">
         <button
           onClick={() => handleTabChange('top')}
           className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
@@ -268,10 +270,11 @@ export function Search({}: SearchProps) {
         >
           New
         </button>
+        </div>
       </div>
 
       {/* Token List */}
-      <div className="space-y-2">
+      <div className="space-y-2 pb-24">
         {searchState.loadingTokens ? (
           // Loading skeleton
           <>
@@ -292,7 +295,7 @@ export function Search({}: SearchProps) {
           </>
         ) : searchState.error ? (
           <div className="text-center py-8">
-            <Icon name="alert" size="lg" className="text-red-500 mx-auto mb-2" />
+            <Icon name="warning" size="lg" className="text-red-500 mx-auto mb-2" />
             <p className="text-[var(--app-foreground-muted)]">{searchState.error}</p>
             <Button
               onClick={() => loadTokens(searchState.activeTab)}

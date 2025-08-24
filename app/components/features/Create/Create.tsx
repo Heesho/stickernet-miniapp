@@ -279,7 +279,7 @@ export function Create({ setActiveTab }: CreateProps) {
   }, []);
 
   return (
-    <div className="fixed inset-0 bottom-20 bg-black text-white flex flex-col max-w-md mx-auto w-full">
+    <div className="fixed inset-0 bg-black text-white flex flex-col max-w-md mx-auto w-full">
       {/* Success Modal (portal to escape bottom nav stacking) */}
       {showSuccessModal &&
         isMounted &&
@@ -354,8 +354,7 @@ export function Create({ setActiveTab }: CreateProps) {
           document.body,
         )}
       {/* Scrollable content section */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-4 pt-6 pb-4">
+      <div className="flex-1 overflow-y-auto px-4 pt-6">
         {/* Name, Symbol and Preview row */}
         <div className="flex items-start gap-4">
           <div className="flex-1">
@@ -432,13 +431,12 @@ export function Create({ setActiveTab }: CreateProps) {
                 : "Connect wallet to see balance"}
           </div>
         </div>
-        </div>
       </div>
 
       {/* Fixed bottom section - positioned at bottom */}
-      <div className="bg-black border-t border-gray-900">
+      <div className="bg-black border-t border-gray-900 pb-20">
         {/* Create Button */}
-        <div className="px-4 mb-2">
+        <div className="px-4 pt-2 mb-3">
           <button
             onClick={handleCreate}
             disabled={!isValid || isCreating}
@@ -453,7 +451,7 @@ export function Create({ setActiveTab }: CreateProps) {
         </div>
 
         {/* Number Pad - compact to fit screen */}
-        <div className="px-4 pb-2">
+        <div className="px-4 pb-4">
           <div className="grid grid-cols-3 gap-1">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <button

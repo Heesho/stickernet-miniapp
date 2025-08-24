@@ -279,7 +279,7 @@ export function Create({ setActiveTab }: CreateProps) {
   }, []);
 
   return (
-    <div className="fixed inset-0 bottom-20 bg-black text-white flex flex-col max-w-md mx-auto w-full overflow-y-auto">
+    <div className="fixed inset-0 bottom-20 bg-black text-white flex flex-col max-w-md mx-auto w-full">
       {/* Success Modal (portal to escape bottom nav stacking) */}
       {showSuccessModal &&
         isMounted &&
@@ -353,8 +353,9 @@ export function Create({ setActiveTab }: CreateProps) {
           </div>,
           document.body,
         )}
-      {/* Top section - no scroll */}
-      <div className="flex-1 flex flex-col px-4 pt-6 overflow-y-auto">
+      {/* Scrollable content section */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-4 pt-6 pb-4">
         {/* Name, Symbol and Preview row */}
         <div className="flex items-start gap-4">
           <div className="flex-1">
@@ -400,8 +401,8 @@ export function Create({ setActiveTab }: CreateProps) {
           )}
         </div>
 
-        {/* Image URL with more spacing */}
-        <div className="mt-8 mb-16">
+        {/* Image URL */}
+        <div className="mt-6 mb-6">
           <input
             type="url"
             value={imageUrl}
@@ -431,12 +432,13 @@ export function Create({ setActiveTab }: CreateProps) {
                 : "Connect wallet to see balance"}
           </div>
         </div>
+        </div>
       </div>
 
       {/* Fixed bottom section - positioned at bottom */}
-      <div className="bg-black">
+      <div className="bg-black border-t border-gray-900">
         {/* Create Button */}
-        <div className="px-4 mb-1">
+        <div className="px-4 mb-2">
           <button
             onClick={handleCreate}
             disabled={!isValid || isCreating}
@@ -451,26 +453,26 @@ export function Create({ setActiveTab }: CreateProps) {
         </div>
 
         {/* Number Pad - compact to fit screen */}
-        <div className="px-4 pb-20">
+        <div className="px-4 pb-2">
           <div className="grid grid-cols-3 gap-1">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <button
                 key={num}
                 onClick={() => handleNumberPad(num.toString())}
-                className="h-9 text-xl font-medium text-[#0052FF] hover:bg-gray-900 active:bg-gray-800 rounded-lg transition-all"
+                className="h-10 text-xl font-medium text-[#0052FF] hover:bg-gray-900 active:bg-gray-800 rounded-lg transition-all"
               >
                 {num}
               </button>
             ))}
             <button
               onClick={() => handleNumberPad(".")}
-              className="h-9 text-xl font-medium text-[#0052FF] hover:bg-gray-900 active:bg-gray-800 rounded-lg transition-all"
+              className="h-10 text-xl font-medium text-[#0052FF] hover:bg-gray-900 active:bg-gray-800 rounded-lg transition-all"
             >
               .
             </button>
             <button
               onClick={() => handleNumberPad("0")}
-              className="h-9 text-xl font-medium text-[#0052FF] hover:bg-gray-900 active:bg-gray-800 rounded-lg transition-all"
+              className="h-10 text-xl font-medium text-[#0052FF] hover:bg-gray-900 active:bg-gray-800 rounded-lg transition-all"
             >
               0
             </button>

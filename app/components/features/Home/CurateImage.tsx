@@ -8,7 +8,7 @@
 "use client";
 
 import { useState, useCallback, memo } from "react";
-import Image from 'next/image';
+// import Image from 'next/image'; // Commented out - using regular img for Discord images
 import { Icon, LoadingSpinner } from "../../ui";
 import type { CurateImageProps } from "./Home.types";
 
@@ -77,18 +77,15 @@ function ImageContent({ curate, imageLoaded, onLoad, onError }: ImageContentProp
           />
         </div>
       )}
-      <Image
+      <img
         src={curate.uri}
         alt={`Curate ${curate.id}`}
-        width={400}
-        height={400}
         className={`w-full h-auto object-cover rounded-2xl transition-opacity duration-300 ${
           imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'
         }`}
         onLoad={onLoad}
         onError={onError}
         loading="lazy"
-        priority={false}
         style={{ width: '100%', height: 'auto' }}
       />
     </div>

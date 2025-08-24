@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import Image from "next/image";
+// import Image from "next/image"; // Commented out - using regular img for Discord images
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Icon } from "../../ui";
@@ -202,11 +202,9 @@ export function ImageDetail({
                 onClick={handleStickerClick}
                 className="w-full relative block"
               >
-                <Image
+                <img
                   src={curate.uri}
                   alt={`Curate ${curate.id}`}
-                  width={400}
-                  height={600}
                   className={`w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0 absolute top-0"} max-h-screen`}
                   onLoad={() => setImageLoaded(true)}
                   onError={() => setImageError(true)}
@@ -268,11 +266,9 @@ export function ImageDetail({
                 className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
               >
                 {!tokenAvatarError ? (
-                  <Image
+                  <img
                     src={curate.token.uri}
                     alt={`${curate.token.name} cover`}
-                    width={32}
-                    height={32}
                     className="w-8 h-8 rounded-full object-cover"
                     onError={() => setTokenAvatarError(true)}
                   />

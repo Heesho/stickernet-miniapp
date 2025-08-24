@@ -81,7 +81,7 @@ export default function StickerPage() {
   }, [tokenAddress, contentId]);
 
   const handleClose = () => {
-    router.push(`/b/${tokenAddress}`);
+    router.back();
   };
 
   const handleCurate = () => {

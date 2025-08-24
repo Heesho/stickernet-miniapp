@@ -422,9 +422,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
             {formatCurrency(portfolioValue)}
           </div>
           <div className="text-sm text-gray-400">
-            {usdcBalance !== undefined && chainId === baseSepolia.id
-              ? `$${Number(formatUnits(usdcBalance, USDC_DECIMALS)).toLocaleString()} cash`
-              : `${formatCurrency(cashValue)} cash`}
+            {`${formatCurrency(cashValue)} cash`}
           </div>
         </div>
       </div>

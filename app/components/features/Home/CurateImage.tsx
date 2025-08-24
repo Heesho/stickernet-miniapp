@@ -69,7 +69,7 @@ function ImageContent({ curate, imageLoaded, onLoad, onError }: ImageContentProp
   return (
     <div className="relative">
       {!imageLoaded && (
-        <div className="aspect-square bg-[var(--app-gray)] animate-pulse rounded-2xl flex items-center justify-center">
+        <div className="w-full min-h-[200px] bg-[var(--app-gray)] animate-pulse rounded-2xl flex items-center justify-center">
           <LoadingSpinner
             size="md"
             variant="accent"
@@ -77,18 +77,15 @@ function ImageContent({ curate, imageLoaded, onLoad, onError }: ImageContentProp
           />
         </div>
       )}
-      <Image
+      <img
         src={curate.uri}
         alt={`Curate ${curate.id}`}
-        width={300}
-        height={300}
-        className={`w-full object-cover rounded-2xl transition-opacity duration-300 ${
+        className={`w-full h-auto object-contain rounded-2xl transition-opacity duration-300 ${
           imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'
         }`}
         onLoad={onLoad}
         onError={onError}
         loading="lazy"
-        priority={false}
       />
     </div>
   );
@@ -99,7 +96,7 @@ function ImageContent({ curate, imageLoaded, onLoad, onError }: ImageContentProp
  */
 function ImageErrorState() {
   return (
-    <div className="aspect-square bg-[var(--app-gray)] rounded-2xl flex items-center justify-center">
+    <div className="w-full min-h-[200px] bg-[var(--app-gray)] rounded-2xl flex items-center justify-center">
       <div className="text-center">
         <Icon 
           name="warning" 

@@ -164,7 +164,7 @@ export function Home({ setActiveTab, onNavigateToBoard }: HomeProps) {
           curates={curates}
           newItems={newItems}
           onImageClick={handleImageClick}
-          enableVirtualScrolling={curates.length > 20}
+          enableVirtualScrolling={false}
         />
         
         {/* Loading indicators */}

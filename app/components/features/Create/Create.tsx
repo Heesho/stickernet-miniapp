@@ -451,7 +451,7 @@ export function Create({ setActiveTab }: CreateProps) {
         </div>
 
         {/* Number Pad - compact to fit screen */}
-        <div className="px-4 pb-8 mb-4">
+        <div className="px-4 pb-20">
           <div className="grid grid-cols-3 gap-1">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <button

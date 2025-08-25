@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 // import Image from "next/image"; // Commented out - using regular img for Discord images
+import { getProxiedImageUrl } from "@/lib/utils/image-proxy";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Icon } from "../../ui";
@@ -203,7 +204,7 @@ export function ImageDetail({
                 className="w-full relative block"
               >
                 <img
-                  src={curate.uri}
+                  src={getProxiedImageUrl(curate.uri)}
                   alt={`Curate ${curate.id}`}
                   className={`w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0 absolute top-0"} max-h-screen`}
                   onLoad={() => setImageLoaded(true)}
@@ -267,7 +268,7 @@ export function ImageDetail({
               >
                 {!tokenAvatarError ? (
                   <img
-                    src={curate.token.uri}
+                    src={getProxiedImageUrl(curate.token.uri)}
                     alt={`${curate.token.name} cover`}
                     className="w-8 h-8 rounded-full object-cover"
                     onError={() => setTokenAvatarError(true)}

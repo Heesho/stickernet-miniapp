@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 // import Image from "next/image"; // Commented out - using regular img for Discord images
+import { getProxiedImageUrl } from "@/lib/utils/image-proxy";
 import { useAccount, useBalance } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { baseSepolia } from "wagmi/chains";
@@ -166,7 +167,7 @@ export function CurateConfirmation({
                       <div className="absolute inset-0 bg-gray-800 animate-pulse rounded-2xl"></div>
                     )}
                     <img
-                      src={curate.uri}
+                      src={getProxiedImageUrl(curate.uri)}
                       alt={`Curate ${curate.id}`}
                       className={`w-20 h-20 object-cover rounded-2xl transition-opacity duration-300 ${
                         imageLoaded ? "opacity-100" : "opacity-0"

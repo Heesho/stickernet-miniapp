@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { getProxiedImageUrl } from "@/lib/utils/image-proxy";
 import { createPortal } from "react-dom";
 import {
   useAccount,
@@ -321,7 +322,7 @@ export function Create({ setActiveTab }: CreateProps) {
                 {createdMeta.imageUrl && (
                   <div className="w-40 h-40 rounded-2xl overflow-hidden bg-gray-900 shadow-lg mb-8">
                     <img
-                      src={createdMeta.imageUrl}
+                      src={getProxiedImageUrl(createdMeta.imageUrl)}
                       alt="Preview"
                       className="w-full h-full object-cover"
                     />
@@ -387,7 +388,7 @@ export function Create({ setActiveTab }: CreateProps) {
           {imageUrl && !imageError && (
             <div className="w-32 h-32 rounded-2xl overflow-hidden flex-shrink-0">
               <img
-                src={imageUrl}
+                src={getProxiedImageUrl(imageUrl)}
                 alt="Preview"
                 className="w-full h-full object-cover"
                 onLoad={() => setImageLoading(false)}

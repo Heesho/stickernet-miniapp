@@ -11,6 +11,7 @@ import { useState, useCallback, memo } from "react";
 // import Image from 'next/image'; // Commented out - using regular img for Discord images
 import { Icon, LoadingSpinner } from "../../ui";
 import type { CurateImageProps } from "./Home.types";
+import { getProxiedImageUrl } from "@/lib/utils/image-proxy";
 
 /**
  * Individual curate image component
@@ -78,7 +79,7 @@ function ImageContent({ curate, imageLoaded, onLoad, onError }: ImageContentProp
         </div>
       )}
       <img
-        src={curate.uri}
+        src={getProxiedImageUrl(curate.uri)}
         alt={`Curate ${curate.id}`}
         className={`w-full h-auto object-cover rounded-2xl transition-opacity duration-300 ${
           imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'

@@ -90,16 +90,15 @@ export function SellPage({
     }
 
     setInputValue(newValue);
-    // Format display value
+    // Format display value without forcing decimals
     if (newValue === "" || newValue === ".") {
       setDisplayValue("0");
     } else {
-      const num = parseFloat(newValue);
-      if (!isNaN(num)) {
-        setDisplayValue(formatNumber(num, 2, true, false)); // No compact format on transaction pages
-      } else {
-        setDisplayValue(newValue);
-      }
+      // Just add commas for thousands, don't force decimal places
+      const parts = newValue.split('.');
+      const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const formattedValue = parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
+      setDisplayValue(formattedValue);
     }
   };
 
@@ -222,12 +221,25 @@ export function SellPage({
               <div className="text-white text-3xl font-medium mb-1 tracking-wide">
                 {displayValue}
               </div>
-              <div className="text-gray-600 text-xs">
+              <button
+                onClick={() => {
+                  if (userTokenBalance && parseFloat(userTokenBalance) > 0) {
+                    const balanceStr = userTokenBalance.toString();
+                    setInputValue(balanceStr);
+                    // Format without forcing decimals
+                    const parts = balanceStr.split('.');
+                    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                    const formattedValue = parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
+                    setDisplayValue(formattedValue);
+                  }
+                }}
+                className="text-gray-600 text-xs hover:text-white transition-colors cursor-pointer"
+              >
                 Available:{" "}
                 {isLoadingBalance
                   ? "Loading..."
                   : `${formatNumber(parseFloat(userTokenBalance), 0, false, false)} ${tokenSymbol.toUpperCase()}`}
-              </div>
+              </button>
             </div>
 
             <div>

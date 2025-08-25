@@ -60,24 +60,25 @@ const TokenListItem = memo(function TokenListItem({
       </div>
 
       {/* Token Image */}
-      <div className="relative w-10 h-10 flex-shrink-0">
+      <div className="relative w-10 h-10 flex-shrink-0 rounded-full overflow-hidden bg-gray-900">
         {!imageError ? (
           <>
             {!imageLoaded && (
-              <div className="w-10 h-10 bg-[var(--app-gray)] animate-pulse rounded-full" />
+              <div className="w-10 h-10 bg-[var(--app-gray)] animate-pulse" />
             )}
             <Image
               src={token.uri}
               alt={token.name}
               width={40}
               height={40}
-              className={`rounded-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'}`}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'}`}
               onLoad={() => setImageLoaded(true)}
               onError={() => setImageError(true)}
+              unoptimized
             />
           </>
         ) : (
-          <div className="w-10 h-10 bg-[var(--app-gray)] rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 bg-[var(--app-gray)] flex items-center justify-center">
             <span className="text-xs text-[var(--app-foreground-muted)]">
               {token.symbol?.charAt(0) || '?'}
             </span>

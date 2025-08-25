@@ -25,7 +25,7 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = memo(({
     const isPositive = timeframe === 'MAX' ? true : priceChange24h >= 0;
     return {
       isPositive,
-      primaryColor: isPositive ? "#0052FF" : "#FF6B35",
+      primaryColor: isPositive ? "#0052FF" : "#ceb1ff",
       gradientId: `gradient-${isPositive ? 'up' : 'down'}`
     };
   }, [priceChange24h, timeframe]);
@@ -272,7 +272,7 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = memo(({
             <path
               d={floorPath}
               fill="none"
-              stroke={themeColors.isPositive ? "rgba(0, 82, 255, 0.4)" : "rgba(255, 107, 53, 0.4)"}
+              stroke={themeColors.isPositive ? "rgba(0, 82, 255, 0.4)" : "rgba(206, 177, 255, 0.4)"}
               strokeWidth="1.5"
               className="pointer-events-none"
               opacity={isFlat ? 0.5 : 1}
@@ -348,8 +348,8 @@ export const RobinhoodChart: React.FC<RobinhoodChartProps> = memo(({
               onClick={handleTimeframeClick}
               className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all ${
                 timeframe === tf
-                  ? `${themeColors.isPositive ? 'bg-[#0052FF]' : 'bg-[#FF6B35]'} text-black`
-                  : `${themeColors.isPositive ? 'text-[#0052FF]' : 'text-[#FF6B35]'} hover:opacity-80`
+                  ? `${themeColors.isPositive ? 'bg-[#0052FF]' : 'bg-[#ceb1ff]'} text-black`
+                  : `${themeColors.isPositive ? 'text-[#0052FF]' : 'text-[#ceb1ff]'} hover:opacity-80`
               }`}
             >
               {tf}

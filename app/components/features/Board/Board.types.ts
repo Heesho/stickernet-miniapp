@@ -71,6 +71,7 @@ export interface BoardChartProps {
     creatorRewardsQuote?: string;
     curatorRewardsQuote?: string;
     holderRewardsQuote?: string;
+    holderRewardsToken?: string;
     contentRevenueQuote?: string;
     contentRevenueToken?: string;
     marketPrice?: string;
@@ -115,6 +116,7 @@ export interface BoardData {
     creatorRewardsQuote?: string;
     curatorRewardsQuote?: string;
     holderRewardsQuote?: string;
+    holderRewardsToken?: string;
     contentRevenueQuote?: string;
     contentRevenueToken?: string;
     marketPrice?: string;

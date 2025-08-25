@@ -105,7 +105,7 @@ export function ImageDetail({
   // Memoize theme calculations - default to blue (MAX timeframe behavior)
   const themeColors = useMemo(() => {
     // Always default to blue theme to match MAX timeframe default
-    // This prevents orange flash for tokens with negative 24h performance
+    // This prevents purple flash for tokens with negative 24h performance
     const priceIsUp = true; // Always blue for consistency with Board view
 
     return {

@@ -62,9 +62,9 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
 
   // Dynamic color theme based on price change (Robinhood-style)
   const priceIsUp = priceChange24h !== null ? priceChange24h >= 0 : true;
-  const themeColor = priceIsUp ? '#0052FF' : '#FF6B35'; // Blue when up, Orange when down
-  const themeColorClass = priceIsUp ? 'text-[#0052FF]' : 'text-[#FF6B35]';
-  const themeBgClass = priceIsUp ? 'bg-[#0052FF]' : 'bg-[#FF6B35]';
+  const themeColor = priceIsUp ? '#0052FF' : '#ceb1ff'; // Blue when up, Purple when down
+  const themeColorClass = priceIsUp ? 'text-[#0052FF]' : 'text-[#ceb1ff]';
+  const themeBgClass = priceIsUp ? 'bg-[#0052FF]' : 'bg-[#ceb1ff]';
 
   // Validate URL format
   useEffect(() => {

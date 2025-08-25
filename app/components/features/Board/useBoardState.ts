@@ -117,12 +117,12 @@ export function useBoardState(
     }
 
     // Always use blue for initial load and only change based on actual timeframe data
-    const color = isPricePositive ? "#0052FF" : "#FF6B35";
-    const colorClass = isPricePositive ? "text-[#0052FF]" : "text-[#FF6B35]";
-    const bgClass = isPricePositive ? "bg-[#0052FF]" : "bg-[#FF6B35]";
+    const color = isPricePositive ? "#0052FF" : "#ceb1ff";
+    const colorClass = isPricePositive ? "text-[#0052FF]" : "text-[#ceb1ff]";
+    const bgClass = isPricePositive ? "bg-[#0052FF]" : "bg-[#ceb1ff]";
     const borderClass = isPricePositive
       ? "border-[#0052FF]"
-      : "border-[#FF6B35]";
+      : "border-[#ceb1ff]";
 
     return {
       color,

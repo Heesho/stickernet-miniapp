@@ -95,7 +95,7 @@ export const BoardStatistics = memo(function BoardStatistics({
 
       {/* Price change indicator */}
       <div className="flex items-center mb-6">
-        <div className={`flex items-center space-x-1 ${timeframePriceData.priceChange >= 0 ? 'text-[#0052FF]' : 'text-[#FF6B35]'}`}>
+        <div className={`flex items-center space-x-1 ${timeframePriceData.priceChange >= 0 ? 'text-[#0052FF]' : 'text-[#ceb1ff]'}`}>
           {/* Triangle indicator */}
           <span className="text-lg">
             {timeframePriceData.priceChange >= 0 ? '▲' : '▼'}

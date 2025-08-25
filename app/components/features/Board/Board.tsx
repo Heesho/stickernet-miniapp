@@ -155,7 +155,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
           todayVolume={boardData.stats.swapVolume}
           onPriceHover={handlePriceHover}
           tokenData={tokenData}
-          subgraphData={undefined}
+          subgraphData={boardData.subgraphData}
           onTimeframeChange={handleTimeframeChange}
         />
       )}

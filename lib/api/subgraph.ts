@@ -233,6 +233,7 @@ export const GET_TOKEN_BOARD_DATA_QUERY = `
       creatorRewardsQuote
       curatorRewardsQuote
       holderRewardsQuote
+      holderRewardsToken
       contentRevenueQuote
       contentRevenueToken
       owner {
@@ -414,6 +415,7 @@ export interface TokenEntity {
   creatorRewardsQuote?: string;
   curatorRewardsQuote?: string;
   holderRewardsQuote?: string;
+  holderRewardsToken?: string;
   treasuryRevenueQuote?: string;
   treasuryRevenueToken?: string;
   contentRevenueQuote?: string;
@@ -640,6 +642,7 @@ export interface TokenBoardDataEntity {
   creatorRewardsQuote?: string;
   curatorRewardsQuote?: string;
   holderRewardsQuote?: string;
+  holderRewardsToken?: string;
   contentRevenueQuote?: string;
   contentRevenueToken?: string;
   owner: {

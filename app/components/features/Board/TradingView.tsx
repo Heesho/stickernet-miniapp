@@ -51,6 +51,7 @@ interface TradingViewProps {
     creatorRewardsQuote?: string;
     curatorRewardsQuote?: string;
     holderRewardsQuote?: string;
+    holderRewardsToken?: string;
     contentRevenueQuote?: string;
     contentRevenueToken?: string;
     marketPrice?: string;
@@ -149,12 +150,12 @@ export function TradingView({
     isPricePositive = true;
   }
 
-  const themeColor = isPricePositive ? "#0052FF" : "#FF6B35";
-  const themeBgClass = isPricePositive ? "bg-[#0052FF]" : "bg-[#FF6B35]";
-  const themeColorClass = isPricePositive ? "text-[#0052FF]" : "text-[#FF6B35]";
+  const themeColor = isPricePositive ? "#0052FF" : "#ceb1ff";
+  const themeBgClass = isPricePositive ? "bg-[#0052FF]" : "bg-[#ceb1ff]";
+  const themeColorClass = isPricePositive ? "text-[#0052FF]" : "text-[#ceb1ff]";
   const themeBorderClass = isPricePositive
     ? "border-[#0052FF]"
-    : "border-[#FF6B35]";
+    : "border-[#ceb1ff]";
 
   // Fetch chart data from subgraph
   const {
@@ -251,6 +252,7 @@ export function TradingView({
         marketValue: "0.00",
         credit: "0.00",
         debt: "0.00",
+        hasPosition: false,
       };
     }
 
@@ -270,6 +272,7 @@ export function TradingView({
       marketValue: marketValue.toString(), // Pass raw number as string
       credit: credit.toString(), // Pass raw number as string
       debt: debt.toString(), // Pass raw number as string
+      hasPosition: shares > 0,
     };
   }, [multicallData, tokenPrice]);
 
@@ -281,6 +284,7 @@ export function TradingView({
         marketValue: "0.00",
         totalSteals: "0",
         totalReturn: "0.00",
+        hasCreations: false,
       };
     }
 
@@ -291,11 +295,14 @@ export function TradingView({
       return parseFloat(value).toFixed(decimals);
     };
 
+    const stickersCount = parseInt(tokenPosition.contentCreated || "0");
+
     return {
       stickers: tokenPosition.contentCreated || "0",
       marketValue: tokenPosition.createdValue || "0", // Pass raw value as string
       totalSteals: tokenPosition.createdCurations || "0",
       totalReturn: formatValue(tokenPosition.creatorRevenueQuote),
+      hasCreations: stickersCount > 0,
     };
   }, [tokenPosition]);
 
@@ -309,6 +316,7 @@ export function TradingView({
         claimable: "0.00",
         totalSpent: "0.00",
         totalReturn: "0.00",
+        hasCollection: false,
       };
     }
 
@@ -359,13 +367,16 @@ export function TradingView({
         accountQuoteEarned + accountTokenEarned * parseFloat(tokenPrice);
     }
 
+    const totalSpentValue = safeParseFloat(tokenPosition.curationSpend);
+
     return {
       stickers: tokenPosition.contentOwned || "0",
       marketValue: contentBalance.toString(), // Pass raw number as string
       ownership: formatNumber(ownership, 0, false),
       claimable: claimable.toString(), // Pass raw number as string
-      totalSpent: formatCurrency(safeParseFloat(tokenPosition.curationSpend)),
+      totalSpent: formatCurrency(totalSpentValue),
       totalReturn: formatCurrency(totalReturn),
+      hasCollection: totalSpentValue > 0,
     };
   }, [tokenPosition, subgraphTokenData, tokenPrice, multicallData]);
 
@@ -414,160 +425,166 @@ export function TradingView({
 
       {/* Trading content */}
       <div className="pb-20 space-y-6">
-        {/* Your Position Section */}
-        <div>
-          <h3 className="text-white text-xl font-semibold mb-4">
-            Your position
-          </h3>
+        {/* Your Position Section - Only show if user has tokens */}
+        {positionData.hasPosition && (
+          <div>
+            <h3 className="text-white text-xl font-semibold mb-4">
+              Your position
+            </h3>
 
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Shares</div>
-              <div className="text-white text-lg">{positionData.shares}</div>
-            </div>
-
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Market value</div>
-              <div className="text-white text-lg">
-                <AnimatedNumber
-                  value={positionData.marketValue}
-                  prefix="$"
-                  decimals={2}
-                  duration={600}
-                  className={animationClass}
-                />
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Shares</div>
+                <div className="text-white text-lg">{positionData.shares}</div>
               </div>
-            </div>
 
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Credit</div>
-              <div className="text-white text-lg">
-                <AnimatedNumber
-                  value={positionData.credit}
-                  prefix="$"
-                  decimals={2}
-                  duration={600}
-                />
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Market value</div>
+                <div className="text-white text-lg">
+                  <AnimatedNumber
+                    value={positionData.marketValue}
+                    prefix="$"
+                    decimals={2}
+                    duration={600}
+                    className={animationClass}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Debt</div>
-              <div className="text-white text-lg">
-                <AnimatedNumber
-                  value={positionData.debt}
-                  prefix="$"
-                  decimals={2}
-                  duration={600}
-                />
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Credit</div>
+                <div className="text-white text-lg">
+                  <AnimatedNumber
+                    value={positionData.credit}
+                    prefix="$"
+                    decimals={2}
+                    duration={600}
+                  />
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Your Creations Section */}
-        <div>
-          <h3 className="text-white text-xl font-semibold mb-4">
-            Your creations
-          </h3>
-
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Stickers</div>
-              <div className="text-white text-lg">{creationsData.stickers}</div>
-            </div>
-
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Market value</div>
-              <div className="text-white text-lg">
-                <AnimatedNumber
-                  value={creationsData.marketValue}
-                  prefix="$"
-                  decimals={2}
-                  duration={600}
-                  className={animationClass}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Total steals</div>
-              <div className="text-white text-lg">
-                {creationsData.totalSteals}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Total return</div>
-              <div className="text-white text-lg">
-                {creationsData.totalReturn}
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Debt</div>
+                <div className="text-white text-lg">
+                  <AnimatedNumber
+                    value={positionData.debt}
+                    prefix="$"
+                    decimals={2}
+                    duration={600}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Your Collection Section */}
-        <div>
-          <h3 className="text-white text-xl font-semibold mb-4">
-            Your collection
-          </h3>
+        {/* Your Creations Section - Only show if user has created stickers */}
+        {creationsData.hasCreations && (
+          <div>
+            <h3 className="text-white text-xl font-semibold mb-4">
+              Your creations
+            </h3>
 
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Stickers</div>
-              <div className="text-white text-lg">
-                {collectionData.stickers}
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Stickers</div>
+                <div className="text-white text-lg">{creationsData.stickers}</div>
               </div>
-            </div>
 
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Market value</div>
-              <div className="text-white text-lg">
-                <AnimatedNumber
-                  value={collectionData.marketValue}
-                  prefix="$"
-                  decimals={2}
-                  duration={600}
-                  className={animationClass}
-                />
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Market value</div>
+                <div className="text-white text-lg">
+                  <AnimatedNumber
+                    value={creationsData.marketValue}
+                    prefix="$"
+                    decimals={2}
+                    duration={600}
+                    className={animationClass}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Ownership</div>
-              <div className="text-white text-lg">
-                {collectionData.ownership}%
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Total steals</div>
+                <div className="text-white text-lg">
+                  {creationsData.totalSteals}
+                </div>
               </div>
-            </div>
 
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Claimable</div>
-              <div className="text-white text-lg">
-                <AnimatedNumber
-                  value={collectionData.claimable}
-                  prefix="$"
-                  decimals={2}
-                  duration={600}
-                  className={animationClass}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Total spent</div>
-              <div className="text-white text-lg">
-                {collectionData.totalSpent}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-gray-500 text-sm mb-1">Total return</div>
-              <div className="text-white text-lg">
-                {collectionData.totalReturn}
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Total return</div>
+                <div className="text-white text-lg">
+                  {creationsData.totalReturn}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Your Collection Section - Only show if user has spent money */}
+        {collectionData.hasCollection && (
+          <div>
+            <h3 className="text-white text-xl font-semibold mb-4">
+              Your collection
+            </h3>
+
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Stickers</div>
+                <div className="text-white text-lg">
+                  {collectionData.stickers}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Market value</div>
+                <div className="text-white text-lg">
+                  <AnimatedNumber
+                    value={collectionData.marketValue}
+                    prefix="$"
+                    decimals={2}
+                    duration={600}
+                    className={animationClass}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Ownership</div>
+                <div className="text-white text-lg">
+                  {collectionData.ownership}%
+                </div>
+              </div>
+
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Claimable</div>
+                <div className="text-white text-lg">
+                  <AnimatedNumber
+                    value={collectionData.claimable}
+                    prefix="$"
+                    decimals={2}
+                    duration={600}
+                    className={animationClass}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Total spent</div>
+                <div className="text-white text-lg">
+                  {collectionData.totalSpent}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Total return</div>
+                <div className="text-white text-lg">
+                  {collectionData.totalReturn}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats Section */}
         <div>
@@ -671,7 +688,7 @@ export function TradingView({
 
         {/* Rewards Section */}
         <div>
-          <h3 className="text-white text-xl font-semibold mb-4">Rewards</h3>
+          <h3 className="text-white text-xl font-semibold mb-4">Revenue</h3>
 
           <div className="grid grid-cols-3 gap-x-8 gap-y-4">
             <div>
@@ -711,9 +728,19 @@ export function TradingView({
             <div>
               <div className="text-gray-500 text-sm mb-1">Holders</div>
               <div className="text-white text-lg">
-                {subgraphData?.holderRewardsQuote
-                  ? formatCurrency(subgraphData.holderRewardsQuote)
-                  : formatCurrency(0)}
+                {(() => {
+                  const holderRewardsQuote = parseFloat(
+                    subgraphData?.holderRewardsQuote || "0"
+                  );
+                  const holderRewardsToken = parseFloat(
+                    subgraphData?.holderRewardsToken || "0"
+                  );
+                  const marketPrice = tokenData?.marketPrice
+                    ? parseFloat(formatUnits(tokenData.marketPrice, 18))
+                    : 0;
+                  const total = holderRewardsQuote + holderRewardsToken * marketPrice;
+                  return formatCurrency(total);
+                })()}
               </div>
             </div>
           </div>
@@ -772,15 +799,18 @@ export function TradingView({
                   >
                     Buy
                   </button>
-                  <button
-                    onClick={() => {
-                      setShowSellPage(true);
-                      setIsTradeMenuExpanded(false);
-                    }}
-                    className={`${themeBgClass} hover:opacity-90 text-black font-semibold py-2.5 px-8 rounded-xl min-w-[120px] focus:outline-none active:opacity-80 transition-all`}
-                  >
-                    Sell
-                  </button>
+                  {/* Only show Sell button if user has tokens */}
+                  {positionData.hasPosition && (
+                    <button
+                      onClick={() => {
+                        setShowSellPage(true);
+                        setIsTradeMenuExpanded(false);
+                      }}
+                      className={`${themeBgClass} hover:opacity-90 text-black font-semibold py-2.5 px-8 rounded-xl min-w-[120px] focus:outline-none active:opacity-80 transition-all`}
+                    >
+                      Sell
+                    </button>
+                  )}
                 </div>
               )}
             </div>

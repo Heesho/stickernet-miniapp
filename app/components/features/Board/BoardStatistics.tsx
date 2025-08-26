@@ -5,9 +5,13 @@ import { useRouter } from 'next/navigation';
 import { AnimatedNumber } from "../../ui/AnimatedNumber";
 import type { BoardStatisticsProps } from './Board.types';
 
-// Client-only OnchainKit Identity components to prevent hydration issues
+// Client-only OnchainKit Identity components with error handling
 const Avatar = dynamic(
-  () => import("@coinbase/onchainkit/identity").then((mod) => ({ default: mod.Avatar })),
+  () => import("@coinbase/onchainkit/identity").then((mod) => ({ default: mod.Avatar }))
+    .catch(() => ({ 
+      // Fallback component if module fails to load
+      default: () => <div className="w-8 h-8 bg-[var(--app-gray)] rounded-full" /> 
+    })),
   { 
     ssr: false,
     loading: () => <div className="w-8 h-8 bg-[var(--app-gray)] animate-pulse rounded-full" />
@@ -15,7 +19,15 @@ const Avatar = dynamic(
 );
 
 const Name = dynamic(
-  () => import("@coinbase/onchainkit/identity").then((mod) => ({ default: mod.Name })),
+  () => import("@coinbase/onchainkit/identity").then((mod) => ({ default: mod.Name }))
+    .catch(() => ({ 
+      // Fallback component if module fails to load
+      default: ({ address }: { address: string }) => (
+        <span className="text-gray-400 text-sm">
+          {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Unknown'}
+        </span>
+      )
+    })),
   { 
     ssr: false,
     loading: () => <div className="w-16 h-4 bg-[var(--app-gray)] animate-pulse rounded" />

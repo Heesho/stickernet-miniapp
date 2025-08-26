@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Button } from "../../ui";
 import { AnimatedNumber } from "../../ui/AnimatedNumber";
 import { RobinhoodChart } from "../../ui/RobinhoodChart/RobinhoodChart";
@@ -13,7 +13,9 @@ import { TokenData } from "@/types";
 import { formatUnits } from "viem";
 import { BuyPage } from "./BuyPage";
 import { SellPage } from "./SellPage";
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { baseSepolia } from "viem/chains";
+import { ROUTER_ADDRESS, ROUTER_ABI } from "@/lib/constants";
 import { useRealTimeData } from "@/app/hooks/useRealTimeData";
 import {
   usePriceAnimation,
@@ -87,9 +89,40 @@ export function TradingView({
   const [showBuyPage, setShowBuyPage] = useState(false);
   const [showSellPage, setShowSellPage] = useState(false);
   const tradeMenuRef = useRef<HTMLDivElement>(null);
+  const hasHandledClaim = useRef(false);
 
   // Get user account
   const { address: userAddress } = useAccount();
+
+  // Claim rewards functionality
+  const {
+    writeContract: claimRewards,
+    data: claimHash,
+    isPending: isClaiming,
+    reset: resetClaim,
+  } = useWriteContract();
+
+  const { isLoading: isClaimConfirming, isSuccess: isClaimConfirmed } = useWaitForTransactionReceipt({
+    hash: claimHash,
+  });
+
+  // Handle claim rewards
+  const handleClaimRewards = useCallback(() => {
+    if (!userAddress) return;
+    
+    // Reset the claim handled flag when initiating new claim
+    hasHandledClaim.current = false;
+    
+    claimRewards({
+      address: ROUTER_ADDRESS,
+      abi: ROUTER_ABI,
+      functionName: "getContentReward",
+      args: [tokenAddress as `0x${string}`],
+      chainId: baseSepolia.id,
+    });
+    
+    setIsTradeMenuExpanded(false);
+  }, [userAddress, tokenAddress, claimRewards]);
 
   // Use real-time data with automatic polling
   const {
@@ -219,7 +252,7 @@ export function TradingView({
   }, [selectedTimeframe, chartData, tokenPrice, onTimeframeChange]);
 
   // Enhanced refresh function that also refreshes chart data
-  const refreshAfterTransaction = async (txHash?: string) => {
+  const refreshAfterTransaction = useCallback(async (txHash?: string) => {
     // Call base refresh
     await baseRefreshAfterTransaction(txHash);
     // Also refresh chart data
@@ -230,7 +263,23 @@ export function TradingView({
     setTimeout(() => {
       refetchChart();
     }, 5000);
-  };
+  }, [baseRefreshAfterTransaction, refetchChart]);
+
+  // Handle successful claim - use ref to ensure single execution
+  useEffect(() => {
+    if (isClaimConfirmed && claimHash && !hasHandledClaim.current) {
+      hasHandledClaim.current = true;
+      
+      // Refresh data after claim is confirmed
+      refreshAfterTransaction(claimHash);
+      
+      // Reset claim state after a delay to allow for future claims
+      setTimeout(() => {
+        resetClaim();
+        hasHandledClaim.current = false;
+      }, 5000);
+    }
+  }, [isClaimConfirmed, claimHash, refreshAfterTransaction, resetClaim]);
 
   const handlePriceHover = (dataPoint: PriceDataPoint | null) => {
     const price = dataPoint ? dataPoint.marketPrice : null;
@@ -309,6 +358,7 @@ export function TradingView({
   // Calculate collection data from subgraph and multicall
   const collectionData = useMemo(() => {
     if (!tokenPosition || !subgraphTokenData) {
+      console.log('No tokenPosition or subgraphTokenData for collection');
       return {
         stickers: "0",
         marketValue: "0.00",
@@ -365,6 +415,17 @@ export function TradingView({
         : 0;
       claimable =
         accountQuoteEarned + accountTokenEarned * parseFloat(tokenPrice);
+      
+      console.log('Claimable calculation:', {
+        multicallData,
+        accountQuoteEarned,
+        accountTokenEarned,
+        tokenPrice: parseFloat(tokenPrice),
+        claimable,
+        hasData: !!multicallData.accountQuoteEarned || !!multicallData.accountTokenEarned
+      });
+    } else {
+      console.log('No multicallData for claimable calculation');
     }
 
     const totalSpentValue = safeParseFloat(tokenPosition.curationSpend);
@@ -780,6 +841,10 @@ export function TradingView({
                     : `${themeBgClass} text-black`
                 } border-2 ${themeBorderClass} hover:opacity-90 font-semibold py-2.5 px-8 rounded-xl min-w-[120px] transition-all duration-200 focus:outline-none active:opacity-80 relative z-10`}
               >
+                {/* Show a dot indicator if there are claimable rewards */}
+                {parseFloat(collectionData.claimable) > 0 && !isTradeMenuExpanded && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
+                )}
                 {isTradeMenuExpanded ? (
                   <span className={`${themeColorClass} text-lg`}>✕</span>
                 ) : (
@@ -809,6 +874,18 @@ export function TradingView({
                       className={`${themeBgClass} hover:opacity-90 text-black font-semibold py-2.5 px-8 rounded-xl min-w-[120px] focus:outline-none active:opacity-80 transition-all`}
                     >
                       Sell
+                    </button>
+                  )}
+                  {/* Only show Claim button if user has claimable rewards */}
+                  {parseFloat(collectionData.claimable) > 0 && (
+                    <button
+                      onClick={handleClaimRewards}
+                      disabled={isClaiming || isClaimConfirming}
+                      className={`${themeBgClass} hover:opacity-90 text-black font-semibold py-2.5 px-8 rounded-xl min-w-[120px] focus:outline-none active:opacity-80 transition-all ${
+                        (isClaiming || isClaimConfirming) ? 'opacity-50 cursor-wait' : ''
+                      }`}
+                    >
+                      {isClaiming || isClaimConfirming ? 'Claiming...' : 'Claim'}
                     </button>
                   )}
                 </div>

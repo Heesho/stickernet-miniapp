@@ -1,22 +1,10 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAccount } from "wagmi";
 import { BottomNavigation } from "./components/ui";
-
-// Dynamic import for components that use MiniKit to prevent SSR issues
-const AppContent = dynamic(() => import("./AppContent"), { 
-  ssr: false,
-  loading: () => (
-    <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] bg-black">
-      <div className="flex items-center justify-center h-screen">
-        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    </div>
-  )
-});
+import AppContent from "./AppContent";
 
 function AppInner() {
   const searchParams = useSearchParams();
@@ -61,7 +49,7 @@ function AppInner() {
     <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
       <AppContent 
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleSetActiveTab}
         boardData={boardData}
         onNavigateToBoard={handleNavigateToBoard}
       />

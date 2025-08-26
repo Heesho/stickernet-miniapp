@@ -77,8 +77,10 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
   // Handle successful transaction
   useEffect(() => {
     if (isConfirmed && onSuccess) {
+      // Call onSuccess immediately to trigger refresh attempts
+      onSuccess();
+      // Close modal after a short delay for better UX
       setTimeout(() => {
-        onSuccess();
         onClose();
       }, 2000);
     }

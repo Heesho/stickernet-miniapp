@@ -83,9 +83,16 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
 
   const handleCreateStickerSuccess = useCallback(() => {
     setShowCreateSticker(false);
+    // Multiple refresh attempts to ensure subgraph has indexed the new sticker
     setTimeout(() => {
       refreshBoardData();
     }, 3000);
+    setTimeout(() => {
+      refreshBoardData();
+    }, 6000);
+    setTimeout(() => {
+      refreshBoardData();
+    }, 10000);
   }, [refreshBoardData]);
 
   const handlePriceHover = useCallback(

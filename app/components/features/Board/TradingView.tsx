@@ -358,7 +358,6 @@ export function TradingView({
   // Calculate collection data from subgraph and multicall
   const collectionData = useMemo(() => {
     if (!tokenPosition || !subgraphTokenData) {
-      console.log('No tokenPosition or subgraphTokenData for collection');
       return {
         stickers: "0",
         marketValue: "0.00",
@@ -415,17 +414,6 @@ export function TradingView({
         : 0;
       claimable =
         accountQuoteEarned + accountTokenEarned * parseFloat(tokenPrice);
-      
-      console.log('Claimable calculation:', {
-        multicallData,
-        accountQuoteEarned,
-        accountTokenEarned,
-        tokenPrice: parseFloat(tokenPrice),
-        claimable,
-        hasData: !!multicallData.accountQuoteEarned || !!multicallData.accountTokenEarned
-      });
-    } else {
-      console.log('No multicallData for claimable calculation');
     }
 
     const totalSpentValue = safeParseFloat(tokenPosition.curationSpend);
@@ -841,10 +829,6 @@ export function TradingView({
                     : `${themeBgClass} text-black`
                 } border-2 ${themeBorderClass} hover:opacity-90 font-semibold py-2.5 px-8 rounded-xl min-w-[120px] transition-all duration-200 focus:outline-none active:opacity-80 relative z-10`}
               >
-                {/* Show a dot indicator if there are claimable rewards */}
-                {parseFloat(collectionData.claimable) > 0 && !isTradeMenuExpanded && (
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
-                )}
                 {isTradeMenuExpanded ? (
                   <span className={`${themeColorClass} text-lg`}>✕</span>
                 ) : (

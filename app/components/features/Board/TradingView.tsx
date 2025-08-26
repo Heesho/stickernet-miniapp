@@ -13,6 +13,8 @@ import { TokenData } from "@/types";
 import { formatUnits } from "viem";
 import { BuyPage } from "./BuyPage";
 import { SellPage } from "./SellPage";
+import { BorrowPage } from "./BorrowPage";
+import { RepayPage } from "./RepayPage";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { baseSepolia } from "viem/chains";
 import { ROUTER_ADDRESS, ROUTER_ABI } from "@/lib/constants";
@@ -88,6 +90,8 @@ export function TradingView({
   const [isTradeMenuExpanded, setIsTradeMenuExpanded] = useState(false);
   const [showBuyPage, setShowBuyPage] = useState(false);
   const [showSellPage, setShowSellPage] = useState(false);
+  const [showBorrowPage, setShowBorrowPage] = useState(false);
+  const [showRepayPage, setShowRepayPage] = useState(false);
   const tradeMenuRef = useRef<HTMLDivElement>(null);
   const hasHandledClaim = useRef(false);
 
@@ -301,6 +305,8 @@ export function TradingView({
         marketValue: "0.00",
         credit: "0.00",
         debt: "0.00",
+        transferrable: "0.00",
+        ltv: "0.00",
         hasPosition: false,
       };
     }
@@ -315,12 +321,20 @@ export function TradingView({
     const debt = multicallData.accountDebt
       ? parseFloat(formatUnits(multicallData.accountDebt, 6))
       : 0;
+    const transferrable = multicallData.accountTransferrable
+      ? parseFloat(formatUnits(multicallData.accountTransferrable, 18))
+      : 0;
+    
+    // Calculate LTV ((credit + debt) / marketValue * 100)
+    const ltv = marketValue > 0 ? ((credit + debt) / marketValue) * 100 : 0;
 
     return {
       shares: formatTokenAmount(shares),
       marketValue: marketValue.toString(), // Pass raw number as string
       credit: credit.toString(), // Pass raw number as string
       debt: debt.toString(), // Pass raw number as string
+      transferrable: transferrable.toString(), // Pass raw number as string
+      ltv: ltv.toFixed(2), // Pass as string with 2 decimals
       hasPosition: shares > 0,
     };
   }, [multicallData, tokenPrice]);
@@ -518,6 +532,29 @@ export function TradingView({
                   <AnimatedNumber
                     value={positionData.debt}
                     prefix="$"
+                    decimals={2}
+                    duration={600}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="text-gray-500 text-sm mb-1">Transferrable</div>
+                <div className="text-white text-lg">
+                  <AnimatedNumber
+                    value={positionData.transferrable}
+                    decimals={4}
+                    duration={600}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="text-gray-500 text-sm mb-1">LTV</div>
+                <div className="text-white text-lg">
+                  <AnimatedNumber
+                    value={positionData.ltv}
+                    suffix="%"
                     decimals={2}
                     duration={600}
                   />
@@ -860,8 +897,32 @@ export function TradingView({
                       Sell
                     </button>
                   )}
+                  {/* Only show Borrow button if user has credit > 0 */}
+                  {positionData.credit && parseFloat(positionData.credit) > 0 && (
+                    <button
+                      onClick={() => {
+                        setShowBorrowPage(true);
+                        setIsTradeMenuExpanded(false);
+                      }}
+                      className={`${themeBgClass} hover:opacity-90 text-black font-semibold py-2.5 px-8 rounded-xl min-w-[120px] focus:outline-none active:opacity-80 transition-all`}
+                    >
+                      Borrow
+                    </button>
+                  )}
+                  {/* Only show Repay button if user has debt > 0 */}
+                  {positionData.debt && parseFloat(positionData.debt) > 0 && (
+                    <button
+                      onClick={() => {
+                        setShowRepayPage(true);
+                        setIsTradeMenuExpanded(false);
+                      }}
+                      className={`${themeBgClass} hover:opacity-90 text-black font-semibold py-2.5 px-8 rounded-xl min-w-[120px] focus:outline-none active:opacity-80 transition-all`}
+                    >
+                      Repay
+                    </button>
+                  )}
                   {/* Only show Claim button if user has claimable rewards */}
-                  {parseFloat(collectionData.claimable) > 0 && (
+                  {collectionData.claimable && parseFloat(collectionData.claimable) > 0 && (
                     <button
                       onClick={handleClaimRewards}
                       disabled={isClaiming || isClaimConfirming}
@@ -900,6 +961,30 @@ export function TradingView({
           tokenName={tokenName}
           tokenPrice={tokenPrice}
           onClose={() => setShowSellPage(false)}
+          onTransactionSuccess={refreshAfterTransaction}
+          themeColor={themeColor}
+        />
+      )}
+
+      {/* Borrow Page Modal */}
+      {showBorrowPage && (
+        <BorrowPage
+          tokenAddress={tokenAddress}
+          tokenSymbol={tokenSymbol}
+          tokenName={tokenName}
+          onClose={() => setShowBorrowPage(false)}
+          onTransactionSuccess={refreshAfterTransaction}
+          themeColor={themeColor}
+        />
+      )}
+
+      {/* Repay Page Modal */}
+      {showRepayPage && (
+        <RepayPage
+          tokenAddress={tokenAddress}
+          tokenSymbol={tokenSymbol}
+          tokenName={tokenName}
+          onClose={() => setShowRepayPage(false)}
           onTransactionSuccess={refreshAfterTransaction}
           themeColor={themeColor}
         />

@@ -17,6 +17,9 @@ export * from '../data/mockData';
 // Re-export everything from styles
 export * from './styles';
 
+// Re-export token ABI for borrow/repay
+export * from './token-abi';
+
 // ===== COMMONLY USED COMBINATIONS =====
 
 /**

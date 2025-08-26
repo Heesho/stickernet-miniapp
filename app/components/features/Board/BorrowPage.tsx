@@ -3,74 +3,48 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
-import { Button } from "../../ui";
-import { useAccount } from "wagmi";
-import { formatUnits } from "viem";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { formatUnits, parseUnits } from "viem";
 import { useTokenData } from "@/app/hooks/useMulticall";
-import { useDebouncedSellQuote } from "@/app/hooks/useSellQuote";
-import { useTokenTransaction } from "@/app/hooks/useTokenTransaction";
+import { baseSepolia } from "wagmi/chains";
+import { TOKEN_ABI, USDC_DECIMALS } from "@/lib/constants";
 import {
   formatNumber,
   formatCurrency,
-  formatTokenAmount,
 } from "@/lib/utils/formatters";
 
-interface SellPageProps {
+interface BorrowPageProps {
   tokenAddress: string;
   tokenSymbol: string;
   tokenName: string;
-  tokenPrice: string;
   onClose: () => void;
   themeColor?: string;
   onTransactionSuccess?: () => void;
 }
 
-export function SellPage({
+export function BorrowPage({
   tokenAddress,
   tokenSymbol,
   tokenName,
-  tokenPrice,
   onClose,
   themeColor = "#0052FF",
   onTransactionSuccess,
-}: SellPageProps) {
+}: BorrowPageProps) {
   const [inputValue, setInputValue] = useState("");
-  const [displayValue, setDisplayValue] = useState("0");
+  const [displayValue, setDisplayValue] = useState("$0");
   const { address } = useAccount();
 
-  // Get user's token balance from token data
+  // Get user's credit from token data
   const { tokenData, isLoading: isLoadingBalance } = useTokenData({
     tokenAddress: tokenAddress as `0x${string}`,
     account: address,
     enabled: !!tokenAddress && !!address,
   });
 
-  // Get the user's transferrable token balance (18 decimals)
-  const userTokenBalance = tokenData?.accountTransferrable
-    ? formatUnits(tokenData.accountTransferrable, 18)
+  // Get the user's available credit (6 decimals for USDC)
+  const userCredit = tokenData?.accountCredit
+    ? formatUnits(tokenData.accountCredit, USDC_DECIMALS)
     : "0";
-
-  // Get sell quote with debouncing
-  const {
-    usdcAmtOut,
-    rawUsdcAmtOut,
-    minUsdcAmtOut,
-    autoMinUsdcAmtOut,
-    slippage,
-    isLoading: isLoadingQuote,
-  } = useDebouncedSellQuote({
-    tokenAddress,
-    tokenAmount: inputValue,
-    enabled: !!tokenAddress && parseFloat(inputValue) > 0,
-    delay: 300,
-  });
-
-  // Format the estimated USDC - use quote if available, otherwise show 0
-  // Don't use compact format on transaction pages
-  const estimatedUSDC =
-    parseFloat(inputValue) > 0 && usdcAmtOut
-      ? formatCurrency(usdcAmtOut, 2, false)
-      : "$0";
 
   const handleNumberPad = (value: string) => {
     let newValue = inputValue;
@@ -92,91 +66,114 @@ export function SellPage({
     setInputValue(newValue);
     // Format display value without forcing decimals
     if (newValue === "" || newValue === ".") {
-      setDisplayValue("0");
+      setDisplayValue("$0");
     } else {
       // Just add commas for thousands, don't force decimal places
       const parts = newValue.split('.');
       const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       const formattedValue = parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
-      setDisplayValue(formattedValue);
+      setDisplayValue("$" + formattedValue);
     }
   };
 
-  // Hook for executing the actual sell transaction
+  // Transaction state
+  const [txStatus, setTxStatus] = useState<"idle" | "pending" | "success" | "error">("idle");
+  const [txError, setTxError] = useState<Error | null>(null);
+
+  // Borrow transaction using writeContract
   const {
-    executeTransaction,
-    status: txStatus,
-    isLoading: isTxLoading,
-    isSuccess: isTxSuccess,
-    error: txError,
-    reset: resetTx,
-  } = useTokenTransaction();
+    writeContract: borrowWrite,
+    data: borrowHash,
+    isPending: isBorrowing,
+    error: borrowError,
+    reset: resetBorrow,
+  } = useWriteContract();
+
+  const { 
+    isLoading: isBorrowConfirming, 
+    isSuccess: isBorrowConfirmed,
+  } = useWaitForTransactionReceipt({
+    hash: borrowHash,
+  });
+
+  // Update status when transaction is pending
+  useEffect(() => {
+    if (isBorrowing || isBorrowConfirming) {
+      setTxStatus("pending");
+    }
+  }, [isBorrowing, isBorrowConfirming]);
 
   const handleClose = () => {
     // Don't allow closing during transaction
-    if (!isTxLoading) {
-      resetTx();
+    if (txStatus !== "pending") {
+      setTxStatus("idle");
+      setTxError(null);
+      resetBorrow();
       onClose();
     }
   };
 
-  const handleSell = async () => {
-    if (parseFloat(inputValue) <= 0 || !autoMinUsdcAmtOut) {
+  const handleBorrow = async () => {
+    if (parseFloat(inputValue) <= 0) {
       return;
     }
 
-    // Check if user has enough transferrable balance
+    // Check if user has enough credit
     const inputAmount = parseFloat(inputValue);
-    const availableBalance = parseFloat(userTokenBalance);
+    const availableCredit = parseFloat(userCredit);
 
-    if (inputAmount > availableBalance) {
-      console.error("Insufficient transferrable balance:", {
+    if (inputAmount > availableCredit) {
+      console.error("Insufficient credit:", {
         requested: inputAmount,
-        available: availableBalance,
+        available: availableCredit,
       });
       return;
     }
 
-    console.log("Sell transaction details:", {
-      tokenAddress,
-      tokenAmount: inputValue,
-      minUsdcAmountOut: autoMinUsdcAmtOut?.toString(),
-      minUsdcAmountOutFormatted: autoMinUsdcAmtOut
-        ? formatUnits(autoMinUsdcAmtOut, 6)
-        : "0",
-    });
-
-    // Execute the sell using the unified hook
-    await executeTransaction(
-      {
-        operation: "sell",
+    try {
+      // Convert input value to USDC units (6 decimals)
+      const borrowAmount = parseUnits(inputValue, USDC_DECIMALS);
+      
+      console.log("Borrow transaction details:", {
         tokenAddress,
-        tokenAmount: inputValue,
-        minUsdcAmountOut: autoMinUsdcAmtOut,
-      },
-      {
-        method: "sendCalls", // Use sendCalls for best Smart Wallet UX
-        onSuccess: (txHash) => {},
-        onError: (error) => {
-          console.error("Sell transaction failed:", error);
-        },
-      },
-    );
-  };
+        borrowAmount: borrowAmount.toString(),
+        borrowAmountFormatted: inputValue,
+      });
 
-  // Handle successful transaction - EXACTLY like buy page
-  useEffect(() => {
-    if (txStatus === "success") {
-      // Trigger refresh of data
+      // Execute borrow transaction directly on token contract
+      // to: user's address (where to send the borrowed USDC)
+      // quoteRaw: amount in USDC units (6 decimals)
+      await borrowWrite({
+        address: tokenAddress as `0x${string}`, // Token contract address
+        abi: TOKEN_ABI,
+        functionName: "borrow",
+        args: [
+          address as `0x${string}`, // to: user's address
+          borrowAmount, // quoteRaw: amount in USDC units (6 decimals)
+        ],
+        chainId: baseSepolia.id,
+      });
+      
+      console.log("Borrow transaction sent successfully");
+      // Set success immediately like RepayPage does
+      setTxStatus("success");
+      
+      // Trigger refresh
       onTransactionSuccess?.();
-
-      // Wait a moment to show success state, then close
-      const timer = setTimeout(() => {
+      
+      // Close after delay
+      setTimeout(() => {
         onClose();
       }, 2000);
-      return () => clearTimeout(timer);
+    } catch (error) {
+      console.error("Borrow transaction failed:", error);
+      setTxStatus("error");
+      setTxError(error instanceof Error ? error : new Error("Transaction failed"));
     }
-  }, [txStatus, onClose, onTransactionSuccess]);
+  };
+
+
+  const isTxLoading = txStatus === "pending";
 
   // Use portal to render outside of parent component hierarchy
   const [mounted, setMounted] = useState(false);
@@ -190,8 +187,7 @@ export function SellPage({
 
   return createPortal(
     <div className="fixed inset-0 bg-black z-[9999]">
-      <div className="absolute inset-0 bg-black" />{" "}
-      {/* Full background overlay */}
+      <div className="absolute inset-0 bg-black" />
       <div className="relative w-full max-w-md mx-auto h-full flex flex-col">
         <div className="px-4 pt-4">
           <div className="flex items-center justify-between mb-4">
@@ -207,7 +203,7 @@ export function SellPage({
           </div>
 
           <h1 className="text-white text-2xl font-semibold mb-4 text-left">
-            Sell {tokenSymbol.toUpperCase()}
+            Borrow {tokenSymbol.toUpperCase()} credit
           </h1>
 
           <div className="space-y-4">
@@ -216,45 +212,29 @@ export function SellPage({
                 className="text-sm mb-2 block"
                 style={{ color: themeColor }}
               >
-                Pay
+                Get
               </label>
               <div className="text-white text-3xl font-medium mb-1 tracking-wide">
                 {displayValue}
               </div>
-              <button
+              <button 
                 onClick={() => {
-                  if (userTokenBalance && parseFloat(userTokenBalance) > 0) {
-                    const balanceStr = userTokenBalance.toString();
-                    setInputValue(balanceStr);
+                  if (userCredit && parseFloat(userCredit) > 0) {
+                    const creditStr = userCredit.toString();
+                    setInputValue(creditStr);
                     // Format without forcing decimals
-                    const parts = balanceStr.split('.');
+                    const parts = creditStr.split('.');
                     const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                     const formattedValue = parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
-                    setDisplayValue(formattedValue);
+                    setDisplayValue("$" + formattedValue);
                   }
                 }}
                 className="text-gray-600 text-xs hover:text-white transition-colors cursor-pointer"
               >
                 {isLoadingBalance
                   ? "Loading..."
-                  : `${formatNumber(parseFloat(userTokenBalance), 0, false, false)} ${tokenSymbol.toUpperCase()} available`}
+                  : `${formatCurrency(userCredit, 2, false)} available`}
               </button>
-            </div>
-
-            <div>
-              <label
-                className="text-sm mb-2 block"
-                style={{ color: themeColor }}
-              >
-                Get
-              </label>
-              <div className="text-white text-3xl font-medium tracking-wide">
-                {isLoadingQuote && parseFloat(inputValue) > 0 ? (
-                  <span className="text-gray-500">Calculating...</span>
-                ) : (
-                  estimatedUSDC
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -262,22 +242,18 @@ export function SellPage({
         <div className="flex-1 flex flex-col justify-end pb-16">
           <div className="px-4">
             <button
-              onClick={handleSell}
+              onClick={handleBorrow}
               disabled={
                 parseFloat(inputValue) <= 0 ||
-                parseFloat(inputValue) > parseFloat(userTokenBalance) ||
-                isTxLoading ||
-                !autoMinUsdcAmtOut
+                parseFloat(inputValue) > parseFloat(userCredit) ||
+                isTxLoading
               }
-              className={`w-full ${
-                txStatus === "success" ? "" : txError ? "" : ""
-              } disabled:bg-gray-700 disabled:text-gray-500 text-black font-semibold py-2.5 rounded-xl transition-colors mb-3 flex items-center justify-center gap-2 focus:outline-none hover:opacity-90`}
+              className={`w-full disabled:bg-gray-700 disabled:text-gray-500 text-black font-semibold py-2.5 rounded-xl transition-colors mb-3 flex items-center justify-center gap-2 focus:outline-none hover:opacity-90`}
               style={{
                 backgroundColor:
                   parseFloat(inputValue) <= 0 ||
-                  parseFloat(inputValue) > parseFloat(userTokenBalance) ||
-                  isTxLoading ||
-                  !autoMinUsdcAmtOut
+                  parseFloat(inputValue) > parseFloat(userCredit) ||
+                  isTxLoading
                     ? "#374151" // gray when disabled
                     : txStatus === "success"
                       ? "#10b981" // green on success
@@ -302,21 +278,15 @@ export function SellPage({
                   <span>Try Again</span>
                 </>
               ) : (
-                "Sell"
+                "Borrow"
               )}
             </button>
 
-            {/* Balance warning */}
-            {parseFloat(inputValue) > parseFloat(userTokenBalance) &&
+            {/* Credit warning */}
+            {parseFloat(inputValue) > parseFloat(userCredit) &&
               parseFloat(inputValue) > 0 && (
                 <div className="text-yellow-500 text-xs text-center mb-2">
-                  Insufficient transferrable balance. You have{" "}
-                  {formatTokenAmount(
-                    userTokenBalance,
-                    tokenSymbol.toUpperCase(),
-                    undefined,
-                    false,
-                  )}
+                  Insufficient credit. You have {formatCurrency(userCredit)} available
                 </div>
               )}
 

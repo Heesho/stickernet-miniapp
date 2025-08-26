@@ -10,7 +10,7 @@ const Avatar = dynamic(
   () => import("@coinbase/onchainkit/identity").then((mod) => ({ default: mod.Avatar }))
     .catch(() => ({ 
       // Fallback component if module fails to load
-      default: () => <div className="w-8 h-8 bg-[var(--app-gray)] rounded-full" /> 
+      default: ({ address }: { address?: `0x${string}` | null }) => <div className="w-8 h-8 bg-[var(--app-gray)] rounded-full" /> 
     })),
   { 
     ssr: false,
@@ -22,7 +22,7 @@ const Name = dynamic(
   () => import("@coinbase/onchainkit/identity").then((mod) => ({ default: mod.Name }))
     .catch(() => ({ 
       // Fallback component if module fails to load
-      default: ({ address }: { address: string }) => (
+      default: ({ address }: { address?: `0x${string}` | null }) => (
         <span className="text-gray-400 text-sm">
           {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Unknown'}
         </span>

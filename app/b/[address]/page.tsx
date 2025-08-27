@@ -36,7 +36,8 @@ export default function BoardPage() {
   // Handle back button in Board component
   const handleBoardSetActiveTab = useCallback((tab: string) => {
     if (tab === "home") {
-      router.push("/");
+      // Use router.back() to return to the previous page instead of always going to home
+      router.back();
     }
   }, [router]);
 

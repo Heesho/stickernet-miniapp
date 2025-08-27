@@ -26,11 +26,21 @@ export default function ImageUpload({
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    console.log('File selected:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified
+    });
 
     const maxSize = maxSizeMB * 1024 * 1024;
     if (file.size > maxSize) {
-      setError(`File size must be less than ${maxSizeMB}MB`);
+      setError(`File size must be less than ${maxSizeMB}MB (current: ${(file.size / 1024 / 1024).toFixed(2)}MB)`);
       return;
     }
 
@@ -38,35 +48,67 @@ export default function ImageUpload({
     setUploading(true);
     setUploadProgress(0);
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    // Create preview
+    try {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.onerror = () => {
+        console.error('Error reading file for preview');
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Error creating preview:', err);
+    }
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      
+      // For iOS, ensure the file is properly attached
+      // Some iOS browsers might need special handling
+      if (file.type === '' && file.name.toLowerCase().endsWith('.heic')) {
+        // HEIC files might not have a proper MIME type
+        const blob = new Blob([file], { type: 'image/heic' });
+        formData.append('file', blob, file.name);
+      } else {
+        formData.append('file', file);
+      }
 
+      console.log('Uploading file to server...');
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
+      const responseData = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseData);
+      } catch (parseErr) {
+        console.error('Failed to parse response:', responseData);
+        throw new Error('Invalid server response');
       }
 
-      const data = await response.json();
+      if (!response.ok) {
+        console.error('Upload failed:', data);
+        throw new Error(data.error || `Upload failed with status ${response.status}`);
+      }
+
+      console.log('Upload successful:', data);
       const ipfsUrl = getIPFSUrl(data.ipfsHash);
       setPreview(ipfsUrl);
       onUploadComplete(data.ipfsHash);
       setUploadProgress(100);
     } catch (err) {
-      console.error('Upload error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to upload file');
+      console.error('Upload error details:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload file';
+      setError(errorMessage);
       setPreview('');
+      // Reset file input to allow re-selection
+      if (e.target) {
+        e.target.value = '';
+      }
     } finally {
       setUploading(false);
     }

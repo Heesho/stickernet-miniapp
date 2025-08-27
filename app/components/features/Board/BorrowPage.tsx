@@ -88,6 +88,13 @@ export function BorrowPage({
     error: borrowError,
     reset: resetBorrow,
   } = useWriteContract();
+  
+  // Debug when hash is set
+  useEffect(() => {
+    if (borrowHash) {
+      console.log("Borrow transaction hash received:", borrowHash);
+    }
+  }, [borrowHash]);
 
   const { 
     isLoading: isBorrowConfirming, 
@@ -102,6 +109,37 @@ export function BorrowPage({
       setTxStatus("pending");
     }
   }, [isBorrowing, isBorrowConfirming]);
+  
+  // Handle transaction success
+  useEffect(() => {
+    if (isBorrowConfirmed && borrowHash) {
+      console.log("Borrow transaction confirmed:", borrowHash);
+      setTxStatus("success");
+      onTransactionSuccess?.();
+      
+      // Close after showing success
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+    }
+  }, [isBorrowConfirmed, borrowHash, onClose, onTransactionSuccess]);
+  
+  // Handle transaction error
+  useEffect(() => {
+    if (borrowError) {
+      console.error("Borrow transaction error:", borrowError);
+      console.error("Error details:", {
+        message: borrowError?.message,
+        cause: (borrowError as any)?.cause,
+        shortMessage: (borrowError as any)?.shortMessage,
+        details: (borrowError as any)?.details,
+        reason: (borrowError as any)?.reason,
+        metaMessages: (borrowError as any)?.metaMessages,
+      });
+      setTxStatus("error");
+      setTxError(borrowError);
+    }
+  }, [borrowError]);
 
   const handleClose = () => {
     // Don't allow closing during transaction
@@ -113,8 +151,9 @@ export function BorrowPage({
     }
   };
 
-  const handleBorrow = async () => {
+  const handleBorrow = () => {
     if (parseFloat(inputValue) <= 0) {
+      console.log("Invalid amount:", inputValue);
       return;
     }
 
@@ -130,20 +169,21 @@ export function BorrowPage({
       return;
     }
 
-    try {
-      // Convert input value to USDC units (6 decimals)
-      const borrowAmount = parseUnits(inputValue, USDC_DECIMALS);
-      
-      console.log("Borrow transaction details:", {
-        tokenAddress,
-        borrowAmount: borrowAmount.toString(),
-        borrowAmountFormatted: inputValue,
-      });
+    // Convert input value to USDC units (6 decimals)
+    const borrowAmount = parseUnits(inputValue, USDC_DECIMALS);
+    
+    console.log("Initiating borrow transaction:", {
+      tokenAddress,
+      borrowAmount: borrowAmount.toString(),
+      borrowAmountFormatted: inputValue,
+      userAddress: address,
+    });
 
+    try {
       // Execute borrow transaction directly on token contract
       // to: user's address (where to send the borrowed USDC)
       // quoteRaw: amount in USDC units (6 decimals)
-      await borrowWrite({
+      borrowWrite({
         address: tokenAddress as `0x${string}`, // Token contract address
         abi: TOKEN_ABI,
         functionName: "borrow",
@@ -154,21 +194,11 @@ export function BorrowPage({
         chainId: baseSepolia.id,
       });
       
-      console.log("Borrow transaction sent successfully");
-      // Set success immediately like RepayPage does
-      setTxStatus("success");
-      
-      // Trigger refresh
-      onTransactionSuccess?.();
-      
-      // Close after delay
-      setTimeout(() => {
-        onClose();
-      }, 2000);
-    } catch (error) {
-      console.error("Borrow transaction failed:", error);
+      console.log("Borrow write function called");
+    } catch (err) {
+      console.error("Error calling borrowWrite:", err);
       setTxStatus("error");
-      setTxError(error instanceof Error ? error : new Error("Transaction failed"));
+      setTxError(err instanceof Error ? err : new Error("Failed to initiate transaction"));
     }
   };
 
@@ -186,9 +216,9 @@ export function BorrowPage({
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black z-[9999] pwa-safe-top ios-standalone-top">
-      <div className="absolute inset-0 bg-black pwa-safe-top ios-standalone-top" />
-      <div className="relative w-full max-w-md mx-auto h-full flex flex-col">
+    <div className="fixed inset-0 bg-background z-[9999] pwa-safe-top ios-standalone-top">
+      <div className="absolute inset-0 bg-background pwa-safe-top ios-standalone-top" />
+      <div className="relative w-full max-w-md mx-auto h-full bg-black flex flex-col pt-12">
         <div className="px-4 pt-4">
           <div className="flex items-center justify-between mb-4">
             <button

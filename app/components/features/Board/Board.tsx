@@ -123,7 +123,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
       />
 
       {/* Add spacing for the fixed header - adjusted for PWA */}
-      <div className="h-14 pwa-header"></div>
+      <div className="h-20 pwa-header"></div>
 
       <BoardStatistics
         token={boardData.token}
@@ -137,11 +137,11 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
       />
 
       {/* Spacing between statistics and content */}
-      <div className="h-8"></div>
+      <div className="h-2"></div>
 
       {/* Board content grid or Trading View */}
       {!showTradingView ? (
-        <div className="px-4">
+        <div>
           <BoardTabs
             curates={boardData.curates}
             onImageClick={handleImageClick}

@@ -19,8 +19,10 @@ export function AuthGate({ children }: AuthGateProps) {
   // Show loading state during hydration
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#111111] flex items-center justify-center">
+        <div className="w-full max-w-md mx-auto bg-black min-h-screen flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+        </div>
       </div>
     );
   }
@@ -28,8 +30,9 @@ export function AuthGate({ children }: AuthGateProps) {
   // Show signin page if not connected
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-6">
-        <div className="w-full max-w-sm flex flex-col items-center justify-center space-y-8">
+      <div className="min-h-screen bg-[#111111] flex items-center justify-center">
+        <div className="w-full max-w-md mx-auto bg-black min-h-screen flex items-center justify-center p-6">
+          <div className="w-full max-w-sm flex flex-col items-center justify-center space-y-8">
           {/* Logo and App Name */}
           <div className="flex flex-col items-center space-y-4">
             <div className="w-32 h-32 bg-white rounded-3xl flex items-center justify-center shadow-2xl p-4">
@@ -59,6 +62,7 @@ export function AuthGate({ children }: AuthGateProps) {
               <p className="text-gray-500 text-sm text-center mt-3">Connecting wallet...</p>
             )}
           </div>
+        </div>
         </div>
       </div>
     );

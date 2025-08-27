@@ -110,7 +110,7 @@ export function CurateConfirmation({
     balanceData && parseFloat(formattedBalance) >= parseFloat(nextPrice);
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex justify-center">
+    <div className="fixed inset-0 bg-background z-50 flex justify-center pt-12">
       <div className="w-full max-w-md bg-black min-h-screen flex flex-col">
         {/* Header with close button */}
         <div className="flex items-center justify-start p-4">

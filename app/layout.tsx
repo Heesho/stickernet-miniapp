@@ -81,12 +81,15 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className="bg-background">
-        <ErrorBoundary>
-          <Providers>
-            {children}
-            <GlobalLoadingOverlay />
-          </Providers>
-        </ErrorBoundary>
+        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-12 bg-black z-[9999]" />
+        <div className="pt-12">
+          <ErrorBoundary>
+            <Providers>
+              {children}
+              <GlobalLoadingOverlay />
+            </Providers>
+          </ErrorBoundary>
+        </div>
       </body>
     </html>
   );

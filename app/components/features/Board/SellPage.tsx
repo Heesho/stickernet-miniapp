@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "../../ui";
@@ -50,6 +50,11 @@ export function SellPage({
     ? formatUnits(tokenData.accountTransferrable, 18)
     : "0";
 
+  // Memoize the enabled check to prevent re-renders
+  const quoteEnabled = useMemo(() => {
+    return !!tokenAddress && parseFloat(inputValue || "0") > 0;
+  }, [tokenAddress, inputValue]);
+
   // Get sell quote with debouncing
   const {
     usdcAmtOut,
@@ -61,16 +66,17 @@ export function SellPage({
   } = useDebouncedSellQuote({
     tokenAddress,
     tokenAmount: inputValue,
-    enabled: !!tokenAddress && parseFloat(inputValue) > 0,
+    enabled: quoteEnabled,
     delay: 300,
   });
 
   // Format the estimated USDC - use quote if available, otherwise show 0
   // Don't use compact format on transaction pages
-  const estimatedUSDC =
-    parseFloat(inputValue) > 0 && usdcAmtOut
+  const estimatedUSDC = useMemo(() => {
+    return parseFloat(inputValue) > 0 && usdcAmtOut
       ? formatCurrency(usdcAmtOut, 2, false)
       : "$0";
+  }, [inputValue, usdcAmtOut]);
 
   const handleNumberPad = (value: string) => {
     let newValue = inputValue;
@@ -189,10 +195,10 @@ export function SellPage({
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black z-[9999] pwa-safe-top ios-standalone-top">
-      <div className="absolute inset-0 bg-black pwa-safe-top ios-standalone-top" />{" "}
+    <div className="fixed inset-0 bg-background z-[9999] pwa-safe-top ios-standalone-top">
+      <div className="absolute inset-0 bg-background pwa-safe-top ios-standalone-top" />{" "}
       {/* Full background overlay */}
-      <div className="relative w-full max-w-md mx-auto h-full flex flex-col">
+      <div className="relative w-full max-w-md mx-auto h-full bg-black flex flex-col pt-12">
         <div className="px-4 pt-4">
           <div className="flex items-center justify-between mb-4">
             <button

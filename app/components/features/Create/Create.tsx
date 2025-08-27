@@ -397,7 +397,7 @@ export function Create({ setActiveTab }: CreateProps) {
           document.body,
         )}
       {/* Scrollable content section */}
-      <div className="flex-1 overflow-y-auto px-4 pt-6">
+      <div className="flex-1 overflow-y-auto px-4 pt-16">
         {/* Name, Symbol and Image Upload row */}
         <div className="flex items-start gap-4">
           <div className="flex-1">

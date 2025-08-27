@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useReadContract } from 'wagmi';
 import { parseUnits, formatUnits, isAddress } from 'viem';
+import { baseSepolia } from 'wagmi/chains';
 import { MULTICALL_ADDRESS, MULTICALL_ABI } from '@/lib/constants';
 import { useErrorHandler, type StandardError } from './useErrorHandler';
 
@@ -46,7 +47,7 @@ function validateSellInputs(tokenAddress: string | undefined, tokenAmount: strin
         retryable: false,
         recoveryAction: 'none',
         recoverySuggestion: 'Please select a valid token.',
-        timestamp: Date.now()
+        timestamp: 0
       }
     };
   }
@@ -71,7 +72,7 @@ function validateSellInputs(tokenAddress: string | undefined, tokenAmount: strin
         retryable: false,
         recoveryAction: 'none',
         recoverySuggestion: 'Please check your input and try again.',
-        timestamp: Date.now()
+        timestamp: 0
       }
     };
   }
@@ -89,7 +90,7 @@ function validateSellInputs(tokenAddress: string | undefined, tokenAmount: strin
         retryable: false,
         recoveryAction: 'none',
         recoverySuggestion: 'Please enter a smaller amount.',
-        timestamp: Date.now()
+        timestamp: 0
       }
     };
   }
@@ -107,7 +108,7 @@ function validateSellInputs(tokenAddress: string | undefined, tokenAmount: strin
         retryable: false,
         recoveryAction: 'none',
         recoverySuggestion: 'Please enter a larger amount.',
-        timestamp: Date.now()
+        timestamp: 0
       }
     };
   }
@@ -130,7 +131,7 @@ function validateSellInputs(tokenAddress: string | undefined, tokenAmount: strin
         retryable: false,
         recoveryAction: 'none',
         recoverySuggestion: 'Please enter a valid number.',
-        timestamp: Date.now()
+        timestamp: 0
       }
     };
   }
@@ -161,6 +162,7 @@ export function useDebouncedSellQuote({
       }
     })
   });
+  
 
   // Debounce the token amount with improved UX
   useEffect(() => {
@@ -182,42 +184,38 @@ export function useDebouncedSellQuote({
   }, [tokenAmount, delay]);
 
   // Validate inputs with comprehensive error handling
-  const validation = useMemo(() => 
-    validateSellInputs(tokenAddress, debouncedAmount), 
-    [tokenAddress, debouncedAmount]
-  );
+  const validation = useMemo(() => {
+    // Only validate if we have a debounced amount to check
+    if (!debouncedAmount) {
+      return { isValid: false };
+    }
+    return validateSellInputs(tokenAddress, debouncedAmount);
+  }, [tokenAddress, debouncedAmount]);
 
   const shouldFetch = enabled && validation.isValid && !!validation.parsedAmount && validation.parsedAmount > 0n;
+
+  // Prepare contract arguments
+  const contractArgs = shouldFetch ? [
+    tokenAddress as `0x${string}`,
+    validation.parsedAmount!,
+    BigInt(9000) // 90% slippage tolerance in basis points (10000 = 100%)
+  ] : undefined;
 
   // Get sell quote from multicall contract
   const { data, isLoading, error, isFetching } = useReadContract({
     address: MULTICALL_ADDRESS,
     abi: MULTICALL_ABI,
     functionName: 'sellTokenIn',
-    args: shouldFetch ? [
-      tokenAddress as `0x${string}`,
-      validation.parsedAmount!,
-      BigInt(9500) // 95% slippage tolerance (for getting minimum amount)
-    ] : undefined,
+    args: contractArgs,
+    chainId: baseSepolia.id, // Explicitly set chain ID
     query: {
       enabled: shouldFetch,
-      refetchInterval: enabled ? 10000 : false,
+      refetchInterval: false, // Disable auto-refetch to prevent loops
       staleTime: 5000,
-      retry: (failureCount, error) => {
-        // Don't retry client-side validation errors
-        if (!validation.isValid) return false;
-        // Retry network errors up to 2 times
-        const errorMsg = error?.message || '';
-        if (errorMsg.includes('network') || errorMsg.includes('RPC')) {
-          return failureCount < 2;
-        }
-        // Don't retry contract reverts
-        if (errorMsg.includes('revert')) return false;
-        return failureCount < 1;
-      },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+      retry: 1, // Allow 1 retry
     }
   });
+  
 
   // Parse the response with error handling
   const result = useMemo(() => {
@@ -257,20 +255,27 @@ export function useDebouncedSellQuote({
         slippage: undefined,
       };
     }
-  }, [data, errorHandler]);
+  }, [data, errorHandler, tokenAddress, debouncedAmount, validation.parsedAmount]);
 
   // Enhanced error handling
   const enhancedError = useMemo(() => {
     if (validation.error) return validation.error;
     if (error) {
-      return errorHandler.handleError(error, {
-        context: 'contract_call',
-        tokenAddress,
-        amount: debouncedAmount
-      });
+      // Simple error object without calling handleError
+      return {
+        id: 'contract_error',
+        category: 'contract' as const,
+        severity: 'medium' as const,
+        message: error.message || 'Contract call failed',
+        userMessage: 'Failed to get quote. Please try again.',
+        retryable: true,
+        recoveryAction: 'retry' as const,
+        recoverySuggestion: 'Please check your input and try again.',
+        timestamp: 0
+      };
     }
     return null;
-  }, [validation.error, error, errorHandler, tokenAddress, debouncedAmount]);
+  }, [validation.error, error]);
 
   // Determine if we have a valid quote
   const hasValidQuote = !!(data && (data as [bigint, bigint, bigint, bigint])[0] && (data as [bigint, bigint, bigint, bigint])[0] > 0n);

@@ -167,7 +167,7 @@ export const BoardStatistics = memo(function BoardStatistics({
           )}
 
           {/* Owner info and options */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-2">
             {/* Owner with OnchainKit Identity - clickable */}
             <button 
               onClick={handleOwnerClick}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 // import Image from "next/image"; // Commented out - using regular img for Discord images
 import { getProxiedImageUrl } from "@/lib/utils/image-proxy";
+import { getImageFromMetadata } from "@/lib/utils/metadata";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Icon } from "../../ui";
@@ -54,6 +55,8 @@ export function ImageDetail({
   const [tokenAvatarError, setTokenAvatarError] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [priceChange24h, setPriceChange24h] = useState<number | null>(null);
+  const [curateImageUrl, setCurateImageUrl] = useState<string>("");
+  const [tokenImageUrl, setTokenImageUrl] = useState<string>("");
   const { address: account, isConnected } = useAccount();
 
   // Use tokenId directly from subgraph
@@ -78,6 +81,28 @@ export function ImageDetail({
     account,
     enabled: !!(tokenAddress && account && isConnected),
   });
+
+  // Fetch metadata and extract image URLs
+  useEffect(() => {
+    const loadImages = async () => {
+      try {
+        // Load curate/sticker image from metadata
+        const curateImage = await getImageFromMetadata(curate.uri);
+        setCurateImageUrl(getProxiedImageUrl(curateImage));
+        
+        // Load token/board image from metadata
+        const tokenImage = await getImageFromMetadata(curate.token.uri);
+        setTokenImageUrl(getProxiedImageUrl(tokenImage));
+      } catch (error) {
+        console.error("Error loading images from metadata:", error);
+        // Fallback to direct URLs if metadata fetch fails
+        setCurateImageUrl(getProxiedImageUrl(curate.uri));
+        setTokenImageUrl(getProxiedImageUrl(curate.token.uri));
+      }
+    };
+    
+    loadImages();
+  }, [curate.uri, curate.token.uri]);
 
   // Fetch price change from subgraph
   useEffect(() => {
@@ -194,24 +219,26 @@ export function ImageDetail({
         <div className="relative">
           {!imageError ? (
             <div className="relative">
-              {!imageLoaded && (
+              {(!imageLoaded || !curateImageUrl) && (
                 <div className="h-screen bg-gray-800 animate-pulse flex items-center justify-center">
                   <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
                 </div>
               )}
-              <button
-                onClick={handleStickerClick}
-                className="w-full relative block"
-              >
-                <img
-                  src={getProxiedImageUrl(curate.uri)}
-                  alt={`Curate ${curate.id}`}
-                  className={`w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0 absolute top-0"} max-h-screen`}
-                  onLoad={() => setImageLoaded(true)}
-                  onError={() => setImageError(true)}
-                  style={{ height: "auto", minHeight: "60vh" }}
-                />
-              </button>
+              {curateImageUrl && (
+                <button
+                  onClick={handleStickerClick}
+                  className="w-full relative block"
+                >
+                  <img
+                    src={curateImageUrl}
+                    alt={`Curate ${curate.id}`}
+                    className={`w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0 absolute top-0"} max-h-screen`}
+                    onLoad={() => setImageLoaded(true)}
+                    onError={() => setImageError(true)}
+                    style={{ height: "auto", minHeight: "60vh" }}
+                  />
+                </button>
+              )}
             </div>
           ) : (
             <div className="h-screen bg-gray-800 flex items-center justify-center">
@@ -266,9 +293,9 @@ export function ImageDetail({
                 onClick={handleBoardClick}
                 className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
               >
-                {!tokenAvatarError ? (
+                {!tokenAvatarError && tokenImageUrl ? (
                   <img
-                    src={getProxiedImageUrl(curate.token.uri)}
+                    src={tokenImageUrl}
                     alt={`${curate.token.name} cover`}
                     className="w-8 h-8 rounded-full object-cover"
                     onError={() => setTokenAvatarError(true)}

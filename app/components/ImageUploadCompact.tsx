@@ -239,7 +239,6 @@ export default function ImageUploadCompact({
       <input
         type="file"
         accept="image/*,video/*"
-        capture="environment"
         onChange={handleFileSelect}
         disabled={uploading}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"

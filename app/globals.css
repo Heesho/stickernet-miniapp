@@ -500,11 +500,28 @@ body::-webkit-scrollbar {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* PWA Safe Areas - Always apply when safe-area-inset is available */
+.pwa-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Fallback for older iOS versions */
+@supports (padding-top: constant(safe-area-inset-top)) {
+  .pwa-safe-top {
+    padding-top: constant(safe-area-inset-top);
+  }
+}
+
+/* Add extra padding for fixed/sticky headers in PWA */
+.pwa-header-spacing {
+  height: env(safe-area-inset-top);
+}
+
 /* Detect PWA/Standalone mode */
 @media (display-mode: standalone) {
-  /* PWA Specific Safe Areas - only apply in standalone mode */
-  .pwa-safe-top {
-    padding-top: max(env(safe-area-inset-top), 20px);
+  /* Global app padding in PWA mode */
+  body {
+    padding-top: env(safe-area-inset-top);
   }
   
   .pwa-safe-bottom {
@@ -514,11 +531,6 @@ body::-webkit-scrollbar {
   /* For bottom navigation in PWA mode */
   .pwa-nav-safe {
     padding-bottom: max(env(safe-area-inset-bottom), 12px);
-  }
-  
-  /* Global app padding in PWA mode */
-  body {
-    padding-top: env(safe-area-inset-top);
   }
   
   .standalone-only {

@@ -13,8 +13,8 @@ export const BoardHeader = memo(function BoardHeader({
   const headerSymbolOpacity = Math.min(scrollY / 100, 1);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-40 pwa-safe-top ios-standalone-top">
-      <div className="w-full max-w-md mx-auto bg-black">
+    <div className="fixed left-0 right-0 z-40 bg-black" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="w-full max-w-md mx-auto">
         <div className="relative flex items-center justify-between p-4">
           {/* Back button */}
           <button 

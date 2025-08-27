@@ -112,7 +112,7 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
   }
 
   return (
-    <div className="animate-fade-in min-h-screen pb-40">
+    <div className="animate-fade-in min-h-screen pb-40" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <BoardHeader
         tokenSymbol={boardData.token.symbol}
         onBackToHome={handleBackToHome}
@@ -122,8 +122,8 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         themeColors={themeColors}
       />
 
-      {/* Add spacing for the fixed header - adjusted for PWA */}
-      <div className="h-14 pwa-header"></div>
+      {/* Add spacing for the fixed header - no need for safe area here as it's handled by parent padding */}
+      <div style={{ height: '56px' }}></div>
 
       <BoardStatistics
         token={boardData.token}

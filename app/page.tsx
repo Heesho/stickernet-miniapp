@@ -49,7 +49,9 @@ function AppInner() {
 
   return (
     <AuthGate>
-      <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)] pwa-safe-top">
+      {/* PWA Safe Area Spacer - visible in PWA mode to push content down */}
+      <div className="fixed top-0 left-0 right-0 z-[60] bg-black" style={{ height: 'env(safe-area-inset-top, 0px)' }} />
+      <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <AppContent 
           activeTab={activeTab}
           setActiveTab={handleSetActiveTab}

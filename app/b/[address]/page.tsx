@@ -42,8 +42,8 @@ export default function BoardPage() {
   }, [router]);
 
   return (
-    <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)] pwa-safe-top">
-      <div className="w-full max-w-md mx-auto px-4 pb-20 bg-black min-h-screen">
+    <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
+      <div className="w-full max-w-md mx-auto pb-20 bg-black min-h-screen">
         <main className="flex-1">
           <Board 
             tokenId={tokenAddress} 

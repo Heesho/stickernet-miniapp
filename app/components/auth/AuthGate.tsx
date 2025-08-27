@@ -50,11 +50,9 @@ export function AuthGate({ children }: AuthGateProps) {
           <div className="w-full flex flex-col items-center">
             <Wallet>
               <ConnectWallet
-                className="bg-white text-black hover:bg-gray-200 transition-colors rounded-xl px-8 py-4 font-semibold text-lg flex items-center justify-center"
+                className="bg-black text-white border-2 border-white hover:bg-gray-900 transition-colors rounded-xl px-8 py-4 font-semibold text-lg"
                 text="Sign in"
-              >
-                <span className="text-black font-semibold text-lg">Sign in</span>
-              </ConnectWallet>
+              />
             </Wallet>
             
             {isConnecting && (

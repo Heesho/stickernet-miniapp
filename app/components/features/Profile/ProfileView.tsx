@@ -174,7 +174,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
     address: USDC_ADDRESS,
     abi: USDC_ABI,
     functionName: "balanceOf",
-    args: userAddress ? [userAddress] : undefined,
+    args: userAddress ? [userAddress as `0x${string}`] : undefined,
     query: {
       enabled: !!userAddress,
       refetchInterval: 5000,

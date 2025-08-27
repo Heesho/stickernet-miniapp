@@ -15,7 +15,9 @@
       "Bash(sed:*)",
       "Bash(awk:*)",
       "Bash(git commit:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

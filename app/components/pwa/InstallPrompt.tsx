@@ -42,18 +42,31 @@ export function InstallPrompt() {
     };
 
     // Only show prompt on mobile devices that haven't installed the app
-    if (!checkStandalone() && checkMobile()) {
-      const isIOSDevice = checkIOS();
-      
+    const standalone = checkStandalone();
+    const mobile = checkMobile();
+    const isIOSDevice = checkIOS();
+    
+    console.log("PWA Install Prompt Debug:", {
+      standalone,
+      mobile,
+      isIOSDevice,
+      userAgent: navigator.userAgent,
+      windowWidth: window.innerWidth
+    });
+    
+    if (!standalone && mobile) {
       // Check if user has dismissed the prompt before
       const dismissed = localStorage.getItem("pwa-prompt-dismissed");
       const dismissedTime = dismissed ? parseInt(dismissed) : 0;
       const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
       
+      console.log("PWA Dismissal check:", { dismissed, daysSinceDismissed });
+      
       // Show prompt if never dismissed or more than 7 days since last dismissal
       if (!dismissed || daysSinceDismissed > 7) {
         // For iOS, show custom prompt immediately
         if (isIOSDevice) {
+          console.log("Showing iOS install prompt in 2 seconds");
           setTimeout(() => setShowPrompt(true), 2000);
         }
       }

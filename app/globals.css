@@ -516,6 +516,11 @@ body::-webkit-scrollbar {
     padding-bottom: max(env(safe-area-inset-bottom), 12px);
   }
   
+  /* Global app padding in PWA mode */
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+  
   .standalone-only {
     display: block;
   }

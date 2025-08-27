@@ -49,7 +49,7 @@ function AppInner() {
 
   return (
     <AuthGate>
-      <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
+      <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)] pwa-safe-top">
         <AppContent 
           activeTab={activeTab}
           setActiveTab={handleSetActiveTab}

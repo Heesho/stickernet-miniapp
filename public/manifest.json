@@ -1,0 +1,45 @@
+{
+  "name": "stickr",
+  "short_name": "stickr",
+  "description": "Create and trade digital stickers on the blockchain",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["social", "finance", "entertainment"],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "scope": "/",
+  "shortcuts": [
+    {
+      "name": "Create Sticker",
+      "url": "/?tab=create",
+      "description": "Create a new sticker"
+    },
+    {
+      "name": "Browse",
+      "url": "/?tab=browse",
+      "description": "Browse stickers"
+    }
+  ]
+}

@@ -117,7 +117,7 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
   const isLoading = isCreating || isConfirming;
 
   return (
-    <div className="fixed inset-0 bg-black z-[9999] flex justify-center">
+    <div className="fixed inset-0 bg-black z-[9999] flex justify-center pwa-safe-top ios-standalone-top">
       <div className="w-full max-w-md bg-black min-h-screen flex flex-col">
         {/* Header with close button */}
         <div className="flex items-center justify-start p-4">

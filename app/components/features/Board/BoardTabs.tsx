@@ -7,7 +7,7 @@ export const BoardTabs = memo(function BoardTabs({
   onImageClick
 }: BoardTabsProps) {
   return (
-    <div className="columns-2 gap-4">
+    <div className="columns-2 gap-4 pt-6">
       {curates.map((curate, index) => (
         <CurateImage 
           key={curate.id} 

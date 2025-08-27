@@ -190,8 +190,8 @@ export function BuyPage({
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black z-[9999]">
-      <div className="absolute inset-0 bg-black" />{" "}
+    <div className="fixed inset-0 bg-black z-[9999] pwa-safe-top ios-standalone-top">
+      <div className="absolute inset-0 bg-black pwa-safe-top ios-standalone-top" />{" "}
       {/* Full background overlay */}
       <div className="relative w-full max-w-md mx-auto h-full flex flex-col">
         <div className="px-4 pt-4">

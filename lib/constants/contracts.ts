@@ -19,13 +19,13 @@ export const USDC_ADDRESS =
  * Router contract address on Base Sepolia
  */
 export const ROUTER_ADDRESS =
-  "0xeC6860553ABF0a9c4428edC9e1B280D3945cDfC2" as const;
+  "0x9Bb002B87cff21f0fFB768d30D5b9349D7d2403f" as const;
 
 /**
  * Multicall contract address for batched contract queries
  */
 export const MULTICALL_ADDRESS =
-  "0x9ACFf17Dc507DB58fc0d964ab10f7e0031dB44b5" as const;
+  "0x6B0d893593366fd31055b448eB074B5aAEB23CC1" as const;
 
 // ===== CONTRACT ABIS =====
 

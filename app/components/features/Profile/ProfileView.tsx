@@ -15,6 +15,8 @@ import { formatCurrency, formatNumber } from "@/lib/utils/formatters";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { base, baseSepolia } from "wagmi/chains";
+import { isTokenBlacklisted } from "@/lib/constants/blacklist";
+import { TokenImage } from "../../ui/TokenImage";
 import { ConnectWallet } from "@coinbase/onchainkit/wallet";
 import {
   Transaction,
@@ -172,39 +174,42 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
     address: USDC_ADDRESS,
     abi: USDC_ABI,
     functionName: "balanceOf",
-    args: connectedAddress ? [connectedAddress] : undefined,
+    args: userAddress ? [userAddress] : undefined,
     query: {
-      enabled: !!connectedAddress,
+      enabled: !!userAddress,
       refetchInterval: 5000,
     },
   });
 
   // Calculate portfolio value
   const calculatePortfolioValue = () => {
-    if (!profileData?.user) return { total: 0, cash: 0 };
-
     let totalValue = 0;
     let cashFromPositions = 0;
 
-    // Add value from token positions (shares)
-    if (profileData.user.tokenPositions) {
-      profileData.user.tokenPositions.forEach((position) => {
-        const balance = parseFloat(position.balance || "0");
-        const marketPrice = parseFloat(position.token.marketPrice || "0");
-        const value = balance * marketPrice;
-        totalValue += value;
+    // Add value from token positions (shares) if profile data exists
+    if (profileData?.user?.tokenPositions) {
+      profileData.user.tokenPositions
+        .filter(position => !isTokenBlacklisted(position.token.id))
+        .forEach((position) => {
+          const balance = parseFloat(position.balance || "0");
+          const marketPrice = parseFloat(position.token.marketPrice || "0");
+          const value = balance * marketPrice;
+          totalValue += value;
 
-        // Fallback cash from subgraph (debt)
-        cashFromPositions += parseFloat(position.debt || "0");
-      });
+          // Fallback cash from subgraph (debt)
+          cashFromPositions += parseFloat(position.debt || "0");
+        });
     }
 
-    // Prefer on-chain USDC balance when available on active chain
+    // Always check on-chain USDC balance when available, regardless of profileData
     let cash = 0;
+    console.log('Debug - chainId:', chainId, 'baseSepolia.id:', baseSepolia.id, 'usdcBalance:', usdcBalance);
     if (usdcBalance !== undefined && chainId === baseSepolia.id) {
-      cash = parseFloat(formatUnits(usdcBalance, USDC_DECIMALS));
+      cash = parseFloat(formatUnits(usdcBalance as bigint, USDC_DECIMALS));
+      console.log('Using on-chain USDC balance:', cash, 'raw:', usdcBalance?.toString());
     } else {
       cash = cashFromPositions;
+      console.log('Using fallback cash from positions:', cash, 'chainId:', chainId, 'usdcBalance:', usdcBalance);
     }
 
     return { total: totalValue + cash, cash };
@@ -255,6 +260,13 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
     } catch {}
     fetchProfileData();
   }, [fetchProfileData]);
+
+  // Refetch balance when address or chain changes
+  useEffect(() => {
+    if (userAddress && chainId === baseSepolia.id) {
+      refetchBalance();
+    }
+  }, [userAddress, chainId, refetchBalance]);
 
   if (!userAddress) {
     return (
@@ -454,8 +466,10 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
         {/* Shares Tab */}
         {activeTab === "shares" && (
           <div className="space-y-3">
-            {profileData.user?.tokenPositions?.length > 0 ? (
-              profileData.user.tokenPositions.map((position) => {
+            {profileData.user?.tokenPositions?.filter(position => !isTokenBlacklisted(position.token.id)).length > 0 ? (
+              profileData.user.tokenPositions
+                .filter(position => !isTokenBlacklisted(position.token.id))
+                .map((position) => {
                 const balance = parseFloat(position.balance || "0");
                 const marketPrice = parseFloat(
                   position.token.marketPrice || "0",
@@ -470,15 +484,12 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 rounded-full bg-gray-800 overflow-hidden">
-                        {position.token.uri && (
-                          <Image
-                            src={position.token.uri}
-                            alt={position.token.symbol}
-                            width={40}
-                            height={40}
-                            className="object-cover"
-                          />
-                        )}
+                        <TokenImage
+                          uri={position.token.uri}
+                          name={position.token.symbol}
+                          size={40}
+                          className="w-full h-full rounded-full"
+                        />
                       </div>
                       <div>
                         <div className="text-white font-medium">
@@ -547,8 +558,10 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
         {/* Boards Tab */}
         {activeTab === "boards" && (
           <div className="space-y-3">
-            {profileData.user?.tokensOwned?.length > 0 ? (
-              profileData.user.tokensOwned.map((token) => (
+            {profileData.user?.tokensOwned?.filter(token => !isTokenBlacklisted(token.id)).length > 0 ? (
+              profileData.user.tokensOwned
+                .filter(token => !isTokenBlacklisted(token.id))
+                .map((token) => (
                 <div
                   key={token.id}
                   onClick={() => router.push(`/b/${token.id}`)}
@@ -556,15 +569,12 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-full bg-gray-800 overflow-hidden">
-                      {token.uri && (
-                        <Image
-                          src={token.uri}
-                          alt={token.symbol}
-                          width={40}
-                          height={40}
-                          className="object-cover"
-                        />
-                      )}
+                      <TokenImage
+                        uri={token.uri}
+                        name={token.symbol}
+                        size={40}
+                        className="w-full h-full rounded-full"
+                      />
                     </div>
                     <div>
                       <div className="text-white font-medium">{token.name}</div>

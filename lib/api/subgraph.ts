@@ -6,6 +6,7 @@
  */
 
 import type { Curate } from "@/types";
+import { isTokenBlacklisted } from "@/lib/constants/blacklist";
 export type { Curate };
 
 // ===== API ENDPOINTS =====
@@ -823,7 +824,13 @@ export async function fetchTokens(
     GetTokensVariables
   >(GET_TOKENS_QUERY, { first, skip, orderBy, orderDirection });
 
-  return result.data?.tokens || [];
+  const tokens = result.data?.tokens || [];
+  // Filter out blacklisted tokens (id field contains the token address)
+  console.log('Filtering tokens, found:', tokens.length);
+  const filtered = tokens.filter(token => !isTokenBlacklisted(token.id));
+  console.log('After filtering blacklisted tokens:', filtered.length);
+  console.log('Blacklisted token check for 0x9d28...:', isTokenBlacklisted('0x9d28d48c7a6001d6245ce1d2467b8e39f21d8d3a'));
+  return filtered;
 }
 
 /**
@@ -854,8 +861,9 @@ export async function fetchTrendingTokens(
     { first, skip, timestamp: timestamp24hAgo.toString() },
   );
 
-  // Extract just the token entities from the response
-  return result.data?.tokenDayDatas?.map((td) => td.token) || [];
+  // Extract just the token entities from the response and filter out blacklisted tokens (id field contains the token address)
+  const tokens = result.data?.tokenDayDatas?.map((td) => td.token) || [];
+  return tokens.filter(token => !isTokenBlacklisted(token.id));
 }
 
 /**

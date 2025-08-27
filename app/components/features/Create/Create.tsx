@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getProxiedImageUrl } from "@/lib/utils/image-proxy";
+import { getIPFSUrl, uploadBoardMetadata, type BoardMetadata } from "@/lib/pinata";
+import ImageUploadCompact from "../../ImageUploadCompact";
 import { createPortal } from "react-dom";
 import {
   useAccount,
@@ -41,7 +43,9 @@ export function Create({ setActiveTab }: CreateProps) {
 
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
+  const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [ipfsHash, setIpfsHash] = useState("");
   const [buyAmount, setBuyAmount] = useState("0");
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
@@ -108,21 +112,27 @@ export function Create({ setActiveTab }: CreateProps) {
   };
 
   const handleCreate = async () => {
+    // Use IPFS URL if we have a hash, otherwise use direct URL
+    const finalImageUrl = ipfsHash ? getIPFSUrl(ipfsHash) : imageUrl;
+    let metadataUrl = finalImageUrl; // Default to image URL for backwards compatibility
+    
     console.log("handleCreate called with:", {
       name,
       symbol,
-      imageUrl,
+      imageUrl: finalImageUrl,
+      ipfsHash,
       buyAmount,
     });
 
     const buyAmountNum = parseFloat(buyAmount);
 
     // Check validation
-    if (!name || !symbol || !imageUrl || buyAmountNum < 1) {
+    if (!name || !symbol || (!imageUrl && !ipfsHash) || buyAmountNum < 1) {
       console.log("Validation failed:", {
         hasName: !!name,
         hasSymbol: !!symbol,
         hasImageUrl: !!imageUrl,
+        hasIpfsHash: !!ipfsHash,
         buyAmountNum,
         isValidAmount: buyAmountNum >= 1,
       });
@@ -145,6 +155,37 @@ export function Create({ setActiveTab }: CreateProps) {
     setIsCreating(true);
 
     try {
+      // Upload metadata to IPFS if we have a description or structured data
+      if (description || ipfsHash) {
+        toast.info("Uploading metadata to IPFS...");
+        
+        const metadata: BoardMetadata = {
+          name,
+          symbol,
+          description: description || undefined,
+          image: finalImageUrl,
+          attributes: [
+            {
+              trait_type: "Creator",
+              value: address || ""
+            },
+            {
+              trait_type: "Created",
+              value: new Date().toISOString()
+            }
+          ]
+        };
+        
+        try {
+          const metadataHash = await uploadBoardMetadata(metadata);
+          metadataUrl = getIPFSUrl(metadataHash);
+          console.log("Metadata uploaded:", metadataUrl);
+        } catch (metadataError) {
+          console.error("Metadata upload failed, using image URL directly:", metadataError);
+          // Fall back to using image URL directly if metadata upload fails
+        }
+      }
+
       // Ensure we're on the correct chain
       if (chain?.id !== baseSepolia.id) {
         try {
@@ -190,7 +231,7 @@ export function Create({ setActiveTab }: CreateProps) {
           args: [
             name,
             symbol,
-            imageUrl,
+            metadataUrl, // Now passing metadata URL instead of just image URL
             false, // isModerated
             buyAmountInUsdc, // amountQuoteIn - the contract handles the buy internally!
           ],
@@ -218,7 +259,7 @@ export function Create({ setActiveTab }: CreateProps) {
         // Consider request submission as success for UX; wallets may not return a tx hash here
         toast.success(`Board ${symbol} created successfully!`);
         // Capture created values for the success modal before clearing inputs
-        setCreatedMeta({ name, symbol, imageUrl });
+        setCreatedMeta({ name, symbol, imageUrl: finalImageUrl });
         setIsCreating(false);
         setIsCreated(true);
         setShowSuccessModal(true);
@@ -226,6 +267,7 @@ export function Create({ setActiveTab }: CreateProps) {
         setName("");
         setSymbol("");
         setImageUrl("");
+        setIpfsHash("");
         setBuyAmount("0");
         return;
       } catch (sendCallsError: any) {
@@ -256,7 +298,7 @@ export function Create({ setActiveTab }: CreateProps) {
   };
 
   const isValid =
-    name && symbol && imageUrl && !imageError && parseFloat(buyAmount) >= 1;
+    name && symbol && (imageUrl || ipfsHash) && !imageError && parseFloat(buyAmount) >= 1;
 
   // Format number with commas for display
   const formatWithCommas = (value: string) => {
@@ -322,7 +364,7 @@ export function Create({ setActiveTab }: CreateProps) {
                 {createdMeta.imageUrl && (
                   <div className="w-40 h-40 rounded-2xl overflow-hidden bg-gray-900 shadow-lg mb-8">
                     <img
-                      src={getProxiedImageUrl(createdMeta.imageUrl)}
+                      src={createdMeta.imageUrl}
                       alt="Preview"
                       className="w-full h-full object-cover"
                     />
@@ -356,7 +398,7 @@ export function Create({ setActiveTab }: CreateProps) {
         )}
       {/* Scrollable content section */}
       <div className="flex-1 overflow-y-auto px-4 pt-6">
-        {/* Name, Symbol and Preview row */}
+        {/* Name, Symbol and Image Upload row */}
         <div className="flex items-start gap-4">
           <div className="flex-1">
             {/* Name */}
@@ -367,7 +409,7 @@ export function Create({ setActiveTab }: CreateProps) {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Name"
                 className="w-full bg-transparent text-lg placeholder:text-gray-600 focus:outline-none focus:placeholder:text-gray-500 transition-colors"
-                maxLength={20}
+                maxLength={26}
               />
             </div>
 
@@ -379,41 +421,35 @@ export function Create({ setActiveTab }: CreateProps) {
                 onChange={(e) => setSymbol(e.target.value.toUpperCase())}
                 placeholder="SYMBOL"
                 className="w-full bg-transparent text-5xl font-bold placeholder:text-gray-600 focus:outline-none focus:placeholder:text-gray-500 transition-colors"
-                maxLength={10}
+                maxLength={8}
               />
             </div>
           </div>
 
-          {/* Image Preview - No box until image is added */}
-          {imageUrl && !imageError && (
-            <div className="w-32 h-32 rounded-2xl overflow-hidden flex-shrink-0">
-              <img
-                src={getProxiedImageUrl(imageUrl)}
-                alt="Preview"
-                className="w-full h-full object-cover"
-                onLoad={() => setImageLoading(false)}
-                onError={() => {
-                  setImageError(true);
-                  setImageLoading(false);
-                }}
-              />
-            </div>
-          )}
+          {/* Image Upload - Top right corner */}
+          <ImageUploadCompact
+            onUploadComplete={(hash) => {
+              setIpfsHash(hash);
+              setImageUrl(getIPFSUrl(hash));
+            }}
+            currentImage={imageUrl}
+          />
         </div>
 
-        {/* Image URL */}
-        <div className="mt-6 mb-6">
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="Enter image URL"
-            className="w-full bg-transparent border-b border-gray-800 pb-2 text-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-gray-600 transition-colors"
+        {/* Description */}
+        <div className="mt-4">
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Description..."
+            className="w-full bg-transparent text-base text-white placeholder:text-gray-600 focus:outline-none focus:placeholder:text-gray-500 transition-colors resize-none"
+            rows={3}
+            maxLength={280}
           />
         </div>
 
         {/* Buy Amount Section */}
-        <div>
+        <div className="mt-8">
           <div className="mb-2">
             <span className="text-sm text-[#0052FF] font-medium">
               Initial buy
@@ -435,9 +471,9 @@ export function Create({ setActiveTab }: CreateProps) {
       </div>
 
       {/* Fixed bottom section - positioned at bottom */}
-      <div className="bg-black border-t border-gray-900 pb-20">
+      <div className="bg-black pb-20">
         {/* Create Button */}
-        <div className="px-4 pt-2 mb-3">
+        <div className="px-4 mb-2">
           <button
             onClick={handleCreate}
             disabled={!isValid || isCreating}

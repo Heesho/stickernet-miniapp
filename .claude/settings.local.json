@@ -14,7 +14,8 @@
       "WebFetch(domain:github.com)",
       "Bash(sed:*)",
       "Bash(awk:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Image from 'next/image';
 import { useAccount } from 'wagmi';
+import ImageUploadCompact from "../../ImageUploadCompact";
+import { getIPFSUrl } from "@/lib/pinata";
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { baseSepolia } from 'wagmi/chains';
@@ -20,6 +22,7 @@ interface CreateStickerProps {
 export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, onSuccess }: CreateStickerProps) {
   const { address: userAddress, isConnected } = useAccount();
   const [url, setUrl] = useState("");
+  const [ipfsHash, setIpfsHash] = useState("");
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [priceChange24h, setPriceChange24h] = useState<number | null>(null);
@@ -66,13 +69,20 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
   const themeColorClass = priceIsUp ? 'text-[#0052FF]' : 'text-[#ceb1ff]';
   const themeBgClass = priceIsUp ? 'bg-[#0052FF]' : 'bg-[#ceb1ff]';
 
-  // Validate URL format
+  // Validate URL format or IPFS hash
   useEffect(() => {
-    const urlPattern = /^https:\/\/(memedepot\.com|.*\.(jpg|jpeg|png|gif|webp)).*$/i;
-    setIsValidUrl(urlPattern.test(url));
+    if (ipfsHash) {
+      setIsValidUrl(true);
+      setUrl(getIPFSUrl(ipfsHash));
+    } else if (url) {
+      const urlPattern = /^https:\/\/(memedepot\.com|.*\.(jpg|jpeg|png|gif|webp)).*$/i;
+      setIsValidUrl(urlPattern.test(url));
+    } else {
+      setIsValidUrl(false);
+    }
     setImageError(false); // Reset error when URL changes
     setImageLoaded(false);
-  }, [url]);
+  }, [url, ipfsHash]);
 
   // Handle successful transaction
   useEffect(() => {
@@ -87,7 +97,8 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
   }, [isConfirmed, onSuccess, onClose]);
 
   const handleCreate = async () => {
-    if (!url || !isValidUrl || !userAddress) return;
+    const finalUrl = ipfsHash ? getIPFSUrl(ipfsHash) : url;
+    if (!finalUrl || !isValidUrl || !userAddress) return;
 
     try {
       // Call createContent on the Router contract
@@ -95,7 +106,7 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
         address: ROUTER_ADDRESS,
         abi: ROUTER_ABI,
         functionName: 'createContent',
-        args: [tokenAddress as `0x${string}`, url], // token address and uri
+        args: [tokenAddress as `0x${string}`, finalUrl], // token address and uri
         chainId: baseSepolia.id,
       });
     } catch (error) {
@@ -106,7 +117,7 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
   const isLoading = isCreating || isConfirming;
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex justify-center">
+    <div className="fixed inset-0 bg-black z-[9999] flex justify-center">
       <div className="w-full max-w-md bg-black min-h-screen flex flex-col">
         {/* Header with close button */}
         <div className="flex items-center justify-start p-4">
@@ -121,66 +132,24 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
         </div>
 
         {/* Content */}
-        <div className="flex-1 px-6 pb-6 flex flex-col">
+        <div className="flex-1 pb-40 flex flex-col">
           {/* Title */}
-          <h1 className="text-white text-2xl font-bold mb-8">
-            Create Sticker for {tokenSymbol || tokenName || 'Token'}
+          <h1 className="text-white text-2xl font-bold mb-4 px-6">
+            Create sticker for {tokenSymbol || tokenName || 'Token'}
           </h1>
 
           {/* Form */}
-          <div className="space-y-6 flex-1">
-            {/* URL Input Section */}
-            <div>
-              <div className={`${themeColorClass} text-base mb-2 italic`}>Enter URL</div>
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="Enter an image URL"
-                className="w-full bg-gray-900 text-white px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <div className="text-gray-400 text-xs mt-2">
-                Enter a direct image URL
-              </div>
-              {url && !isValidUrl && (
-                <div className="text-red-400 text-xs mt-2">
-                  Please enter a valid image URL
-                </div>
-              )}
-            </div>
-
-            {/* Image Preview Section */}
-            {url && isValidUrl && (
-              <div>
-                <div className={`${themeColorClass} text-base mb-2 italic`}>Preview</div>
-                <div className="flex items-center justify-center">
-                  {!imageError ? (
-                    <div className="relative w-60 h-60">
-                      {!imageLoaded && (
-                        <div className="absolute inset-0 bg-gray-800 animate-pulse rounded-2xl"></div>
-                      )}
-                      <Image
-                        src={url}
-                        alt="Sticker preview"
-                        width={240}
-                        height={240}
-                        className={`w-60 h-60 object-cover rounded-2xl transition-opacity duration-300 ${
-                          imageLoaded ? 'opacity-100' : 'opacity-0'
-                        }`}
-                        onLoad={() => setImageLoaded(true)}
-                        onError={() => setImageError(true)}
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-60 h-60 bg-gray-800 rounded-2xl flex items-center justify-center">
-                      <div className="text-gray-500 text-sm text-center px-4">
-                        Unable to load image
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+          <div className={`flex-1 overflow-y-auto ${!url ? 'flex justify-center pt-16' : ''}`}>
+            {/* Compact Image Upload with full screen preview */}
+            <ImageUploadCompact
+              onUploadComplete={(hash) => {
+                setIpfsHash(hash);
+                setUrl(getIPFSUrl(hash));
+              }}
+              currentImage={url}
+              size={200}
+              fullScreenPreview={true}
+            />
           </div>
 
           {/* Transaction Status */}
@@ -205,8 +174,9 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
           )}
         </div>
 
-        {/* Create Button - Fixed above navbar */}
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-black p-3 z-40">
+        {/* Stick Button with black background extending to bottom */}
+        <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-black z-[10000]">
+          <div className="px-4 pb-4 pt-4 bg-black">
           <div className="flex items-center">
             <button
               onClick={handleCreate}
@@ -240,6 +210,9 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
               )}
             </button>
           </div>
+          </div>
+          {/* Black space below button to cover image */}
+          <div className="h-20 bg-black" />
         </div>
       </div>
     </div>

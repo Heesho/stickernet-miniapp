@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo, memo } from "react";
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button, Icon } from "../../ui";
+import { TokenImage } from "../../ui/TokenImage";
 import { 
   executeGraphQLQuery,
   fetchTokens,
@@ -46,9 +47,6 @@ const TokenListItem = memo(function TokenListItem({
   rank: number;
   onClick?: () => void;
 }) {
-  const [imageError, setImageError] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-
   return (
     <div 
       className="flex items-center space-x-3 py-2 px-1 hover:bg-[var(--app-hover)] transition-all duration-200 cursor-pointer"
@@ -61,29 +59,12 @@ const TokenListItem = memo(function TokenListItem({
 
       {/* Token Image */}
       <div className="relative w-10 h-10 flex-shrink-0 rounded-full overflow-hidden bg-gray-900">
-        {!imageError ? (
-          <>
-            {!imageLoaded && (
-              <div className="w-10 h-10 bg-[var(--app-gray)] animate-pulse" />
-            )}
-            <Image
-              src={token.uri}
-              alt={token.name}
-              width={40}
-              height={40}
-              className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute top-0'}`}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
-              unoptimized
-            />
-          </>
-        ) : (
-          <div className="w-10 h-10 bg-[var(--app-gray)] flex items-center justify-center">
-            <span className="text-xs text-[var(--app-foreground-muted)]">
-              {token.symbol?.charAt(0) || '?'}
-            </span>
-          </div>
-        )}
+        <TokenImage 
+          uri={token.uri}
+          name={token.name}
+          size={40}
+          className="w-full h-full rounded-full"
+        />
       </div>
 
       {/* Token Info - Symbol and Name stacked */}

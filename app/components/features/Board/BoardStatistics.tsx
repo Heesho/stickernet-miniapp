@@ -1,9 +1,12 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import Image from 'next/image';
 import dynamic from "next/dynamic";
 import { useRouter } from 'next/navigation';
 import { AnimatedNumber } from "../../ui/AnimatedNumber";
 import type { BoardStatisticsProps } from './Board.types';
+import { fetchBoardMetadata } from '@/lib/utils/metadata';
+import { getImageFromMetadata } from '@/lib/utils/metadata';
+import { getIPFSUrl } from '@/lib/pinata';
 
 // Client-only OnchainKit Identity components with error handling
 const Avatar = dynamic(
@@ -45,6 +48,37 @@ export const BoardStatistics = memo(function BoardStatistics({
   subgraphData
 }: BoardStatisticsProps) {
   const router = useRouter();
+  const [description, setDescription] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string>('');  // Start with empty string until we determine the actual image URL
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(true);
+  
+  useEffect(() => {
+    const loadMetadata = async () => {
+      try {
+        setIsLoadingMetadata(true);
+        const metadata = await fetchBoardMetadata(token.uri);
+        console.log('Fetched metadata:', metadata);
+        if (metadata) {
+          setDescription(metadata.description || '');
+          // If the URI points to metadata, get the actual image URL and ensure it's a gateway URL
+          const imageUrl = metadata.image ? getIPFSUrl(metadata.image) : token.uri;
+          console.log('Setting image URL to:', imageUrl);
+          setImageUrl(imageUrl);
+        }
+      } catch (error) {
+        console.error('Failed to load board metadata:', error);
+        // If fetching metadata fails, assume uri is direct image URL
+        console.log('Using direct image URL:', token.uri);
+        setImageUrl(getIPFSUrl(token.uri));
+      } finally {
+        setIsLoadingMetadata(false);
+      }
+    };
+    
+    if (token.uri) {
+      loadMetadata();
+    }
+  }, [token.uri]);
   
   const handleOwnerClick = () => {
     if (token.owner) {
@@ -88,15 +122,18 @@ export const BoardStatistics = memo(function BoardStatistics({
         
         {/* Token cover image */}
         <div className="ml-4">
-          {!tokenAvatarError ? (
+          {!tokenAvatarError && imageUrl ? (
             <Image
-              src={token.uri}
+              src={imageUrl}
               alt={`${token.name} cover`}
               width={120}
               height={120}
               className="w-[120px] h-[120px] rounded-2xl object-cover"
               onError={onTokenAvatarError}
+              priority
             />
+          ) : !tokenAvatarError && isLoadingMetadata ? (
+            <div className="w-[120px] h-[120px] bg-gray-800 rounded-2xl animate-pulse" />
           ) : (
             <div className="w-[120px] h-[120px] bg-green-500 rounded-2xl flex items-center justify-center">
               <div className="w-10 h-10 bg-white rounded-full"></div>
@@ -123,10 +160,11 @@ export const BoardStatistics = memo(function BoardStatistics({
       {!showTradingView && (
         <>
           {/* Board description */}
-          <p className="text-white text-base mb-6">
-            This is a description about this board where the creator can say... 
-            <button className="text-white opacity-70 ml-2">more</button>
-          </p>
+          {description && (
+            <p className="text-white text-base mb-6">
+              {description}
+            </p>
+          )}
 
           {/* Owner info and options */}
           <div className="flex items-center justify-between mb-8">

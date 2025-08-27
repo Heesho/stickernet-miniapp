@@ -122,8 +122,8 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         themeColors={themeColors}
       />
 
-      {/* Add spacing for the fixed header */}
-      <div className="h-16"></div>
+      {/* Add spacing for the fixed header - adjusted for PWA */}
+      <div className="h-14 pwa-header"></div>
 
       <BoardStatistics
         token={boardData.token}
@@ -136,12 +136,17 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         subgraphData={boardData.subgraphData}
       />
 
+      {/* Spacing between statistics and content */}
+      <div className="h-8"></div>
+
       {/* Board content grid or Trading View */}
       {!showTradingView ? (
-        <BoardTabs
-          curates={boardData.curates}
-          onImageClick={handleImageClick}
-        />
+        <div className="px-4">
+          <BoardTabs
+            curates={boardData.curates}
+            onImageClick={handleImageClick}
+          />
+        </div>
       ) : (
         <BoardChart
           tokenAddress={tokenAddress || ""}

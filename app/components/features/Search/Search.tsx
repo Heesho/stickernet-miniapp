@@ -191,7 +191,7 @@ export function Search({}: SearchProps) {
   return (
     <div className="animate-fade-in">
       {/* Sticky header with search and tabs */}
-      <div className="sticky top-0 bg-black z-10 pb-4">
+      <div className="sticky top-0 bg-black z-10 pb-4 -mx-4 px-4 pt-3">
         {/* Search Input */}
         <div className="relative mb-4">
           <div className="flex items-center space-x-2">

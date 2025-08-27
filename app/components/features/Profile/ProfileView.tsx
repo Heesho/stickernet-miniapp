@@ -329,7 +329,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
   return (
     <div className="animate-fade-in">
       {/* Sticky Container for Header and Tabs */}
-      <div className="sticky top-0 bg-black z-10 -mx-4 px-4 pt-4 pb-2">
+      <div className="sticky top-0 bg-black z-10 -mx-4 px-4 pt-3 pb-2">
         {/* Profile Header */}
         <div className="pb-4">
         <div className="flex items-start justify-between gap-2 w-full">

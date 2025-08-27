@@ -65,7 +65,7 @@ export const VirtualizedGrid = memo(function VirtualizedGrid({
           style={{
             transform: `translateY(${offsetY}px)`,
           }}
-          className="columns-2 gap-4"
+          className="columns-2 gap-4 pt-4"
         >
           {visibleCurates.map(({ curate, index }) => (
             <CurateImage
@@ -82,7 +82,7 @@ export const VirtualizedGrid = memo(function VirtualizedGrid({
   }
 
   return (
-    <div className="columns-2 gap-4">
+    <div className="columns-2 gap-4 pt-4">
       {visibleCurates.map(({ curate, index }) => (
         <CurateImage
           key={curate.id}

@@ -15,7 +15,7 @@ export default function AppContent({ activeTab, setActiveTab, boardData, onNavig
   // MiniKit is handled by the provider and doesn't need to block rendering
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 py-3 pb-20 bg-black min-h-screen">
+    <div className="w-full max-w-md mx-auto px-4 pb-20 bg-black min-h-screen">
       <main className="flex-1">
         {activeTab === "home" && <Home setActiveTab={setActiveTab} onNavigateToBoard={onNavigateToBoard} />}
         {activeTab === "browse" && <Search setActiveTab={setActiveTab} />}

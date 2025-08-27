@@ -322,7 +322,7 @@ export function Create({ setActiveTab }: CreateProps) {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black text-white flex flex-col max-w-md mx-auto w-full">
+    <div className="fixed inset-0 bg-black text-white flex flex-col max-w-md mx-auto w-full pwa-safe-top ios-standalone-top">
       {/* Success Modal (portal to escape bottom nav stacking) */}
       {showSuccessModal &&
         isMounted &&

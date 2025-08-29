@@ -200,7 +200,7 @@ export function ImageDetail({
         {/* Sticky back button */}
         <button
           onClick={onClose}
-          className="fixed top-16 w-10 h-10 bg-black bg-opacity-80 rounded-lg flex items-center justify-center hover:bg-opacity-90 transition-all backdrop-blur-sm z-50"
+          className="fixed top-4 w-10 h-10 bg-black bg-opacity-80 rounded-lg flex items-center justify-center hover:bg-opacity-90 transition-all backdrop-blur-sm z-50"
           style={{ left: "max(1rem, calc(50% - 13rem))" }} // Centers it within the max-w-md container with padding
         >
           <svg
@@ -216,7 +216,7 @@ export function ImageDetail({
         </button>
 
         {/* Image at top - clickable to go to dedicated sticker page */}
-        <div className="relative pt-12">
+        <div className="relative">
           {!imageError ? (
             <div className="relative">
               {(!imageLoaded || !curateImageUrl) && (

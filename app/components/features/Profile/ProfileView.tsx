@@ -329,7 +329,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
   return (
     <div className="animate-fade-in">
       {/* Fixed Container for Header and Tabs */}
-      <div className="fixed top-12 left-0 right-0 max-w-md mx-auto bg-black z-10 px-4 pt-3 pb-2">
+      <div className="fixed top-0 left-0 right-0 max-w-md mx-auto bg-black z-10 px-4 pt-3 pb-2">
         {/* Profile Header */}
         <div className="pb-4">
         <div className="flex items-start justify-between gap-2 w-full">
@@ -466,9 +466,13 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
         {/* Shares Tab */}
         {activeTab === "shares" && (
           <div className="space-y-3">
-            {profileData.user?.tokenPositions?.filter(position => !isTokenBlacklisted(position.token.id)).length > 0 ? (
+            {profileData.user?.tokenPositions?.filter(position => 
+              !isTokenBlacklisted(position.token.id) && parseFloat(position.balance || "0") > 0.001
+            ).length > 0 ? (
               profileData.user.tokenPositions
-                .filter(position => !isTokenBlacklisted(position.token.id))
+                .filter(position => 
+                  !isTokenBlacklisted(position.token.id) && parseFloat(position.balance || "0") > 0.001
+                )
                 .map((position) => {
                 const balance = parseFloat(position.balance || "0");
                 const marketPrice = parseFloat(

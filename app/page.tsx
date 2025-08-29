@@ -6,7 +6,6 @@ import { useAccount } from "wagmi";
 import { BottomNavigation } from "./components/ui";
 import AppContent from "./AppContent";
 import { AuthGate } from "./components/auth/AuthGate";
-import { InstallPrompt } from "./components/pwa/InstallPrompt";
 
 function AppInner() {
   const searchParams = useSearchParams();
@@ -49,7 +48,7 @@ function AppInner() {
 
   return (
     <AuthGate>
-      <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)] pwa-safe-top">
+      <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
         <AppContent 
           activeTab={activeTab}
           setActiveTab={handleSetActiveTab}
@@ -57,7 +56,6 @@ function AppInner() {
           onNavigateToBoard={handleNavigateToBoard}
         />
         <BottomNavigation activeTab={activeTab} setActiveTab={handleSetActiveTab} />
-        <InstallPrompt />
       </div>
     </AuthGate>
   );

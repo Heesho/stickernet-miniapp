@@ -12,8 +12,8 @@ type BottomNavigationProps = {
 
 export const BottomNavigation = memo(function BottomNavigation({ activeTab, setActiveTab }: BottomNavigationProps) {
   return (
-    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-black backdrop-blur-md z-50 pwa-bottom-nav">
-      <div className="flex justify-around items-center px-2 py-4 pwa-nav-safe">
+    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-black backdrop-blur-md z-50">
+      <div className="flex justify-around items-center px-2 py-4">
         {NAV_ITEMS.map((item) => {
           // Memoize individual tab handlers
           const handleTabClick = () => setActiveTab(item.id);

@@ -322,7 +322,7 @@ export function Create({ setActiveTab }: CreateProps) {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black text-white flex flex-col max-w-md mx-auto w-full pwa-safe-top ios-standalone-top">
+    <div className="fixed inset-0 bg-black text-white flex flex-col max-w-md mx-auto w-full">
       {/* Success Modal (portal to escape bottom nav stacking) */}
       {showSuccessModal &&
         isMounted &&
@@ -397,7 +397,7 @@ export function Create({ setActiveTab }: CreateProps) {
           document.body,
         )}
       {/* Scrollable content section */}
-      <div className="flex-1 overflow-y-auto px-4 pt-16">
+      <div className="flex-1 overflow-y-auto px-4 pt-3">
         {/* Name, Symbol and Image Upload row */}
         <div className="flex items-start gap-4">
           <div className="flex-1">

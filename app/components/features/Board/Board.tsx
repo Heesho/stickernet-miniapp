@@ -122,8 +122,8 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
         themeColors={themeColors}
       />
 
-      {/* Add spacing for the fixed header - adjusted for PWA */}
-      <div className="h-20 pwa-header"></div>
+      {/* Add spacing for the fixed header */}
+      <div className="h-20"></div>
 
       <BoardStatistics
         token={boardData.token}

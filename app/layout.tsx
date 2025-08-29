@@ -22,12 +22,6 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "stickr",
     description: "Create and trade digital stickers on the blockchain",
-    manifest: "/manifest.json",
-    appleWebApp: {
-      capable: true,
-      statusBarStyle: "black-translucent",
-      title: "stickr",
-    },
     icons: {
       icon: [
         { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
@@ -73,23 +67,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="stickr" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className="bg-background">
-        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-12 bg-black z-[9999]" />
-        <div className="pt-12">
-          <ErrorBoundary>
-            <Providers>
-              {children}
-              <GlobalLoadingOverlay />
-            </Providers>
-          </ErrorBoundary>
-        </div>
+        <ErrorBoundary>
+          <Providers>
+            {children}
+            <GlobalLoadingOverlay />
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

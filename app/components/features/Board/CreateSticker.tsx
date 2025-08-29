@@ -117,8 +117,8 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
   const isLoading = isCreating || isConfirming;
 
   return (
-    <div className="fixed inset-0 bg-background z-[9999] flex justify-center pwa-safe-top ios-standalone-top">
-      <div className="w-full max-w-md bg-black min-h-screen flex flex-col pt-12">
+    <div className="fixed inset-0 bg-background z-[9999] flex justify-center">
+      <div className="w-full max-w-md bg-black min-h-screen flex flex-col">
         {/* Header with close button */}
         <div className="flex items-center justify-start p-4">
           <button 
@@ -139,7 +139,7 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
           </h1>
 
           {/* Form */}
-          <div className={`flex-1 overflow-y-auto ${!url ? 'flex justify-center pt-16' : ''}`}>
+          <div className="flex-1 overflow-y-auto">
             {/* Compact Image Upload with full screen preview */}
             <ImageUploadCompact
               onUploadComplete={(hash) => {

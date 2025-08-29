@@ -110,7 +110,7 @@ export function CurateConfirmation({
     balanceData && parseFloat(formattedBalance) >= parseFloat(nextPrice);
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex justify-center pt-12">
+    <div className="fixed inset-0 bg-background z-50 flex justify-center">
       <div className="w-full max-w-md bg-black min-h-screen flex flex-col">
         {/* Header with close button */}
         <div className="flex items-center justify-start p-4">
@@ -185,51 +185,6 @@ export function CurateConfirmation({
             </div>
           </div>
 
-          {/* Transaction Status */}
-          {(status.approveStatus !== "idle" ||
-            status.curateStatus !== "idle") &&
-            !(
-              status.approveStatus === "success" &&
-              status.curateStatus === "success"
-            ) && (
-              <div className="mb-4 p-3 rounded-xl bg-gray-900">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-300">
-                    Transaction Status
-                  </span>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${
-                      status.approveStatus === "success" &&
-                      status.curateStatus === "success"
-                        ? "bg-green-500/20 text-green-400"
-                        : status.approveStatus === "pending" ||
-                            status.curateStatus === "pending"
-                          ? "bg-yellow-500/20 text-yellow-400 animate-pulse"
-                          : status.approveStatus === "error" ||
-                              status.curateStatus === "error"
-                            ? "bg-red-500/20 text-red-400"
-                            : "bg-gray-500/20 text-gray-400"
-                    }`}
-                  >
-                    {status.approveStatus === "success" &&
-                    status.curateStatus === "success"
-                      ? "Complete"
-                      : status.approveStatus === "pending" ||
-                          status.curateStatus === "pending"
-                        ? "Processing..."
-                        : status.approveStatus === "error" ||
-                            status.curateStatus === "error"
-                          ? "Failed"
-                          : "Ready"}
-                  </span>
-                </div>
-                {status.error && (
-                  <div className="mt-2 text-xs text-red-400">
-                    {status.error}
-                  </div>
-                )}
-              </div>
-            )}
         </div>
       </div>
 
@@ -239,15 +194,15 @@ export function CurateConfirmation({
           <button
             onClick={handleCurate}
             disabled={isCurateLoading || !hasEnoughBalance}
-            className={`w-full font-semibold py-3 rounded-xl border-2 ${themeBorderClass} transition-all duration-200 focus:outline-none focus:ring-0 focus:ring-offset-0 ${
+            className={`w-full font-semibold py-3 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-0 focus:ring-offset-0 ${
               isCurateLoading
-                ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                ? "bg-gray-700 text-gray-500 cursor-not-allowed border-gray-700"
                 : !hasEnoughBalance
-                  ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                  ? "bg-gray-700 text-gray-500 cursor-not-allowed border-gray-700"
                   : status.approveStatus === "success" &&
                       status.curateStatus === "success"
-                    ? "bg-green-500 hover:bg-green-600 text-black"
-                    : `${themeBgClass} hover:opacity-90 text-black`
+                    ? "bg-green-500 hover:bg-green-600 text-black border-green-500"
+                    : `${themeBgClass} hover:opacity-90 text-black ${themeBorderClass}`
             }`}
           >
             {isCurateLoading ? (

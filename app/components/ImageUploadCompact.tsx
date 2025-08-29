@@ -114,16 +114,51 @@ export default function ImageUploadCompact({
   }, [onUploadComplete]);
 
   // Full height preview for sticker page (with or without uploading)
-  if (fullScreenPreview && preview) {
-    return (
-      <div className="w-full flex-1 overflow-y-auto overflow-x-hidden">
-        {/* Show loader while uploading or image loading */}
-        {(uploading || !imageLoaded) && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black z-50">
-            <div className="w-12 h-12 border-3 border-gray-400 border-t-blue-500 rounded-full animate-spin" />
+  if (fullScreenPreview) {
+    // If no preview yet, show the upload button in a consistent position
+    if (!preview) {
+      return (
+        <div className="w-full flex-1 flex items-center justify-center">
+          <div className="relative">
+            <div className="w-48 h-48 border-2 border-dashed border-gray-600 rounded-2xl flex items-center justify-center hover:border-gray-400 transition-colors cursor-pointer">
+              {uploading ? (
+                <div className="w-8 h-8 border-4 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <div className="relative">
+                  <svg
+                    className="w-16 h-16 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
+                    <span className="text-black text-sm font-bold">+</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            <input
+              type="file"
+              accept="image/*,video/*"
+              onChange={handleFileSelect}
+              disabled={uploading}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+            />
           </div>
-        )}
-        
+        </div>
+      );
+    }
+    
+    // If we have a preview, show it
+    return (
+      <div className="w-full flex-1 overflow-y-auto overflow-x-hidden relative">
         <Image
           src={preview}
           alt="Preview"
@@ -132,8 +167,18 @@ export default function ImageUploadCompact({
           className="w-full h-auto object-contain"
           priority
           onLoad={() => setImageLoaded(true)}
-          style={{ opacity: imageLoaded && !uploading ? 1 : 0 }}
+          style={{ opacity: imageLoaded && !uploading ? 1 : 0.5 }}
         />
+        
+        {/* Show loader overlay while uploading or image loading */}
+        {(uploading || !imageLoaded) && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-black bg-opacity-70 rounded-full p-4">
+              <div className="w-12 h-12 border-4 border-gray-600 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+          </div>
+        )}
+        
         {/* Add padding at bottom to ensure scrolling and visibility above Stick button */}
         <div className="h-48 bg-black" />
       </div>
@@ -157,14 +202,14 @@ export default function ImageUploadCompact({
             />
             {uploading && (
               <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
               </div>
             )}
           </div>
         ) : (
         <div className="w-full h-full border-2 border-dashed border-gray-600 rounded-2xl flex items-center justify-center hover:border-gray-400 transition-colors cursor-pointer">
           {uploading ? (
-            <div className="w-8 h-8 border-3 border-gray-400 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-gray-400 border-t-transparent rounded-full animate-spin" />
           ) : (
             <div className="relative">
               <svg
@@ -213,7 +258,7 @@ export default function ImageUploadCompact({
     >
       <div className="w-full h-full border-2 border-dashed border-gray-600 rounded-2xl flex items-center justify-center hover:border-gray-400 transition-colors cursor-pointer">
         {uploading ? (
-          <div className="w-8 h-8 border-3 border-gray-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-gray-400 border-t-transparent rounded-full animate-spin" />
         ) : (
           <div className="relative">
             <svg

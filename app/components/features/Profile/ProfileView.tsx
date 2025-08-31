@@ -169,15 +169,17 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
     "idle" | "loading" | "success"
   >("idle");
 
-  // USDC balance query
+  // USDC balance query - always query on Base Sepolia regardless of current chain
   const { data: usdcBalance, refetch: refetchBalance, isLoading: isLoadingBalance, error: balanceError } = useReadContract({
     address: USDC_ADDRESS,
     abi: USDC_ABI,
     functionName: "balanceOf",
     args: userAddress ? [userAddress as `0x${string}`] : undefined,
+    chainId: baseSepolia.id, // Always query Base Sepolia
     query: {
       enabled: !!userAddress,
       refetchInterval: 5000,
+      staleTime: 0, // Always fetch fresh data
     },
   });
 
@@ -212,15 +214,15 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
         });
     }
 
-    // Always check on-chain USDC balance when available, regardless of profileData
+    // Always use on-chain USDC balance when available (we're always querying Base Sepolia)
     let cash = 0;
-    console.log('Debug - chainId:', chainId, 'baseSepolia.id:', baseSepolia.id, 'usdcBalance:', usdcBalance);
-    if (usdcBalance !== undefined && chainId === baseSepolia.id) {
+    console.log('Debug - usdcBalance:', usdcBalance);
+    if (usdcBalance !== undefined) {
       cash = parseFloat(formatUnits(usdcBalance as bigint, USDC_DECIMALS));
       console.log('Using on-chain USDC balance:', cash, 'raw:', usdcBalance?.toString());
     } else {
       cash = cashFromPositions;
-      console.log('Using fallback cash from positions:', cash, 'chainId:', chainId, 'usdcBalance:', usdcBalance);
+      console.log('Using fallback cash from positions:', cash, 'usdcBalance:', usdcBalance);
     }
 
     return { total: totalValue + cash, cash };
@@ -274,10 +276,13 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
 
   // Refetch balance when address or chain changes
   useEffect(() => {
-    if (userAddress && chainId === baseSepolia.id) {
+    // Refetch balance whenever userAddress is available
+    // We're always querying Base Sepolia explicitly now
+    if (userAddress) {
+      console.log('Triggering USDC balance refetch for address:', userAddress);
       refetchBalance();
     }
-  }, [userAddress, chainId, refetchBalance]);
+  }, [userAddress, refetchBalance]);
 
   if (!userAddress) {
     return (

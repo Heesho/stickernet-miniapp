@@ -110,6 +110,7 @@ export interface UseContentDataReturn extends AsyncState {
   readonly weeklyReward: string;
   readonly price: string;
   readonly nextPrice: string;
+  readonly refetch?: () => void;
 }
 
 export interface UseTokenDataReturn extends AsyncState {

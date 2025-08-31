@@ -170,7 +170,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
   >("idle");
 
   // USDC balance query
-  const { data: usdcBalance, refetch: refetchBalance } = useReadContract({
+  const { data: usdcBalance, refetch: refetchBalance, isLoading: isLoadingBalance, error: balanceError } = useReadContract({
     address: USDC_ADDRESS,
     abi: USDC_ABI,
     functionName: "balanceOf",
@@ -179,6 +179,17 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
       enabled: !!userAddress,
       refetchInterval: 5000,
     },
+  });
+
+  // Debug logging for USDC balance
+  console.log('USDC Balance Debug:', {
+    userAddress,
+    usdcBalance: usdcBalance?.toString(),
+    isLoadingBalance,
+    balanceError: balanceError?.message,
+    chainId,
+    expectedChainId: baseSepolia.id,
+    chainMatch: chainId === baseSepolia.id
   });
 
   // Calculate portfolio value

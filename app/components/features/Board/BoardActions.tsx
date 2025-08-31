@@ -15,9 +15,9 @@ export const BoardActions = memo(function BoardActions({
     <div className="fixed bottom-20 left-0 right-0 z-40">
       <div className="w-full max-w-md mx-auto bg-black px-4 py-3">
         <div className="flex items-center justify-between">
-          {/* Today's steal volume */}
+          {/* Today's collect volume */}
           <div>
-            <div className="text-white text-sm opacity-70">Today's steal volume</div>
+            <div className="text-white text-sm opacity-70">Today's collect volume</div>
             <div className="text-white text-2xl font-bold">
               ${totalVolume}
             </div>
@@ -32,7 +32,7 @@ export const BoardActions = memo(function BoardActions({
               borderColor: themeColor
             }}
           >
-            Stick
+            Create
           </button>
         </div>
       </div>

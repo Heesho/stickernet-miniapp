@@ -573,7 +573,7 @@ export function TradingView({
 
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
               <div>
-                <div className="text-gray-500 text-sm mb-1">Stickers</div>
+                <div className="text-gray-500 text-sm mb-1">Stickrs</div>
                 <div className="text-white text-lg">{creationsData.stickers}</div>
               </div>
 
@@ -616,7 +616,7 @@ export function TradingView({
 
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
               <div>
-                <div className="text-gray-500 text-sm mb-1">Stickers</div>
+                <div className="text-gray-500 text-sm mb-1">Stickrs</div>
                 <div className="text-white text-lg">
                   {collectionData.stickers}
                 </div>
@@ -705,7 +705,7 @@ export function TradingView({
             </div>
 
             <div>
-              <div className="text-gray-500 text-sm mb-1">Holders</div>
+              <div className="text-gray-500 text-sm mb-1">Shareholders</div>
               <div className="text-white text-lg">
                 {subgraphData?.holders
                   ? formatNumber(subgraphData.holders, 0, false)
@@ -742,7 +742,7 @@ export function TradingView({
             </div>
 
             <div>
-              <div className="text-gray-500 text-sm mb-1">Stickers</div>
+              <div className="text-gray-500 text-sm mb-1">Stickrs</div>
               <div className="text-white text-lg">
                 {subgraphData?.contents
                   ? formatNumber(subgraphData.contents, 0, false)
@@ -812,7 +812,7 @@ export function TradingView({
             </div>
 
             <div>
-              <div className="text-gray-500 text-sm mb-1">Holders</div>
+              <div className="text-gray-500 text-sm mb-1">Shareholders</div>
               <div className="text-white text-lg">
                 {(() => {
                   const holderRewardsQuote = parseFloat(
@@ -848,7 +848,7 @@ export function TradingView({
             {/* Volume display */}
             <div>
               <div className="text-white text-sm opacity-70">
-                Today's swap volume
+                Today's trade volume
               </div>
               <div className="text-white text-2xl font-bold">
                 {formatCurrency(todayVolume)}

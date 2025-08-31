@@ -24,8 +24,9 @@ import { isAddress, isValidTokenId } from '@/types';
 export function useContentData({
   tokenAddress,
   tokenId,
-  enabled = true
-}: UseContentDataParams): UseContentDataReturn {
+  enabled = true,
+  refetchInterval = 0
+}: UseContentDataParams & { refetchInterval?: number }): UseContentDataReturn {
   const errorHandler = useErrorHandler({
     hookName: 'useContentData',
     showToast: false, // Don't show toast for data fetching
@@ -44,14 +45,16 @@ export function useContentData({
   const isValidId = tokenId ? isValidTokenId(tokenId) : false;
   const shouldFetch = enabled && isValidAddress && isValidId;
 
-  const { data, isError, isLoading, error } = useReadContract({
+  const { data, isError, isLoading, error, refetch } = useReadContract({
     address: MULTICALL_ADDRESS,
     abi: MULTICALL_ABI,
     functionName: 'getContentData',
     args: shouldFetch && tokenAddress && tokenId ? [tokenAddress, tokenId] : undefined,
     chainId: baseSepolia.id,
     query: {
-      enabled: shouldFetch
+      enabled: shouldFetch,
+      refetchInterval: refetchInterval > 0 ? refetchInterval : false,
+      staleTime: refetchInterval > 0 ? 0 : 5000
     }
   });
 
@@ -92,7 +95,8 @@ export function useContentData({
     isLoading,
     isError: isError || errorHandler.hasError,
     isSuccess: !isLoading && !isError && !errorHandler.hasError && !!data,
-    error: error || null
+    error: error || null,
+    refetch
   };
 }
 

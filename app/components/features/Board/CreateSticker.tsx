@@ -135,7 +135,7 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
         <div className="flex-1 pb-40 flex flex-col">
           {/* Title */}
           <h1 className="text-white text-2xl font-bold mb-4 px-6">
-            Create sticker for {tokenSymbol || tokenName || 'Token'}
+            Create stickr for {tokenSymbol || tokenName || 'Token'}
           </h1>
 
           {/* Form */}
@@ -174,7 +174,7 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
           )}
         </div>
 
-        {/* Stick Button with black background extending to bottom */}
+        {/* Create Button with black background extending to bottom */}
         <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-black z-[10000]">
           <div className="px-4 pb-4 pt-4 bg-black">
           <div className="flex items-center">
@@ -194,19 +194,19 @@ export function CreateSticker({ tokenAddress, tokenSymbol, tokenName, onClose, o
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm">Sticking...</span>
+                  <span className="text-sm">Creating...</span>
                 </div>
               ) : isConfirmed ? (
                 <div className="flex items-center justify-center space-x-2">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
                   </svg>
-                  <span>Stuck!</span>
+                  <span>Created!</span>
                 </div>
               ) : !isConnected ? (
                 'Connect Wallet'
               ) : (
-                'Stick'
+                'Create'
               )}
             </button>
           </div>

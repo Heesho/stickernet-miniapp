@@ -36,6 +36,7 @@ export interface UseContentDataReturn extends BaseHookReturn {
   readonly weeklyReward: string;
   readonly price: string;
   readonly nextPrice: string;
+  readonly refetch?: () => void;
 }
 
 export interface UseTokenDataParams {

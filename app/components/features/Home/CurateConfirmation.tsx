@@ -135,7 +135,7 @@ export function CurateConfirmation({
         <div className="flex-1 px-6 pb-6 flex flex-col">
           {/* Title */}
           <h1 className="text-white text-2xl font-bold mb-8">
-            Steal {curate.token.symbol || curate.token.name || "PENGU"}{" "}
+            Collect {curate.token.symbol || curate.token.name || "PENGU"}{" "}
             {curate.tokenId.toString()}
           </h1>
 
@@ -188,7 +188,7 @@ export function CurateConfirmation({
         </div>
       </div>
 
-      {/* Steal Button - Fixed at same position as previous page */}
+      {/* Collect Button - Fixed at same position as previous page */}
       <div className="fixed bottom-20 left-0 right-0 z-40">
         <div className="w-full max-w-md mx-auto px-4">
           <button
@@ -229,7 +229,7 @@ export function CurateConfirmation({
             ) : !hasEnoughBalance ? (
               "Insufficient Balance"
             ) : (
-              "Steal"
+              "Collect"
             )}
           </button>
         </div>

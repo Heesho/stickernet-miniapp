@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 // import Image from "next/image"; // Commented out - using regular img for Discord images
 import { getProxiedImageUrl } from "@/lib/utils/image-proxy";
 import { getImageFromMetadata } from "@/lib/utils/metadata";
@@ -68,12 +68,32 @@ export function ImageDetail({
 
   // Debug logging
 
-  // Get real-time on-chain data for weekly rewards and current price
-  const { weeklyReward, nextPrice, isLoading, isError } = useContentData({
+  // Get real-time on-chain data for weekly rewards and current price with polling
+  const { weeklyReward, nextPrice, isLoading, isError, refetch } = useContentData({
     tokenAddress,
     tokenId,
     enabled: !!(tokenAddress && tokenId),
-  });
+    refetchInterval: 3000, // Poll every 3 seconds for fresh price
+  } as any);
+
+  // Track previous price for animation
+  const prevPriceRef = useRef(nextPrice);
+  const [priceAnimation, setPriceAnimation] = useState(false);
+
+  // Detect price changes and trigger animation
+  useEffect(() => {
+    if (nextPrice && prevPriceRef.current !== nextPrice) {
+      setPriceAnimation(true);
+      prevPriceRef.current = nextPrice;
+      
+      // Reset animation after duration
+      const timer = setTimeout(() => {
+        setPriceAnimation(false);
+      }, 600);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [nextPrice]);
 
   // Get token data for price change
   const { tokenData } = useTokenData({
@@ -187,8 +207,12 @@ export function ImageDetail({
         onSuccess={() => {
           setShowConfirmation(false);
           onStealConfirmationChange?.(false);
+          // Immediately refresh price data after successful collection
+          if (refetch) {
+            refetch();
+          }
           onCurate();
-          onClose();
+          // Don't close - stay on the stickr detail page
         }}
       />
     );
@@ -277,11 +301,17 @@ export function ImageDetail({
                 <span className="text-sm">5</span>
               </div>
             </div>
-            {/* Price on the right side - bright and prominent */}
-            <div className="text-white text-2xl font-bold">
+            {/* Price on the right side - bright and prominent with animation */}
+            <div className={`text-white text-2xl font-bold transition-all duration-300 relative ${
+              priceAnimation ? 'scale-110 text-[#0052FF]' : 'scale-100'
+            }`}>
               {nextPrice && parseFloat(nextPrice) > 0
                 ? formatCurrency(nextPrice, 2, false)
                 : formatCurrency(curate.price, 2, false)}
+              {/* Subtle pulse indicator when price updates */}
+              {priceAnimation && (
+                <div className="absolute inset-0 bg-[#0052FF] opacity-20 rounded animate-pulse" />
+              )}
             </div>
           </div>
 
@@ -362,7 +392,7 @@ export function ImageDetail({
           </div>
         </div>
 
-        {/* Weekly Earnings and Steal button - matching Board's volume section */}
+        {/* Weekly Earnings and Collect button - matching Board's volume section */}
         <div className="fixed bottom-20 left-0 right-0 z-40">
           <div className="w-full max-w-md mx-auto bg-black px-4 py-3">
             <div className="flex items-center justify-between">
@@ -378,7 +408,7 @@ export function ImageDetail({
                 </div>
               </div>
 
-              {/* Steal button - matching Stick/Trade button exactly */}
+              {/* Collect button - matching Stick/Trade button exactly */}
               <button
                 onClick={handleCurate}
                 disabled={isLoading || !nextPrice}
@@ -394,7 +424,7 @@ export function ImageDetail({
                     <span className="text-sm">Loading...</span>
                   </div>
                 ) : (
-                  "Steal"
+                  "Collect"
                 )}
               </button>
             </div>

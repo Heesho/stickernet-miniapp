@@ -4,15 +4,25 @@ import type { BoardMetadata } from '@/lib/pinata';
 /**
  * Fetches metadata from an IPFS URL or returns a default structure for direct image URLs
  */
-export async function fetchBoardMetadata(uri: string): Promise<BoardMetadata | null> {
+export async function fetchBoardMetadata(uri: string, retries = 2): Promise<BoardMetadata | null> {
   if (!uri) return null;
 
   try {
     // Convert IPFS URI to gateway URL if needed
     const url = getIPFSUrl(uri);
     
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
     // Check if this is likely a JSON metadata URL by trying to fetch it
-    const response = await fetch(url);
+    const response = await fetch(url, { 
+      signal: controller.signal,
+      mode: 'cors',
+      cache: 'force-cache'
+    });
+    clearTimeout(timeoutId);
+    
     const contentType = response.headers.get('content-type');
     
     // If it's JSON, parse and return it
@@ -46,12 +56,29 @@ export async function fetchBoardMetadata(uri: string): Promise<BoardMetadata | n
       };
     }
   } catch (error) {
-    console.error('Error fetching metadata:', error);
+    // Retry logic for transient failures
+    if (retries > 0 && error instanceof Error && error.name !== 'AbortError') {
+      console.warn(`Retrying metadata fetch for: ${uri}, attempts left: ${retries}`);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+      return fetchBoardMetadata(uri, retries - 1);
+    }
+    
+    // Log more specific error information
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.warn('Metadata fetch timeout for:', uri);
+      } else {
+        console.warn('Error fetching metadata for:', uri, error.message);
+      }
+    } else {
+      console.warn('Unknown error fetching metadata for:', uri);
+    }
+    
     // Return the URL as an image in case of error
     return {
       name: '',
       symbol: '',
-      image: uri,
+      image: getIPFSUrl(uri),
       description: undefined
     };
   }

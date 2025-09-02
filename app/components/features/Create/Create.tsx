@@ -35,7 +35,7 @@ import { toast } from "sonner";
 import type { CreateProps } from "./Create.types";
 
 export function Create({ setActiveTab }: CreateProps) {
-  const { address, isConnected, chain, isConnecting } = useAccount();
+  const { address, isConnected, chain } = useAccount();
   const { isValidConnection } = useEnforceBaseWallet();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
@@ -58,101 +58,24 @@ export function Create({ setActiveTab }: CreateProps) {
     imageUrl: string;
   }>({ name: "", symbol: "", imageUrl: "" });
   const [isMounted, setIsMounted] = useState(false);
-  const [hasInitializedBalance, setHasInitializedBalance] = useState(false);
-  const [fallbackBalance, setFallbackBalance] = useState<bigint | undefined>(undefined);
 
-  // Get user's USDC balance directly from the USDC contract
-  const { data: usdcBalance, isLoading: isLoadingBalance, refetch: refetchBalance, isRefetching, error: balanceError } = useReadContract({
+  // USDC balance query - exactly like ProfileView
+  const { data: usdcBalance, isLoading: isLoadingBalance } = useReadContract({
     address: USDC_ADDRESS,
     abi: USDC_ABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
-    chainId: baseSepolia.id, // Explicitly specify the chain
+    chainId: baseSepolia.id, // Always query Base Sepolia
     query: {
-      enabled: !!address && isConnected && !isConnecting && chain?.id === baseSepolia.id && !!walletClient, // Only fetch when fully ready
-      refetchInterval: 5000, // Refetch every 5 seconds
-      refetchOnMount: true,
-      refetchOnReconnect: true,
-      staleTime: 2000, // Consider data stale after 2 seconds
-      gcTime: 10000, // Keep in cache for 10 seconds
-      retry: 3, // Retry failed requests
-      retryDelay: 1000, // Wait 1 second between retries
+      enabled: !!address,
+      refetchInterval: 5000,
+      staleTime: 0, // Always fetch fresh data
     },
   });
 
-  // Use fallback balance if main balance fetch fails
-  const effectiveBalance = usdcBalance !== undefined ? usdcBalance : fallbackBalance;
-  
-  // Only show 0 if we've actually fetched and got no balance
-  // Otherwise keep it undefined to show loading state
-  const userBalance = effectiveBalance !== undefined
-    ? parseFloat(formatUnits(effectiveBalance, USDC_DECIMALS))
-    : hasInitializedBalance ? 0 : undefined;
-
-  // Log balance fetching state for debugging
-  useEffect(() => {
-    if (balanceError) {
-      console.error("Error fetching USDC balance:", balanceError);
-      setHasInitializedBalance(true);
-    }
-    if (usdcBalance !== undefined) {
-      console.log("USDC balance fetched:", {
-        raw: usdcBalance?.toString(),
-        formatted: userBalance,
-        address,
-        chainId: chain?.id,
-      });
-      setHasInitializedBalance(true);
-    }
-  }, [usdcBalance, balanceError, userBalance, address, chain?.id]);
-
-  // Refetch balance when chain or connection changes
-  useEffect(() => {
-    if (address && isConnected && !isConnecting && chain?.id === baseSepolia.id && walletClient) {
-      console.log("Conditions met for balance fetch:", {
-        address,
-        isConnected,
-        chainId: chain?.id,
-        hasWalletClient: !!walletClient,
-      });
-      // Add a small delay to ensure the connection is stable
-      const timer = setTimeout(() => {
-        refetchBalance();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [address, isConnected, isConnecting, chain?.id, walletClient, refetchBalance]);
-
-  // Fallback: manually fetch balance if the hook fails
-  useEffect(() => {
-    const fetchBalanceFallback = async () => {
-      if (!address || !publicClient || chain?.id !== baseSepolia.id) return;
-      
-      try {
-        console.log("Attempting fallback balance fetch for:", address);
-        const balance = await publicClient.readContract({
-          address: USDC_ADDRESS,
-          abi: USDC_ABI,
-          functionName: "balanceOf",
-          args: [address],
-        });
-        
-        if (balance !== undefined && usdcBalance === undefined) {
-          console.log("Fallback balance fetched:", balance?.toString());
-          setFallbackBalance(balance as bigint);
-          setHasInitializedBalance(true);
-        }
-      } catch (error) {
-        console.error("Fallback balance fetch failed:", error);
-      }
-    };
-
-    // Try fallback if main fetch hasn't worked after 2 seconds
-    if (address && isConnected && chain?.id === baseSepolia.id && usdcBalance === undefined) {
-      const timer = setTimeout(fetchBalanceFallback, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [address, isConnected, chain?.id, publicClient, usdcBalance]);
+  const userBalance = usdcBalance
+    ? parseFloat(formatUnits(usdcBalance as bigint, USDC_DECIMALS))
+    : 0;
 
   const handleNumberPad = (value: string) => {
     let newValue = buyAmount;
@@ -540,19 +463,11 @@ export function Create({ setActiveTab }: CreateProps) {
               : formatWithCommas(buyAmount)}
           </div>
           <div className="text-sm text-gray-500">
-            {!isConnected
-              ? "Connect wallet to see balance"
-              : isConnecting
-                ? "Connecting..."
-              : chain?.id !== baseSepolia.id
-                ? "Switch to Base Sepolia to see balance"
-                : balanceError
-                  ? "Error loading balance"
-                : (isLoadingBalance || isRefetching) && userBalance === undefined
-                  ? "Loading balance..."
-                  : userBalance !== undefined
-                    ? `${formatCurrency(userBalance, 2, false)} available • $1 minimum`
-                    : "Fetching balance..."}
+            {isLoadingBalance
+              ? "Loading balance..."
+              : isConnected
+                ? `${formatCurrency(userBalance, 2, false)} available • $1 minimum`
+                : "Connect wallet to see balance"}
           </div>
         </div>
       </div>

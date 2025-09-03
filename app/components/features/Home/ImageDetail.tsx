@@ -59,6 +59,10 @@ export function ImageDetail({
   const [tokenImageUrl, setTokenImageUrl] = useState<string>("");
   const { address: account, isConnected } = useAccount();
 
+  // Check if current user is the owner of the NFT
+  const currentOwner = curate.user?.id || curate.creator.id;
+  const isOwner = account && currentOwner && account.toLowerCase() === currentOwner.toLowerCase();
+
   // Use tokenId directly from subgraph
   const tokenAddress = curate.token.id as `0x${string}`;
   const rawTokenId = curate.tokenId;
@@ -424,7 +428,7 @@ export function ImageDetail({
                     <span className="text-sm">Loading...</span>
                   </div>
                 ) : (
-                  "Collect"
+                  isOwner ? "You own this stickr" : "Collect"
                 )}
               </button>
             </div>

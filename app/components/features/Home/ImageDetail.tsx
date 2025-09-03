@@ -399,7 +399,7 @@ export function ImageDetail({
               {/* Owner's Weekly Earnings - matching volume display style */}
               <div>
                 <div className="text-white text-sm opacity-70">
-                  Owner's Weekly Earnings
+                  Collector's Weekly Earnings
                 </div>
                 <div className="text-white text-2xl font-bold">
                   {weeklyReward && parseFloat(weeklyReward) > 0

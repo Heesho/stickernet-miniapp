@@ -284,40 +284,6 @@ export function ImageDetail({
 
         {/* Content below image */}
         <div className="px-4 pt-4 pb-40 bg-black">
-          {/* Interaction stats and price inline directly under image */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-6 text-white">
-              <div className="flex items-center space-x-1">
-                <Icon name="heart" size="sm" className="text-white" />
-                <span className="text-sm">2</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                <span className="text-sm">5</span>
-              </div>
-            </div>
-            {/* Price on the right side - bright and prominent with animation */}
-            <div className={`text-white text-2xl font-bold transition-all duration-300 relative ${
-              priceAnimation ? 'scale-110 text-[#0052FF]' : 'scale-100'
-            }`}>
-              {nextPrice && parseFloat(nextPrice) > 0
-                ? formatCurrency(nextPrice, 2, false)
-                : formatCurrency(curate.price, 2, false)}
-              {/* Subtle pulse indicator when price updates */}
-              {priceAnimation && (
-                <div className="absolute inset-0 bg-[#0052FF] opacity-20 rounded animate-pulse" />
-              )}
-            </div>
-          </div>
 
           {/* Clean info section - left aligned, no labels */}
           <div className="space-y-3">
@@ -350,9 +316,9 @@ export function ImageDetail({
               </span>
             </div>
 
-            {/* Created by */}
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-400 text-sm">Created by</span>
+            {/* Creator */}
+            <div className="flex items-center justify-between">
+              <span className="text-gray-400 text-sm">Creator</span>
               <button
                 onClick={() => handleUserClick(curate.creator.id)}
                 className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
@@ -368,9 +334,9 @@ export function ImageDetail({
               </button>
             </div>
 
-            {/* Owned by */}
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-400 text-sm">Owned by</span>
+            {/* Owner */}
+            <div className="flex items-center justify-between">
+              <span className="text-gray-400 text-sm">Owner</span>
               <button
                 onClick={() =>
                   handleUserClick(curate.user?.id || curate.creator.id)
@@ -393,22 +359,38 @@ export function ImageDetail({
                 />
               </button>
             </div>
+
+            {/* Weekly Revenue */}
+            <div className="flex items-center justify-between">
+              <span className="text-gray-400 text-sm">Weekly Revenue</span>
+              <span className="text-white text-sm">
+                {weeklyReward && parseFloat(weeklyReward) > 0
+                  ? formatCurrency(weeklyReward, 2, false)
+                  : formatCurrency(1.81, 2, false)}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Weekly Earnings and Collect button - matching Board's volume section */}
+        {/* Price and Collect button - matching Board's volume section */}
         <div className="fixed bottom-20 left-0 right-0 z-40">
           <div className="w-full max-w-md mx-auto bg-black px-4 py-3">
             <div className="flex items-center justify-between">
-              {/* Owner's Weekly Earnings - matching volume display style */}
+              {/* Price */}
               <div>
                 <div className="text-white text-sm opacity-70">
-                  Collector's Weekly Earnings
+                  Price
                 </div>
-                <div className="text-white text-2xl font-bold">
-                  {weeklyReward && parseFloat(weeklyReward) > 0
-                    ? formatCurrency(weeklyReward, 2, false)
-                    : formatCurrency(1.81, 2, false)}
+                <div className={`text-white text-2xl font-bold transition-all duration-300 relative ${
+                  priceAnimation ? 'scale-110 text-[#0052FF]' : 'scale-100'
+                }`}>
+                  {nextPrice && parseFloat(nextPrice) > 0
+                    ? formatCurrency(nextPrice, 2, false)
+                    : formatCurrency(curate.price, 2, false)}
+                  {/* Subtle pulse indicator when price updates */}
+                  {priceAnimation && (
+                    <div className="absolute inset-0 bg-[#0052FF] opacity-20 rounded animate-pulse" />
+                  )}
                 </div>
               </div>
 

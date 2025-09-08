@@ -434,7 +434,7 @@ export function ProfileView({ userAddress: propAddress }: ProfileViewProps) {
                       ) : (
                         <span className="flex items-center gap-2">
                           <Icon name="deposit" size="sm" />
-                          Mint 1K USDC
+                          Mint 100K USDC
                         </span>
                       )
                     }

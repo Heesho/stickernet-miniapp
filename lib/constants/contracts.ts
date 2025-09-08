@@ -884,6 +884,6 @@ export const USDC_DECIMALS = 6;
 export const REWARD_DECIMALS = 18;
 
 /**
- * Test mint amount for USDC (1000 USDC)
+ * Test mint amount for USDC (100000 USDC)
  */
-export const TEST_USDC_MINT_AMOUNT = "1000";
+export const TEST_USDC_MINT_AMOUNT = "100000";

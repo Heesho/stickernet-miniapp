@@ -211,13 +211,36 @@ export function TradingView({
     if (chartData && chartData.length > 0) {
       const currentPrice = parseFloat(tokenPrice);
       const firstDataPoint = chartData[0];
-      const priceChange =
-        ((currentPrice - firstDataPoint.marketPrice) /
-          firstDataPoint.marketPrice) *
-        100;
-      const priceChangeAmount = (
-        currentPrice - firstDataPoint.marketPrice
-      ).toFixed(6);
+      
+      // For MAX timeframe, ensure we never show negative change
+      // (token can't be worth less than at creation)
+      let priceChange = 0;
+      let priceChangeAmount = "0.000000";
+      
+      if (selectedTimeframe === "MAX") {
+        // MAX timeframe should always be 0% or positive
+        // If the first and last price are the same (new token), show 0%
+        if (firstDataPoint.marketPrice === currentPrice || firstDataPoint.marketPrice === 0) {
+          priceChange = 0;
+          priceChangeAmount = "0.000000";
+        } else {
+          priceChange = Math.max(0, 
+            ((currentPrice - firstDataPoint.marketPrice) / firstDataPoint.marketPrice) * 100
+          );
+          priceChangeAmount = Math.max(0, currentPrice - firstDataPoint.marketPrice).toFixed(6);
+        }
+      } else {
+        // For other timeframes, calculate normally
+        if (firstDataPoint.marketPrice > 0) {
+          priceChange =
+            ((currentPrice - firstDataPoint.marketPrice) /
+              firstDataPoint.marketPrice) *
+            100;
+          priceChangeAmount = (
+            currentPrice - firstDataPoint.marketPrice
+          ).toFixed(6);
+        }
+      }
 
       // Update local state for theme
       setTimeframePriceChange(priceChange);
@@ -250,6 +273,17 @@ export function TradingView({
           priceChange,
           priceChangeAmount,
           label,
+        });
+      }
+    } else if (selectedTimeframe === "MAX") {
+      // If no chart data for MAX view (very new token), show 0% change
+      setTimeframePriceChange(0);
+      
+      if (onTimeframeChange) {
+        onTimeframeChange(selectedTimeframe, {
+          priceChange: 0,
+          priceChangeAmount: "0.000000",
+          label: "all time",
         });
       }
     }

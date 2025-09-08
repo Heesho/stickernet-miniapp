@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { BoardProps } from "./Board.types";
 import type { Curate } from "@/types";
@@ -16,6 +16,7 @@ import { BoardActions } from "./BoardActions";
 import { BoardModals } from "./BoardModals";
 import { BoardLoadingState } from "./BoardLoadingState";
 import { BoardErrorState } from "./BoardErrorState";
+import { useChartData } from "@/app/hooks/useChartData";
 
 export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
   const router = useRouter();
@@ -47,7 +48,45 @@ export function Board({ tokenId, tokenAddress, setActiveTab }: BoardProps) {
     timeframePriceData,
     handleTimeframeChange,
     themeColors,
+    setTimeframePriceData,
   } = useBoardState(boardData as any);
+
+  // Fetch initial MAX chart data to calculate price change for board view
+  const { data: maxChartData } = useChartData({
+    tokenAddress: tokenAddress || "",
+    timeframe: "MAX",
+    enabled: !!tokenAddress && !!boardData && !showTradingView, // Only fetch when not in trading view
+  });
+
+  // Calculate MAX timeframe price change when chart data loads
+  useEffect(() => {
+    if (maxChartData && maxChartData.length > 0 && boardData && !showTradingView) {
+      const currentPrice = parseFloat(boardData.token.price);
+      const firstDataPoint = maxChartData[0];
+      
+      // For MAX timeframe, ensure we never show negative change
+      let priceChange = 0;
+      let priceChangeAmount = "0.000000";
+      
+      // MAX timeframe should always be 0% or positive
+      if (firstDataPoint.marketPrice === currentPrice || firstDataPoint.marketPrice === 0) {
+        priceChange = 0;
+        priceChangeAmount = "0.000000";
+      } else {
+        priceChange = Math.max(0, 
+          ((currentPrice - firstDataPoint.marketPrice) / firstDataPoint.marketPrice) * 100
+        );
+        priceChangeAmount = Math.max(0, currentPrice - firstDataPoint.marketPrice).toFixed(6);
+      }
+      
+      // Update the timeframe price data for board view
+      setTimeframePriceData({
+        priceChange,
+        priceChangeAmount,
+        label: "all time",
+      });
+    }
+  }, [maxChartData, boardData, showTradingView, setTimeframePriceData]);
 
   // Memoize handler functions to prevent unnecessary re-renders
   const handleBackToHome = useCallback(() => {

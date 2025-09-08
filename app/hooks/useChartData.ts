@@ -559,13 +559,75 @@ export function useChartData({
           const tokenAge = now - tokenCreatedAt;
 
           // Decide which data type to use based on token age
+          // If < 1 hour old, use minute data
           // If < 7 days old, use hour data
           // If < 90 days old, use day data
           // Otherwise, use day data but sample more sparsely
 
           let processedData: PriceDataPoint[] = [];
 
-          if (tokenAge < 7 * 86400) {
+          if (tokenAge < 3600) {
+            // Token is less than 1 hour old - use minute data
+            const currentMinuteIndex = Math.floor(now / 60);
+            const tokenCreatedMinuteIndex = Math.floor(tokenCreatedAt / 60);
+
+            const minuteIds: string[] = [];
+            for (let i = tokenCreatedMinuteIndex; i <= currentMinuteIndex; i++) {
+              minuteIds.push(`${token}-${i}`);
+            }
+
+            console.log("MAX chart minute data query details:", {
+              tokenAge: tokenAge / 60,
+              minutesToFetch: minuteIds.length,
+              currentPrice,
+            });
+
+            const response = await fetch("/api/subgraph", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                query: GET_TOKEN_MINUTE_DATA,
+                variables: { ids: minuteIds },
+              }),
+            });
+
+            const result = await response.json();
+            if (result.errors) {
+              console.error("MAX chart GraphQL errors:", result.errors);
+            }
+
+            const minuteData = result.data?.tokenMinuteDatas || [];
+            
+            // For very young tokens, always create at least 2 points
+            if (minuteData.length === 0 || tokenAge < 60) {
+              // Create a simple line from creation to now
+              processedData = [
+                {
+                  timestamp: tokenCreatedAt * 1000,
+                  marketPrice: currentPrice, // Use current price as starting price
+                  floorPrice: currentFloorPrice,
+                  volume: 0,
+                },
+                {
+                  timestamp: now * 1000,
+                  marketPrice: currentPrice,
+                  floorPrice: currentFloorPrice,
+                  volume: 0,
+                },
+              ];
+            } else {
+              processedData = processMAXChartData(
+                minuteData,
+                currentPrice,
+                currentFloorPrice,
+                tokenCreatedAt,
+                now,
+                "minute",
+              );
+            }
+          } else if (tokenAge < 7 * 86400) {
             // Token is less than 7 days old - use hour data
             const currentHourIndex = Math.floor(now / 3600);
             const tokenCreatedHourIndex = Math.floor(tokenCreatedAt / 3600);
@@ -741,7 +803,7 @@ export function useChartData({
     currentFloorPrice: number,
     tokenCreatedAt: number,
     endTimestamp: number,
-    dataType: "hour" | "day",
+    dataType: "minute" | "hour" | "day",
   ): PriceDataPoint[] => {
     console.log("Processing MAX chart data:", {
       dataCount: data.length,
@@ -756,7 +818,7 @@ export function useChartData({
 
     // Create a map of existing data points
     const dataMap = new Map<number, GraphQLDataPoint>();
-    const divisor = dataType === "hour" ? 3600 : 86400;
+    const divisor = dataType === "minute" ? 60 : dataType === "hour" ? 3600 : 86400;
 
     data.forEach((point) => {
       const index = Math.floor(parseInt(point.timestamp) / divisor);
@@ -780,7 +842,7 @@ export function useChartData({
       actualPoints,
     });
 
-    // Start with the first available price
+    // Start with current price as baseline for new tokens
     let lastKnownPrice = currentPrice;
     let lastKnownFloorPrice = currentFloorPrice;
     let hasSeenData = false;
@@ -832,9 +894,9 @@ export function useChartData({
       }
 
       if (!foundData) {
-        // Use last known price or a baseline if we haven't seen any data yet
-        const priceToUse = hasSeenData ? lastKnownPrice : 0.0001;
-        const floorToUse = hasSeenData ? lastKnownFloorPrice : 0.0001;
+        // Use last known price or current price if we haven't seen any data yet
+        const priceToUse = hasSeenData ? lastKnownPrice : currentPrice;
+        const floorToUse = hasSeenData ? lastKnownFloorPrice : currentFloorPrice;
 
         result.push({
           timestamp,

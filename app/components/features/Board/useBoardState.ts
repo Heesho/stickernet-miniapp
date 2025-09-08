@@ -60,8 +60,8 @@ export function useBoardState(
   const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("MAX");
   const [timeframePriceData, setTimeframePriceData] =
     useState<TimeframePriceData>({
-      priceChange: 0,
-      priceChangeAmount: "0",
+      priceChange: 0,  // For MAX view, this will be updated when chart data loads
+      priceChangeAmount: "0.000000",
       label: "all time",
     });
 
